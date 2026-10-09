@@ -1,4 +1,4 @@
-# Dishes Be Crazy
+<img width="1916" height="526" alt="image" src="https://github.com/user-attachments/assets/ff51ed18-90d5-44ae-a94a-d1c846d4efbc" />
 
 ## Team Members
 - Ethan Elkaim 40311428 - Lead Developer
