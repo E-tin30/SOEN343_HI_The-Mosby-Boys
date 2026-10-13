@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: dishes-be-crazy
+
+  datasource:
+    url: ${SUPABASE_DB_URL}
+    username: ${SUPABASE_DB_USER}
+    password: ${SUPABASE_DB_PASSWORD}
