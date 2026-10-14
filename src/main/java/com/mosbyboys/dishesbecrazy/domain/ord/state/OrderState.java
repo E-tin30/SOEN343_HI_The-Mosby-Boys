@@ -29,4 +29,9 @@ public abstract class OrderState {
     public OrderState cancel() {
         throw new IllegalTransitionException(this, "cancel");
     }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName();
+    }
 }
