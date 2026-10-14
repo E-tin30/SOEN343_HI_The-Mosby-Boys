@@ -1,5 +1,6 @@
 package com.mosbyboys.dishesbecrazy.domain.ord.state;
 
+/* Order has been delivered to the customer by courier */
 public class DeliveredState {
-    // Out of scope for phase 2 just a placeholder
+    /* DLV stub, not used this phase. Same as PickedUpState. */
 }
