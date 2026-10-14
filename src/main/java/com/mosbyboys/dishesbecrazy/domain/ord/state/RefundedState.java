@@ -4,4 +4,7 @@ package com.mosbyboys.dishesbecrazy.domain.ord.state;
 not this. Pick one and make the diagram and code match. */
 public class RefundedState extends OrderState {
     
+    // Out of scope for phase 2
+    // terminal state no transitions allowed
+
 }
