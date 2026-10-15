@@ -18,6 +18,18 @@ import com.mosbyboys.dishesbecrazy.domain.ord.state.ReadyState;
 import com.mosbyboys.dishesbecrazy.domain.ord.state.RejectedState;
 
 public class OrderTest {
+
+    // Helper to create valid orders
+    private Order newOrder() {
+        OrderLine line1 = new OrderLine(UUID.randomUUID(), 3, new BigDecimal("12.50"));
+        OrderLine line2 = new OrderLine(UUID.randomUUID(), 2, new BigDecimal("4.25"));
+        return new Order(UUID.randomUUID(), UUID.randomUUID(), List.of(line1, line2));
+    }
+    
+    // Helper methods to get orders at certain states
+    private Order acceptedOrder()  { Order o = newOrder(); o.accept(); return o; }
+    private Order preparingOrder() { Order o = acceptedOrder(); o.startPreparing(); return o; }
+    private Order readyOrder()     { Order o = preparingOrder(); o.markReady(); return o; }
     
     // a new order starts in PlacedState
     @Test
@@ -112,16 +124,4 @@ public class OrderTest {
     void orderCreationWithNullLineItemThrows() {
         assertThrows(IllegalArgumentException.class, () -> new Order(UUID.randomUUID(), UUID.randomUUID(), null));
     }
-
-    // Helper to create valid orders
-    private Order newOrder() {
-        OrderLine line1 = new OrderLine(UUID.randomUUID(), 3, new BigDecimal("12.50"));
-        OrderLine line2 = new OrderLine(UUID.randomUUID(), 2, new BigDecimal("4.25"));
-        return new Order(UUID.randomUUID(), UUID.randomUUID(), List.of(line1, line2));
-    }
-    
-    // Helper methods to get orders at certain states
-    private Order acceptedOrder()  { Order o = newOrder(); o.accept(); return o; }
-    private Order preparingOrder() { Order o = acceptedOrder(); o.startPreparing(); return o; }
-    private Order readyOrder()     { Order o = preparingOrder(); o.markReady(); return o; }
 }
