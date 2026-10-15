@@ -1,0 +1,5 @@
+# Run once with --spring.profiles.active=demo-seed to load the demo profile configuration.
+spring:
+  main:
+    # Runs the seed command without starting an HTTP server.
+    web-application-type: none
