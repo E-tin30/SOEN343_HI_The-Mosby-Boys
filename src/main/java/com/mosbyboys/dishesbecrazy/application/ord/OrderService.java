@@ -39,6 +39,8 @@ public class OrderService {
         orderEntity.setCreatedAt(order.getPlacedAt());
         orderEntity.setRejectionReason(order.getRejectionReason());
 
+        orderRepo.saveAndFlush(orderEntity);
+
         if (isNew) {
             List<OrderLineItemEntity> lines = order.getOrderLineItems().stream().map(line -> {
                 OrderLineItemEntity e = new OrderLineItemEntity();
@@ -50,8 +52,6 @@ public class OrderService {
             }).toList();
             lineItemRepo.saveAll(lines);
         }
-
-        orderRepo.save(orderEntity);
     }
 
     @Transactional(readOnly = true)
