@@ -20,8 +20,8 @@ public class AccountRepo{
         this.restClient = RestClient.builder().baseUrl(url).defaultHeader("apikey", key).build();
     }
 
-    public UUID createAuthUser(String email, String password) {//Sends an API request to Supabase to create an entry in auth.users
-        Map<?, ?> response = restClient.post().uri("/auth/v1/signup").contentType(MediaType.APPLICATION_JSON).body(Map.of("email", email,"password", password)).retrieve().body(Map.class);
+    public UUID createAuthUser(String displayName, String email, String password) {//Sends an API request to Supabase to create an entry in auth.users
+        Map<?, ?> response = restClient.post().uri("/auth/v1/signup").contentType(MediaType.APPLICATION_JSON).body(Map.of("email", email,"password", password, "data", Map.of("display_name", displayName))).retrieve().body(Map.class);
 
         if (response == null) {
             throw new IllegalStateException("Empty response from Supabase");
@@ -33,19 +33,21 @@ public class AccountRepo{
             throw new IllegalStateException("Invalid Supabase response");
         }
 
-        Map<?, ?> userMap = (Map<?, ?>) user; //Necessary since user has been upcasted to this point (we must downcast before further operations)
+        Map<?, ?> userMap = (Map<?, ?>) user;
+
         Object id = userMap.get("id");
 
         if (!(id instanceof String)) {
             throw new IllegalStateException("User ID missing");
         }
+
         String userId = (String) id;
 
         return UUID.fromString(userId);
     }
 
-    public int saveUserAccount(UUID id, String username, String role) {//Writes to our custom public.User table
-        String sql = "INSERT INTO public.\"Users\" (id, username, role) VALUES (?, ?, ?)";
-        return jdbcTemplate.update(sql, id, username, role);
+    public int saveUserAccount(UUID id, String firstName, String lastName, String username, String role) {//Writes to our custom public.User table
+        String sql = "INSERT INTO public.\"Users\" (id, first_name, last_name, username, role) VALUES (?, ?, ?, ?, ?)";
+        return jdbcTemplate.update(sql, id, firstName, lastName, username, role);
     }
 }

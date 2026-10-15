@@ -17,7 +17,7 @@ public class DishesBeCrazyApplication {
 	@Bean
 	CommandLineRunner testInsert(AuthService authService) {
 		return args -> {
-			authService.testSaveAccount();
+			authService.saveAccount();
 		};
 	}
 
