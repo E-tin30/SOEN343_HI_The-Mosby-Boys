@@ -4,4 +4,5 @@ package com.mosbyboys.dishesbecrazy.application.ord;
 and whether the order/restaurant is theirs. */
 public class PermissionPolicy {
     
+    
 }
