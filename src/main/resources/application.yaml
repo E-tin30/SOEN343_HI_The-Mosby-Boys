@@ -1,4 +1,7 @@
 spring:
+  config:
+    import: optional:file:.env[.properties]
+
   application:
     name: dishes-be-crazy
 
@@ -9,3 +12,7 @@ spring:
 
   flyway:
     enabled: false
+
+  supabase:
+    url: ${SUPABASE_URL}
+    publishable-key: ${SUPABASE_PUBLISHABLE_KEY}
