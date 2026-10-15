@@ -44,10 +44,11 @@ public class PermissionPolicy {
             throw new PermissionDeniedException("Customer can only cancel order before it is accepted.");
         }
         if(caller instanceof Customer customer){
-            if(!customer.getCustomerId().equals(order.getCustomerId())){
-                throw new PermissionDeniedException("Customer can only cancel their orders not other customer's orders.");
+            if(customer.getCustomerId().equals(order.getCustomerId())){
+                return;
             }
         }
+        throw new PermissionDeniedException("A customer can only cancel their own order, before it is accepted.");
     }
 
     // Check if the restaurant can make changes to an order
