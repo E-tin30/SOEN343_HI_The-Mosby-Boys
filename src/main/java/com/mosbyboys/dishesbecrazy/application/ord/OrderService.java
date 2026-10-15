@@ -33,7 +33,7 @@ public class OrderService {
 
         OrderEntity orderEntity = existing.orElseGet(OrderEntity::new);
         orderEntity.setId(order.getId());
-        orderEntity.setUserId(order.getUserId());
+        orderEntity.setUserId(order.getCustomerId());
         orderEntity.setRestaurantId(order.getRestaurantId());
         orderEntity.setState(order.getState().toString());
         orderEntity.setCreatedAt(order.getPlacedAt());

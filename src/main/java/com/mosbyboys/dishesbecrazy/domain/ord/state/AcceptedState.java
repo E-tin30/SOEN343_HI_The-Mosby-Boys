@@ -1,7 +1,6 @@
 package com.mosbyboys.dishesbecrazy.domain.ord.state;
 
-/* Restaurant accepted it, it's in the prep queue. Can only go to preparing.
-TODO(team): confirm operator can cancel from accepted (spec: cancel after placed is an operator action). */
+/* Restaurant accepted it, it's in the prep queue. Can go to preparing or cancelled. */
 public class AcceptedState extends OrderState {
     
    @Override 
