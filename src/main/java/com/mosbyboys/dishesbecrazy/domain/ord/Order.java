@@ -17,19 +17,19 @@ public class Order {
     
     private final UUID id;
     private OrderState state;
-    private final UUID userId;
+    private final UUID customerId;
     private final UUID restaurantId;
     private final List<OrderLine> orderLineItems;
     private final Instant placedAt;
     private String rejectionReason;
 
-    public Order(UUID userId, UUID restaurantId, List<OrderLine> orderLineItems){
+    public Order(UUID customerId, UUID restaurantId, List<OrderLine> orderLineItems){
         if(orderLineItems == null || orderLineItems.isEmpty()){
             throw new IllegalArgumentException("orderLineItems must not be null or empty");
         }
         
-        if(userId == null){
-            throw new IllegalArgumentException("userId must not be null");
+        if(customerId == null){
+            throw new IllegalArgumentException("customerId must not be null");
         }
 
         if(restaurantId == null){
@@ -38,7 +38,7 @@ public class Order {
 
         this.id = UUID.randomUUID();
         this.state = new PlacedState();
-        this.userId = userId;
+        this.customerId = customerId;
         this.restaurantId = restaurantId;
         this.orderLineItems = List.copyOf(orderLineItems);
         this.placedAt = Instant.now();
