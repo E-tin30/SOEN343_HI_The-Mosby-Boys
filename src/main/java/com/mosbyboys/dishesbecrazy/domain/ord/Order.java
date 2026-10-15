@@ -44,6 +44,24 @@ public class Order {
         this.placedAt = Instant.now();
     }
 
+    //The private Order constructor is for the reconstitute method so it can bypass the final attributes
+    private Order(UUID id, OrderState state, UUID userId, UUID restaurantId,
+                  List<OrderLine> lines, Instant placedAt, String rejectionReason) {
+        this.id = id;
+        this.state = state;
+        this.userId = userId;
+        this.restaurantId = restaurantId;
+        this.orderLineItems = List.copyOf(lines);
+        this.placedAt = placedAt;
+        this.rejectionReason = rejectionReason;
+    }
+
+    //This method is for loading the objects back from the db
+    public static Order reconstitute(UUID id, OrderState state, UUID userId, UUID restaurantId,
+                                     List<OrderLine> lines, Instant placedAt, String rejectionReason) {
+        return new Order(id, state, userId, restaurantId, lines, placedAt, rejectionReason);
+    }
+
     // State changes
     public void accept(){
         this.state = this.state.accept();
