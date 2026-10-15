@@ -59,4 +59,46 @@ public class ORDFacade {
         orderEventService.save(orderId, before, order.getState().toString(), userId, "REJECT");
     }
 
+    @Transactional
+    public void cancelOrder(UUID userId, UUID orderId) {
+        //todo: add permission - must be operator. only can be customer if before is PlacedState
+
+        Order order = orderService.load(orderId);
+        String before = order.getState().toString();
+
+        order.cancel();
+
+        //save to db
+        orderService.save(order);
+        orderEventService.save(orderId, before, order.getState().toString(), userId, "CANCEL");
+    }
+
+    @Transactional
+    public void prepareOrder(UUID userId, UUID orderId) {
+        Order order = orderService.load(orderId);
+        String before = order.getState().toString();
+
+        order.startPreparing();
+
+        //save to db
+        orderService.save(order);
+        orderEventService.save(orderId, before, order.getState().toString(), userId, "PREPARING");
+    }
+
+    @Transactional
+    public void markOrderReady(UUID userId, UUID orderId) {
+        //todo: check permission - must be restaurant
+
+        Order order = orderService.load(orderId);
+        String before = order.getState().toString();
+
+        order.markReady();
+
+        //save to db
+        orderService.save(order);
+        orderEventService.save(orderId, before, order.getState().toString(), userId, "READY");
+    }
+
+    /*other state transitions are out of scope for phase 2*/
+
 }
