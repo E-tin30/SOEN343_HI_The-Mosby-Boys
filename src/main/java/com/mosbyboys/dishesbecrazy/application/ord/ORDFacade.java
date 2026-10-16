@@ -2,6 +2,7 @@ package com.mosbyboys.dishesbecrazy.application.ord;
 
 import com.mosbyboys.dishesbecrazy.domain.ord.Order;
 import com.mosbyboys.dishesbecrazy.domain.ord.OrderLine;
+import com.mosbyboys.dishesbecrazy.domain.reg.User;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,12 +19,14 @@ public class ORDFacade {
 
     private final OrderService orderService;
     private final OrderEventService orderEventService;
+    private final PermissionPolicy permissionPolicy;
 
     @Transactional
-    public Order placeOrder(UUID userId, UUID restaurantId, List<OrderLine> orderLineItems) {
-        //TODO: check with permission policy class before proceeding - must be customer
+    public Order placeOrder(User user, UUID restaurantId, List<OrderLine> orderLineItems) {
+        //Check Permission
+        permissionPolicy.checkCanPlace(user);
 
-        Order order = new Order(userId, restaurantId, orderLineItems);
+        Order order = new Order(user.getUserId(), restaurantId, orderLineItems);
 
         //save order to db
         orderService.save(order);
@@ -32,71 +35,83 @@ public class ORDFacade {
     }
 
     @Transactional
-    public void acceptOrder(UUID userId, UUID orderId) {
-        //TODO: check with permission policy class before proceeding - must be restaurant
-
+    public void acceptOrder(User user, UUID orderId) {
         Order order = orderService.load(orderId);
+
+        //Check Permission
+        permissionPolicy.checkCanActAsRestaurant(user, order);
+
         String before = order.getState().toString();
 
         order.accept();
 
         //save state change event
         orderService.save(order);
-        orderEventService.save(orderId, before, order.getState().toString(), userId, "ACCEPT");
+        orderEventService.save(orderId, before, order.getState().toString(), user.getUserId(), "ACCEPT");
     }
 
     @Transactional
-    public void rejectOrder(UUID userId, UUID orderId, String reason) {
-        //Todo: check with permissions first - must be restaurant
-
+    public void rejectOrder(User user, UUID orderId, String reason) {
         Order order = orderService.load(orderId);
+
+        //Check Permission
+        permissionPolicy.checkCanActAsRestaurant(user, order);
+
         String before = order.getState().toString();
 
         order.reject(reason);
 
         //save to db
         orderService.save(order);
-        orderEventService.save(orderId, before, order.getState().toString(), userId, "REJECT");
+        orderEventService.save(orderId, before, order.getState().toString(), user.getUserId(), "REJECT");
     }
 
     @Transactional
-    public void cancelOrder(UUID userId, UUID orderId) {
-        //todo: add permission - must be operator. only can be customer if before is PlacedState
-
+    public void cancelOrder(User user, UUID orderId) {
         Order order = orderService.load(orderId);
+
+        //Check Permission
+        permissionPolicy.checkCanCancel(user, order);
+
         String before = order.getState().toString();
 
         order.cancel();
 
         //save to db
         orderService.save(order);
-        orderEventService.save(orderId, before, order.getState().toString(), userId, "CANCEL");
+        orderEventService.save(orderId, before, order.getState().toString(), user.getUserId(), "CANCEL");
     }
 
     @Transactional
-    public void prepareOrder(UUID userId, UUID orderId) {
+    public void prepareOrder(User user, UUID orderId) {
         Order order = orderService.load(orderId);
+
+        //Check Permission
+        permissionPolicy.checkCanActAsRestaurant(user, order);
+
         String before = order.getState().toString();
 
         order.startPreparing();
 
         //save to db
         orderService.save(order);
-        orderEventService.save(orderId, before, order.getState().toString(), userId, "PREPARING");
+        orderEventService.save(orderId, before, order.getState().toString(), user.getUserId(), "PREPARING");
     }
 
     @Transactional
-    public void markOrderReady(UUID userId, UUID orderId) {
-        //todo: check permission - must be restaurant
-
+    public void markOrderReady(User user, UUID orderId) {
         Order order = orderService.load(orderId);
+
+        //Check Permission
+        permissionPolicy.checkCanActAsRestaurant(user, order);
+
         String before = order.getState().toString();
 
         order.markReady();
 
         //save to db
         orderService.save(order);
-        orderEventService.save(orderId, before, order.getState().toString(), userId, "READY");
+        orderEventService.save(orderId, before, order.getState().toString(), user.getUserId(), "READY");
     }
 
     /*other state transitions are out of scope for phase 2*/

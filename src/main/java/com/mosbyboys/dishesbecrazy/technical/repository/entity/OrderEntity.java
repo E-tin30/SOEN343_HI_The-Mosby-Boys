@@ -8,7 +8,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "\"Orders\"")
+@Table(name = "\"Order\"")
 @Getter @Setter
 @NoArgsConstructor
 public class OrderEntity {

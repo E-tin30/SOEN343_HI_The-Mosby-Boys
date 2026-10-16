@@ -11,7 +11,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "\"OrderLineItems\"")   // quoted: capital letters in the Supabase table name
+@Table(name = "\"OrderLineItem\"")
 @Getter @Setter
 @NoArgsConstructor
 public class OrderLineItemEntity {
