@@ -13,12 +13,4 @@ public class DishesBeCrazyApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(DishesBeCrazyApplication.class, args);
 	}
-
-	@Bean
-	CommandLineRunner testInsert(AuthService authService) {
-		return args -> {
-			authService.saveAccount();
-		};
-	}
-
 }

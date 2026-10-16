@@ -46,8 +46,8 @@ public class AccountRepo{
         return UUID.fromString(userId);
     }
 
-    public int saveUserAccount(UUID id, String firstName, String lastName, String username, String role) {//Writes to our custom public.User table
+    public void saveUserAccount(UUID id, String firstName, String lastName, String username, String role) {//Writes to our custom public.User table
         String sql = "INSERT INTO public.\"Users\" (id, first_name, last_name, username, role) VALUES (?, ?, ?, ?, ?)";
-        return jdbcTemplate.update(sql, id, firstName, lastName, username, role);
+        jdbcTemplate.update(sql, id, firstName, lastName, username, role);
     }
 }

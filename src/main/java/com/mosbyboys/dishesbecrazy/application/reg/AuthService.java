@@ -16,14 +16,6 @@ public class AuthService {
     }
 
     public void saveAccount(String firstName, String lastName, String email, String username, String password, String role) {
-        firstName = "Zayden";
-        lastName = "Kungu";
-        email = "zayden1919@gmail.com";
-        username = "Zayy";
-        password = "password123";
-        role = "customer";
-
-        int rows = accountRepo.saveUserAccount(accountRepo.createAuthUser(firstName + " " + lastName, email, password),
-                firstName, lastName, username, role);
+        accountRepo.saveUserAccount(accountRepo.createAuthUser(firstName + " " + lastName, email, password), firstName, lastName, username, role);
     }
 }

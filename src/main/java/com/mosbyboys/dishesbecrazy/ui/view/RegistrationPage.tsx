@@ -1,10 +1,31 @@
 import type { FormEvent } from "react";
 
-export default function Register() {
-  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+export default function Register(){
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
     const data = Object.fromEntries(new FormData(e.currentTarget));
-    console.log(data);
+
+    try {
+        const response = await fetch("http://localhost:8080/register", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+            throw new Error(`Registration failed: ${response.status}`);
+        }
+
+        const result = await response.text();
+        alert(result);
+
+    } catch (error) {
+        console.error("Registration error:", error);
+        alert("Registration failed!");
+    }
   }
 
   return (
