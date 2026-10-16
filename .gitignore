@@ -106,3 +106,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Local Spring Security configuration
+/src/main/java/com/mosbyboys/dishesbecrazy/technical/security/SecurityConfig.java
