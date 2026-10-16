@@ -30,6 +30,10 @@ public class ORDFacade {
         //Check Permission
         permissionPolicy.checkCanPlace(user);
 
+        if(!(user instanceof Customer customer)){
+            throw new PermissionDeniedException("Only a customer can place an order.");
+        }
+
         Order order = new Order(user.getUserId(), restaurantId, orderLineItems);  
         order.getOrderLineItems().forEach(this::checkAgainstMenu);
 
