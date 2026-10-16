@@ -1,6 +1,8 @@
 import type { FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function Register(){
+  const navigate = useNavigate();
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
@@ -21,6 +23,7 @@ export default function Register(){
 
         const result = await response.text();
         alert(result);
+        navigate("/login");
 
     } catch (error) {
         console.error("Registration error:", error);
