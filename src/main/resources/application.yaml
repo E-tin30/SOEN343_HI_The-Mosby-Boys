@@ -14,5 +14,9 @@ spring:
     enabled: false
 
   jpa:
-      hibernate:
-        ddl-auto: validate
+    hibernate:
+      ddl-auto: validate
+
+  supabase:
+    url: ${SUPABASE_URL}
+    publishable-key: ${SUPABASE_PUBLISHABLE_KEY}

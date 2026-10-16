@@ -1,6 +1,9 @@
 package com.mosbyboys.dishesbecrazy.technical.repository;
 
+import com.mosbyboys.dishesbecrazy.technical.repository.entity.OrderEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.UUID;
+
 /* Saves and loads orders. The state is stored as text and turned back into a state object on load. */
-public class OrderRepo {
-    
-}
+public interface OrderRepo extends JpaRepository<OrderEntity, UUID>  {}

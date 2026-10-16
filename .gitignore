@@ -108,3 +108,8 @@ build/
 .vscode/
 *.md
 !README.md
+
+
+###Agent skills###
+/.agents/
+/skills-lock.json
