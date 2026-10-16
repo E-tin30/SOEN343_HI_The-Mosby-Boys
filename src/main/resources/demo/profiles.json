@@ -1,0 +1,39 @@
+[
+  {
+    "email": "customer.demo@example.com",
+    "firstName": "Alex",
+    "lastName": "Demo",
+    "username": "demo_customer",
+    "role": "CUSTOMER",
+    "profileId": "34300000-0000-4000-8000-000000000001",
+    "address": "123 Demo Street, Montreal"
+  },
+  {
+    "email": "restaurant.demo@example.com",
+    "firstName": "Sam",
+    "lastName": "Demo",
+    "username": "demo_restaurant",
+    "role": "RESTAURANT",
+    "profileId": "34300000-0000-4000-8000-000000000002",
+    "restaurantName": "Dishes Be Crazy Demo",
+    "status": "OPEN",
+    "location": "456 Demo Street, Montreal"
+  },
+  {
+    "email": "courier.demo@example.com",
+    "firstName": "Jo",
+    "lastName": "Demo",
+    "username": "demo_courier",
+    "role": "COURIER",
+    "profileId": "34300000-0000-4000-8000-000000000003",
+    "state": "OFF_DUTY",
+    "location": "Montreal"
+  },
+  {
+    "email": "operator.demo@example.com",
+    "firstName": "Pat",
+    "lastName": "Demo",
+    "username": "demo_operator",
+    "role": "OPERATOR"
+  }
+]
