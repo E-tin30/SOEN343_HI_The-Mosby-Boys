@@ -11,8 +11,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 
 import java.util.List;
 
-/* Decides which requests need a logged-in user and which origins may call the API.
-TEMPORARY: every request is open until REG auth (Supabase JWT, R-REG-02) is wired in. */
+/* TEMPORARY: every request is open until REG auth (Supabase JWT, R-REG-02) is wired in. */
 @Configuration
 public class SecurityConfig {
     @Bean
@@ -34,7 +33,6 @@ public class SecurityConfig {
 
         config.setAllowedOrigins(List.of("http://localhost:5173","http://127.0.0.1:5173"));
 
-        // PUT/PATCH/DELETE for menu editing (UC-ORD-05); Authorization for the session token later
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Content-Type", "Authorization"));
 

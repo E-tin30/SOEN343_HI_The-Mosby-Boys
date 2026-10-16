@@ -18,14 +18,14 @@ public class MenuItem {
     private UUID id;
 
     @Column(insertable = false, updatable = false)
-    private Instant createdAt; // confirm we want to use instant
+    private Instant createdAt; 
 
     private String name;
     private BigDecimal price;
     private int stockQuantity;
 
-    @Enumerated(EnumType.STRING)          // stores "AVAILABLE" / "SOLD_OUT" as text
-    private MenuItemStatus status; // should this be derived? enum?
+    @Enumerated(EnumType.STRING)         
+    private MenuItemStatus status; 
 
     private String imageUrl;
     private String description;

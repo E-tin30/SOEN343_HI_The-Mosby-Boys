@@ -19,27 +19,26 @@ import com.mosbyboys.dishesbecrazy.domain.ord.MenuItemStatus;
 @Table(name = "\"Restaurant\"")
 public class Restaurant {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID) // not certain this will mesh well yet
+    @GeneratedValue(strategy = GenerationType.UUID) 
     private UUID id;
 
     @Column(name = "created_at")
     private Instant createdAt; 
     private String name;
 
-    // should this be derived and manual? e.g. if all menu items are sold out, then the restaurant is paused
-    @Enumerated(EnumType.STRING)          // stores "OPEN" / "PAUSED" as text
-    @Column(nullable = false, length = 20) // do i not need to include the name of the collumn if same as attrib name?
+    @Enumerated(EnumType.STRING)        
+    @Column(nullable = false, length = 20) 
     private RestaurantStatus status; 
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "restaurant_id")   // the FK column in "MenuItems" that points back here
+    @JoinColumn(name = "restaurant_id")   
     private List<MenuItem> menu = new ArrayList<>();
 
     @Embedded
     private Location location;    
 
     @Column(name = "user_id")
-    private UUID ownerId; // foreign key to the user that owns this restaurant
+    private UUID ownerId; 
 
     public void pause() {
         this.status = RestaurantStatus.PAUSED;
@@ -50,7 +49,7 @@ public class Restaurant {
     }
 
     public void close() {
-        this.status = RestaurantStatus.CLOSED; // diff between closed and paused?
+        this.status = RestaurantStatus.CLOSED; 
     }
 
     public boolean isOpen() {
