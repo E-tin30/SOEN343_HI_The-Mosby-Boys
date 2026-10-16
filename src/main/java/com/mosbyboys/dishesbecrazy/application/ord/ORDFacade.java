@@ -2,6 +2,7 @@ package com.mosbyboys.dishesbecrazy.application.ord;
 
 import com.mosbyboys.dishesbecrazy.domain.ord.Order;
 import com.mosbyboys.dishesbecrazy.domain.ord.OrderLine;
+import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
 import com.mosbyboys.dishesbecrazy.domain.reg.User;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +27,11 @@ public class ORDFacade {
         //Check Permission
         permissionPolicy.checkCanPlace(user);
 
-        Order order = new Order(user.getUserId(), restaurantId, orderLineItems);
+        if(!(user instanceof Customer customer)){
+            throw new PermissionDeniedException("Only a customer can place an order.");
+        }
+
+        Order order = new Order(customer.getCustomerId(), restaurantId, orderLineItems);
 
         //save order to db
         orderService.save(order);
