@@ -13,7 +13,6 @@ spring:
   flyway:
     enabled: false
 
-  spring:
-    jpa:
+  jpa:
       hibernate:
         ddl-auto: validate
