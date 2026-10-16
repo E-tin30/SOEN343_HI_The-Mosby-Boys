@@ -12,3 +12,7 @@ spring:
 
   flyway:
     enabled: false
+
+  supabase:
+    url: ${SUPABASE_URL}
+    publishable-key: ${SUPABASE_PUBLISHABLE_KEY}
