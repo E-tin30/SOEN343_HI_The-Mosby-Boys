@@ -10,12 +10,12 @@ import org.springframework.stereotype.Repository;
 import org.springframework.web.client.RestClient;
 
 @Repository
-public class AccountRepo{
+public class UserRepo{
 
     private final JdbcTemplate jdbcTemplate;
     private final RestClient restClient;
 
-	public AccountRepo(JdbcTemplate jdbcTemplate, @Value("${spring.supabase.url}") String url, @Value("${spring.supabase.publishable-key}") String key) {
+	public UserRepo(JdbcTemplate jdbcTemplate, @Value("${spring.supabase.url}") String url, @Value("${spring.supabase.publishable-key}") String key) {
         this.jdbcTemplate = jdbcTemplate;
         this.restClient = RestClient.builder().baseUrl(url).defaultHeader("apikey", key).build();
     }
@@ -46,8 +46,8 @@ public class AccountRepo{
         return UUID.fromString(userId);
     }
 
-    public void saveUserAccount(UUID id, String firstName, String lastName, String username, String role) {//Writes to our custom public.User table
-        String sql = "INSERT INTO public.\"Users\" (id, first_name, last_name, username, role) VALUES (?, ?, ?, ?, ?)";
+    public void saveUser(UUID id, String firstName, String lastName, String username, String role) {//Writes to our custom public.User table
+        String sql = "INSERT INTO public.\"User\" (id, first_name, last_name, username, role) VALUES (?, ?, ?, ?, ?)";
         jdbcTemplate.update(sql, id, firstName, lastName, username, role);
     }
 }

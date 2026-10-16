@@ -20,7 +20,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public String register(@RequestBody RegistrationRequest request) {
-		authService.saveAccount(request.firstName(), request.lastName(), request.email(), request.username(), request.password(),request.role());
+		authService.saveUser(request.firstName(), request.lastName(), request.email(), request.username(), request.password(),request.role());
         return "Registration successful";
     }
 }
