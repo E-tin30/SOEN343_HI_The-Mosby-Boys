@@ -17,7 +17,8 @@
     "profileId": "34300000-0000-4000-8000-000000000002",
     "restaurantName": "Dishes Be Crazy Demo",
     "status": "OPEN",
-    "location": "456 Demo Street, Montreal"
+    "latitude": 45.5017,
+    "longitude": -73.5673
   },
   {
     "email": "courier.demo@example.com",

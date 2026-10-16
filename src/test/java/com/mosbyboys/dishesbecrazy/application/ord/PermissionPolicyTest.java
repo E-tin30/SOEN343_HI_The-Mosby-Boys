@@ -29,7 +29,7 @@ public class PermissionPolicyTest {
 
     private RestaurantOwner restaurant(UUID restaurantId) {
         return new RestaurantOwner(UUID.randomUUID(), OffsetDateTime.now(), "A", "B", "a@b.c", "ab", "hash",
-                restaurantId, OffsetDateTime.now(), "Resto", "OPEN", "456 Street");
+                restaurantId, OffsetDateTime.now(), "Resto", "OPEN");
     }
 
     private Operator operator() {
