@@ -43,9 +43,9 @@ export default function Register(){
 
       <p>
         <select name="role" required>
-          <option value="customer">Customer</option>
-          <option value="restaurant">Restaurant</option>
-          <option value="courier">Courier</option>
+          <option value="CUSTOMER">Customer</option>
+          <option value="RESTAURANT">Restaurant</option>
+          <option value="COURIER">Courier</option>
         </select>
       </p>
 
