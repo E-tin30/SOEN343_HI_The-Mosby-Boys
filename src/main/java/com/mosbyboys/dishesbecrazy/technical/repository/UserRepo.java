@@ -8,6 +8,10 @@ import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.HttpClientErrorException;
+
+
+import com.mosbyboys.dishesbecrazy.technical.security.InvalidCredentialsException;
 
 @Repository
 public class UserRepo{
@@ -49,5 +53,31 @@ public class UserRepo{
     public void saveUser(UUID id, String firstName, String lastName, String username, String role) {//Writes to our custom public.User table
         String sql = "INSERT INTO public.\"User\" (id, first_name, last_name, username, role) VALUES (?, ?, ?, ?, ?)";
         jdbcTemplate.update(sql, id, firstName, lastName, username, role);
+    }
+
+    public record LoginTokens(String accessToken, String refreshToken, long expiresIn){
+    }
+
+    public LoginTokens login(String email, String password){
+        try{
+            Map<?, ?> response = restClient.post().uri("/auth/v1/token?grant_type=password").contentType(MediaType.APPLICATION_JSON).body(Map.of("email", email, "password", password)).retrieve().body(Map.class);
+    
+            if (response == null){
+                throw new IllegalStateException("Empty response from Supabase");
+            }
+
+            Object accessToken = response.get("access_token");
+            Object refreshToken = response.get("refresh_token");
+            Object expiresIn = response.get("expires_in");
+
+            if (!(accessToken instanceof String)||!(refreshToken instanceof String)||!(expiresIn instanceof Number)){
+                throw new IllegalStateException ("Invalid login response");
+            }
+
+            return new LoginTokens((String) accessToken, (String) refreshToken, ((Number) expiresIn).longValue()); 
+        } catch (HttpClientErrorException.BadRequest e){
+            throw new InvalidCredentialsException("Invalid email or password");
+        }
+
     }
 }
