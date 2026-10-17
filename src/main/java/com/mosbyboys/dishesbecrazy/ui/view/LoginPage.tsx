@@ -40,18 +40,17 @@ export default function LoginPage() {
             return;
         }
 
-        if (response.ok) {
-            const loginTokens = await response.json();
-            navigate("/home");
-        }
-
         if (!response.ok) {
             setError("Login failed. Please try again.");
             return;
         }
 
         const loginTokens: LoginTokens = await response.json();
+
+        // Next: give these tokens to AuthContext
         setTokens(loginTokens);
+
+        navigate("/home");
 
         } catch {
         setError("Could not connect to the backend server.");

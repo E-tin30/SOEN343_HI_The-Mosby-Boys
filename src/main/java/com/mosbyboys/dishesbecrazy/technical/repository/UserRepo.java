@@ -2,6 +2,7 @@ package com.mosbyboys.dishesbecrazy.technical.repository;
 
 import java.util.Map;
 import java.util.UUID;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -10,7 +11,6 @@ import org.springframework.stereotype.Repository;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.HttpClientErrorException;
 
-
 import com.mosbyboys.dishesbecrazy.technical.security.InvalidCredentialsException;
 
 @Repository
@@ -18,6 +18,14 @@ public class UserRepo{
 
     private final JdbcTemplate jdbcTemplate;
     private final RestClient restClient;
+
+    public record LoginTokens(String accessToken, String refreshToken, long expiresIn){
+
+    }
+
+    public record UserProfile(UUID id, String firstName, String lastName, String username, String role) {
+
+    }
 
 	public UserRepo(JdbcTemplate jdbcTemplate, @Value("${spring.supabase.url}") String url, @Value("${spring.supabase.publishable-key}") String key) {
         this.jdbcTemplate = jdbcTemplate;
@@ -55,9 +63,6 @@ public class UserRepo{
         jdbcTemplate.update(sql, id, firstName, lastName, username, role);
     }
 
-    public record LoginTokens(String accessToken, String refreshToken, long expiresIn){
-    }
-
     public LoginTokens login(String email, String password){
         try{
             Map<?, ?> response = restClient.post().uri("/auth/v1/token?grant_type=password").contentType(MediaType.APPLICATION_JSON).body(Map.of("email", email, "password", password)).retrieve().body(Map.class);
@@ -79,5 +84,11 @@ public class UserRepo{
             throw new InvalidCredentialsException("Invalid email or password");
         }
 
+    }
+
+    public Optional<UserProfile> findUserById(UUID id) {
+        String sql = "SELECT id, first_name, last_name, username, role FROM public.\"User\" WHERE id = ?";
+
+        return jdbcTemplate.query(sql, (rs, rowNum) -> new UserProfile(rs.getObject("id", UUID.class), rs.getString("first_name"), rs.getString("last_name"), rs.getString("username"), rs.getString("role")), id).stream().findFirst();
     }
 }

@@ -1,12 +1,13 @@
 package com.mosbyboys.dishesbecrazy.application.reg;
 
 import java.util.UUID;
+import java.util.NoSuchElementException;
 
 import org.springframework.stereotype.Service;
 
 import com.mosbyboys.dishesbecrazy.technical.repository.UserRepo;
 import com.mosbyboys.dishesbecrazy.technical.repository.UserRepo.LoginTokens;
-
+import com.mosbyboys.dishesbecrazy.technical.repository.UserRepo.UserProfile;
 
 @Service
 public class AuthService {
@@ -24,4 +25,9 @@ public class AuthService {
     public LoginTokens login(String email, String password){
         return userRepo.login(email, password);
     }
+
+    public UserProfile getUserById(UUID id){
+        return userRepo.findUserById(id).orElseThrow(() -> new NoSuchElementException("User profile not found"));
+    }
+
 }
