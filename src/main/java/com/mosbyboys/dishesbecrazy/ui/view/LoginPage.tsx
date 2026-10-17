@@ -1,5 +1,6 @@
 
 import { useState, type FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
 
 type LoginTokens = {
   accessToken: string;
@@ -11,6 +12,7 @@ export default function LoginPage() {
     const [tokens, setTokens] = useState<LoginTokens | null>(null);
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -36,6 +38,11 @@ export default function LoginPage() {
             const message = await response.text();
             setError(message || "Invalid email or password");
             return;
+        }
+
+        if (response.ok) {
+            const loginTokens = await response.json();
+            navigate("/home");
         }
 
         if (!response.ok) {
