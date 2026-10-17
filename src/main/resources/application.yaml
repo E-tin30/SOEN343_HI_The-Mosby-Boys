@@ -25,4 +25,4 @@ spring:
           jwk-set-uri: ${SUPABASE_URL}/auth/v1/.well-known/jwks.json
           audiences:
             - authenticated
-          jws-algorithms: RS256
+          jws-algorithms: ES256
