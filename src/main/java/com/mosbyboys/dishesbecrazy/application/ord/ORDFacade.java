@@ -2,6 +2,7 @@ package com.mosbyboys.dishesbecrazy.application.ord;
 
 import com.mosbyboys.dishesbecrazy.domain.ord.Order;
 import com.mosbyboys.dishesbecrazy.domain.ord.OrderLine;
+import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
 import com.mosbyboys.dishesbecrazy.domain.reg.User;
 import com.mosbyboys.dishesbecrazy.technical.repository.MenuItemRepo;
 import com.mosbyboys.dishesbecrazy.domain.ord.MenuItem;
