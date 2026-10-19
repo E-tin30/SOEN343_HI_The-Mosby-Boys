@@ -1,4 +1,7 @@
 spring:
+  config:
+    import: optional:file:.env[.properties]
+  
   application:
     name: dishes-be-crazy
 
@@ -9,3 +12,17 @@ spring:
 
   flyway:
     enabled: false
+
+  supabase:
+    url: ${SUPABASE_URL}
+    publishable-key: ${SUPABASE_PUBLISHABLE_KEY}
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${SUPABASE_URL}/auth/v1
+          jwk-set-uri: ${SUPABASE_URL}/auth/v1/.well-known/jwks.json
+          audiences:
+            - authenticated
+          jws-algorithms: ES256
