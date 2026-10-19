@@ -24,7 +24,7 @@ public final class UserFactory {
             case RESTAURANT -> new RestaurantOwner(
                     data.userId(), data.createdAt(), data.firstName(), data.lastName(),
                     data.email(), data.username(), data.hashedPassword(),
-                    data.profileId(), data.profileCreatedAt(), data.restaurantName(), data.status(), data.location());
+                    data.profileId(), data.profileCreatedAt(), data.restaurantName(), data.status());
             case OPERATOR -> new Operator(
                     data.userId(), data.createdAt(), data.firstName(), data.lastName(),
                     data.email(), data.username(), data.hashedPassword());
