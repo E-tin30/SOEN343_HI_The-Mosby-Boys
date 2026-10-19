@@ -106,6 +106,8 @@ build/
 
 ### VS Code ###
 .vscode/
+*.md
+!README.md
 
 
 ###Agent skills###

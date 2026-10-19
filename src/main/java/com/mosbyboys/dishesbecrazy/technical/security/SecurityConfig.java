@@ -15,6 +15,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+/* TEMPORARY: every request is open until REG auth (Supabase JWT, R-REG-02) is wired in. */
 @Configuration
 public class SecurityConfig {
 

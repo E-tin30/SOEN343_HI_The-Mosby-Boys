@@ -83,11 +83,12 @@ public class DemoProfileSeeder implements CommandLineRunner {
                     WHERE NOT EXISTS (SELECT 1 FROM public."Courier" WHERE user_id = ?)
                     """, account.profileId(), userId, account.state(), account.location(), userId);
             case RESTAURANT -> jdbc.update("""
-                    INSERT INTO public."Restaurant" (id, created_at, user_id, name, status, location)
-                    SELECT ?, CURRENT_TIMESTAMP, ?, ?, ?, ?
+                    INSERT INTO public."Restaurant" (id, created_at, user_id, name, status, latitude, longitude)
+                    SELECT ?, CURRENT_TIMESTAMP, ?, ?, ?, ?, ?
                     WHERE NOT EXISTS (SELECT 1 FROM public."Restaurant" WHERE user_id = ?)
-                    """, account.profileId(), userId, account.restaurantName(), account.status(), account.location(), userId);
-            case OPERATOR -> { /* Operators need only their User row. */ }
+                    """, account.profileId(), userId, account.restaurantName(), account.status(),
+                    account.latitude(), account.longitude(), userId);
+            case OPERATOR -> { /* Operators need only their Users row. */ }
         }
     }
 
@@ -103,6 +104,9 @@ public class DemoProfileSeeder implements CommandLineRunner {
             if (account.role() != Role.OPERATOR && account.profileId() == null) {
                 throw new IllegalArgumentException("Role-specific profiles require a UUID.");
             }
+            if (account.role() == Role.RESTAURANT && (account.latitude() == null || account.longitude() == null)) {
+                throw new IllegalArgumentException("Restaurant profiles require latitude and longitude.");
+            }
         }
         if (roles.size() != Role.values().length) {
             throw new IllegalArgumentException("Seed configuration requires one account of each role.");
@@ -112,6 +116,6 @@ public class DemoProfileSeeder implements CommandLineRunner {
     // Holds the JSON fields; passwords stay in the environment.
     public record Account(String email, String firstName, String lastName, String username,
                           Role role, UUID profileId, String address, String state, String location,
-                          String restaurantName, String status) {
+                          String restaurantName, String status, Double latitude, Double longitude) {
     }
 }
