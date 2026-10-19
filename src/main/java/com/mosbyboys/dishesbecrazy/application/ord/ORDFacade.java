@@ -4,9 +4,7 @@ import com.mosbyboys.dishesbecrazy.domain.ord.Order;
 import com.mosbyboys.dishesbecrazy.domain.ord.OrderLine;
 import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
 import com.mosbyboys.dishesbecrazy.domain.reg.User;
-import com.mosbyboys.dishesbecrazy.technical.repository.MenuItemRepo;
 import com.mosbyboys.dishesbecrazy.domain.ord.MenuItem;
-import com.mosbyboys.dishesbecrazy.domain.ord.MenuItemStatus;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,7 +22,7 @@ public class ORDFacade {
     private final OrderService orderService;
     private final OrderEventService orderEventService;
     private final PermissionPolicy permissionPolicy;
-    private final MenuItemRepo menuItemRepo;   
+    private final MenuService menuService;
 
     @Transactional
     public Order placeOrder(User user, UUID restaurantId, List<OrderLine> orderLineItems) {
@@ -45,9 +43,8 @@ public class ORDFacade {
     }
 
     private void checkAgainstMenu(OrderLine line) {
-    MenuItem item = menuItemRepo.findById(line.getMenuItemId())
-            .orElseThrow(() -> new IllegalArgumentException("Menu item not found: " + line.getMenuItemId()));
-    if (item.getStatus() != MenuItemStatus.AVAILABLE) {
+    MenuItem item = menuService.load(line.getMenuItemId());
+    if (!item.isAvailable()) {
         throw new IllegalArgumentException("Item is sold out: " + item.getName());
     }
     if (line.getUnitPrice().compareTo(item.getPrice()) != 0) {
