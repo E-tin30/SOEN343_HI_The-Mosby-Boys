@@ -13,7 +13,7 @@
 `src/main/resources/demo/profiles.json` defines one fictional profile per role.
 JSON does not support comments; `profileId` identifies the linked table row,
 while Supabase Auth supplies the shared user ID.
-The current schema stores credentials in Supabase Auth: `public.Users.id` must
+The current schema stores credentials in Supabase Auth: `public."User".id` must
 reference `auth.users.id`. The loader uses the Supabase Admin API to create missing
 confirmed Auth accounts, then links their profile rows. It does not send invitation emails.
 
@@ -47,7 +47,7 @@ the terminal environment, run:
 Spring Boot does not automatically load `.env`; configure the environment in your
 IDE or shell first. This profile runs without an HTTP server. It reads the JSON
 configuration, looks up or creates the four Auth accounts by their demo emails, then inserts the
-Users and linked Customer/Courier/Restaurant rows in one transaction. The database
+User and linked Customer/Courier/Restaurant rows in one transaction. The database
 connection needs permission to look up these Auth accounts and insert profiles.
 Auth creation happens before the SQL transaction: if later steps fail, created
 Auth accounts remain and are reused on retry. No existing account is deleted or reset.

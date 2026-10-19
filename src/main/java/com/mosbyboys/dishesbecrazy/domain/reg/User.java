@@ -6,7 +6,7 @@ import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Getter;
 
-// Shared attributes from Supabase Users; userId maps to Users.id. Only a concrete role can be instantiated.
+// Shared attributes from public."User"; userId maps to its id. Only a concrete role can be instantiated.
 @Getter
 public abstract class User {
     private final UUID userId;

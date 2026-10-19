@@ -62,11 +62,11 @@ public class DemoProfileSeeder implements CommandLineRunner {
     private void seed(Account account, UUID userId) {
         // Adds the shared profile without overwriting an existing row.
         jdbc.update("""
-                INSERT INTO public."Users" (id, first_name, last_name, username, role)
+                INSERT INTO public."User" (id, first_name, last_name, username, role)
                 VALUES (?, ?, ?, ?, ?) ON CONFLICT (id) DO NOTHING
                 """, userId, account.firstName(), account.lastName(), account.username(), account.role().name());
         // Stops if an existing profile has a conflicting role.
-        String role = jdbc.queryForObject("SELECT role FROM public.\"Users\" WHERE id = ?", String.class, userId);
+        String role = jdbc.queryForObject("SELECT role FROM public.\"User\" WHERE id = ?", String.class, userId);
         if (!account.role().name().equals(role)) {
             throw new IllegalStateException("Existing demo profile has a different role: " + account.email());
         }
@@ -87,7 +87,7 @@ public class DemoProfileSeeder implements CommandLineRunner {
                     SELECT ?, CURRENT_TIMESTAMP, ?, ?, ?, ?
                     WHERE NOT EXISTS (SELECT 1 FROM public."Restaurant" WHERE user_id = ?)
                     """, account.profileId(), userId, account.restaurantName(), account.status(), account.location(), userId);
-            case OPERATOR -> { /* Operators need only their Users row. */ }
+            case OPERATOR -> { /* Operators need only their User row. */ }
         }
     }
 
