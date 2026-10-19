@@ -43,14 +43,14 @@ public class ORDFacade {
     }
 
     private void checkAgainstMenu(OrderLine line) {
-    MenuItem item = menuService.load(line.getMenuItemId());
-    if (!item.isAvailable()) {
-        throw new IllegalArgumentException("Item is sold out: " + item.getName());
+        MenuItem item = menuService.load(line.getMenuItemId());
+        if (!item.isAvailable()) {
+            throw new IllegalArgumentException("Item is sold out: " + item.getName());
+        }
+        if (line.getUnitPrice().compareTo(item.getPrice()) != 0) {
+            throw new IllegalArgumentException("Price of " + item.getName() + " has changed, please refresh the menu");
+        }
     }
-    if (line.getUnitPrice().compareTo(item.getPrice()) != 0) {
-        throw new IllegalArgumentException("Price of " + item.getName() + " has changed, please refresh the menu");
-    }
-}
 
     @Transactional
     public void acceptOrder(User user, UUID orderId) {

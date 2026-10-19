@@ -63,7 +63,7 @@ class UserFactoryTests {
     @Test
     void createsRestaurantOwnerWithItsRestaurant() {
         var data = sharedData().profileId(profileId).profileCreatedAt(profileCreatedAt)
-                .restaurantName("Demo Diner").status("OPEN").location("Montreal").build();
+                .restaurantName("Demo Diner").status("OPEN").build();
 
         var owner = assertInstanceOf(RestaurantOwner.class, factory.createUser(Role.RESTAURANT, data));
 
@@ -72,7 +72,6 @@ class UserFactoryTests {
         assertEquals(profileCreatedAt, owner.getRestaurantCreatedAt());
         assertEquals("Demo Diner", owner.getName());
         assertEquals("OPEN", owner.getStatus());
-        assertEquals("Montreal", owner.getLocation());
     }
 
     @Test
