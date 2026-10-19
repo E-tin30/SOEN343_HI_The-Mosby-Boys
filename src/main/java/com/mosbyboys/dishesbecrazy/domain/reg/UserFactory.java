@@ -37,12 +37,6 @@ public final class UserFactory {
      * customer address or courier state). The factory reads the fields for the selected role.
      * profileId/profileCreatedAt identify the customer, courier, or restaurant profile;
      * operators do not use them.
-     *
-     * As a record, its field values cannot be reassigned after creation. Lombok's
-     * builder lets callers supply named fields instead of a long constructor argument list.
-     * This container does not validate individual fields, save data to the database,
-     * or hash passwords: hashedPassword must already be hashed. Both the record and
-     * builder omit the password hash from their toString() output.
      */
     @Builder
     public record UserData(UUID userId, OffsetDateTime createdAt,
