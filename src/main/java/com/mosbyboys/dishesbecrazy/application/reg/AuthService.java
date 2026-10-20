@@ -24,6 +24,13 @@ public class AuthService {
 
     public void createUser(String firstName, String lastName, String email, String username, String password, String role, String address, String restaurantName) {
         Role userRole = Role.valueOf(role);
+        
+        // Operators can't register themselves
+        if (userRole == Role.OPERATOR) {
+            throw new IllegalArgumentException("Operator accounts cannot self-register");
+        }
+
+        // only customer and restaurant need an address
         boolean needsAddress = userRole == Role.CUSTOMER || userRole == Role.RESTAURANT;
         
         if (needsAddress && (address == null || address.isBlank())) {
