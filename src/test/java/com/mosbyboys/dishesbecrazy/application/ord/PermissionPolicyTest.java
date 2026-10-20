@@ -172,8 +172,8 @@ public class PermissionPolicyTest {
 
     // --- Browse menu (UC-ORD-01) ---
 
-    private Restaurant restaurantWithStatus(UUID restaurantId, RestaurantStatus status) {
-        return new Restaurant(restaurantId, UUID.randomUUID(), "Resto", status, null, Instant.now());
+    private Restaurant restaurantWithStatus(UUID ownerId, RestaurantStatus status) {
+        return new Restaurant(UUID.randomUUID(), ownerId, "Resto", status, null, Instant.now());
     }
 
     // check that customers can browse an open restaurant's menu
@@ -195,10 +195,10 @@ public class PermissionPolicyTest {
     // check that owners can browse their own menu, even while paused
     @Test
     void ownerCanBrowseOwnPausedRestaurant() {
-        UUID restaurantId = UUID.randomUUID();
-        Restaurant paused = restaurantWithStatus(restaurantId, RestaurantStatus.PAUSED);
+        RestaurantOwner owner = restaurant(UUID.randomUUID());
+        Restaurant paused = restaurantWithStatus(owner.getUserId(), RestaurantStatus.PAUSED);
 
-        assertDoesNotThrow(() -> policy.checkCanBrowseMenu(restaurant(restaurantId), paused));
+        assertDoesNotThrow(() -> policy.checkCanBrowseMenu(owner, paused));
     }
 
     // check that owners cannot browse another restaurant's menu

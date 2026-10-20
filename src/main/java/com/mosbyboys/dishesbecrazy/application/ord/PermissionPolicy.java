@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component;
 
 import com.mosbyboys.dishesbecrazy.domain.ord.Order;
 import com.mosbyboys.dishesbecrazy.domain.ord.Restaurant;
+import com.mosbyboys.dishesbecrazy.domain.ord.RestaurantStatus;
 import com.mosbyboys.dishesbecrazy.domain.ord.state.PlacedState;
 import com.mosbyboys.dishesbecrazy.domain.reg.User;
 import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
@@ -111,23 +112,19 @@ public class PermissionPolicy {
         if (restaurant == null) {
             throw new PermissionDeniedException("No restaurant.");
         }
-        if(restaurant.getStatus() == RestaurantStatus.PAUSED) {
-            throw new PermissionDeniedException("This restaurant is paused and not taking orders")
+          switch (caller.getRole()) {
+        case OPERATOR -> {
+             return;  // can pause/reopen any restaurant, so sees all
+             }  
+        case RESTAURANT -> {
+            if (restaurant.isOwnedBy(caller.getUserId())) return;   // own menu, any status
+            throw new PermissionDeniedException("Cannot view another restaurant's menu.");
         }
-        if(caller.getRole() == Role.OPERATOR){
-            return; // operators can see everything
+        case CUSTOMER -> {
+            if (restaurant.isOpen()) return;
+            throw new PermissionDeniedException("This restaurant is paused and not taking orders.");
         }
-        if(caller instanceof Customer customer && restaurant.isOpen()){
-            return; // customers can see any open restaurant's menu
+        case COURIER -> throw new PermissionDeniedException("Couriers cannot view restaurant menus yet (DLV not implemented).");
         }
-        if(caller instanceof RestaurantOwner restaurantOwner){
-            if(restaurantOwner.getRestaurantId().equals(restaurant.getId())){
-                return; // restaurant owners can see their own menu
-            }
-        }
-        if(caller.getRole() == Role.COURIER) {
-            throw new PermissionDeniedException("Couriers cannot view restaurant menus yet (DLV not implemented).");
-        }
-        throw new PermissionDeniedException("Cannot view this restaurant's menu.");
     }
 }

@@ -5,6 +5,8 @@ import com.mosbyboys.dishesbecrazy.domain.ord.OrderLine;
 import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
 import com.mosbyboys.dishesbecrazy.domain.reg.User;
 import com.mosbyboys.dishesbecrazy.domain.ord.MenuItem;
+import com.mosbyboys.dishesbecrazy.domain.ord.Restaurant;
+
 import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -49,7 +51,7 @@ public class ORDFacade {
     @Transactional
     public List<MenuItem> getMenuForRestaurant(User user,UUID restaurantId) {
         Restaurant restaurant = restaurantService.load(restaurantId);   
-        permissionPolicy.checkCanBrowseMenu(caller, restaurant);        
+        permissionPolicy.checkCanBrowseMenu(user, restaurant);        
         return menuService.getMenu(restaurantId); 
     }
 
