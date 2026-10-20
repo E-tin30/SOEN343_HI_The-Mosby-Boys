@@ -1,23 +1,14 @@
 package com.mosbyboys.dishesbecrazy.ui.controller;
 
+@AllArgsConstructor
 @RestController
 public class MenuController {
 
-    private final MenuService menuService;
-
-    public MenuController(MenuService menuService) {
-        this.menuService = menuService;
-    }
-
-    @GetMapping("/api/restaurants")
-    public ResponseEntity<List<Restaurant>> getRestaurants() {
-        List<Restaurant> restaurants = menuService.getRestaurants();
-        return ResponseEntity.ok(restaurants);
-    }
+    private final ORDFacade ordFacade;
 
     @GetMapping("/api/restaurants/{restaurantId}/menu")
-    public ResponseEntity<List<MenuItem>> getMenu(@PathVariable UUID restaurantId) {
-        List<MenuItem> menuItems = menuService.getMenuForRestaurant(restaurantId);
+    public ResponseEntity<List<MenuItem>> getMenu(User user, @PathVariable UUID restaurantId) {
+        List<MenuItem> menuItems = ordFacade.getMenuForRestaurant(user, restaurantId);
         return ResponseEntity.ok(menuItems);
     }
 }

@@ -111,6 +111,9 @@ public class PermissionPolicy {
         if (restaurant == null) {
             throw new PermissionDeniedException("No restaurant.");
         }
+        if(restaurant.getStatus() == RestaurantStatus.PAUSED) {
+            throw new PermissionDeniedException("This restaurant is paused and not taking orders")
+        }
         if(caller.getRole() == Role.OPERATOR){
             return; // operators can see everything
         }

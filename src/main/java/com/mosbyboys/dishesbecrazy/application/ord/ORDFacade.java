@@ -29,7 +29,28 @@ public class ORDFacade {
 
     @Transactional
     public List<Restaurant> getRestaurants(User user) {
-        return restaurantService.getAllRestaurants();
+        switch (user.getRole()) {
+            case CUSTOMER -> {
+                return restaurantService.findOpen();
+            }
+            case RESTAURANT-> {
+                return restaurantService.findByOwner(user.getUserId());
+            }
+            case OPERATOR -> {
+                return restaurantService.findAll();
+            }
+            case COURIER -> {
+                throw new PermissionDeniedException("Couriers cannot view restaurants.");
+            }
+            default -> throw new IllegalArgumentException("Unknown role: " + user.getRole());
+        }
+    }
+
+    @Transactional
+    public List<MenuItem> getMenuForRestaurant(User user,UUID restaurantId) {
+        Restaurant restaurant = restaurantService.load(restaurantId);   
+        permissionPolicy.checkCanBrowseMenu(caller, restaurant);        
+        return menuService.getMenu(restaurantId); 
     }
 
     @Transactional
