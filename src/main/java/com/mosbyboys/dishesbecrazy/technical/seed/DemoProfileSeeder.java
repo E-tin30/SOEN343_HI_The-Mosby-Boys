@@ -73,15 +73,17 @@ public class DemoProfileSeeder implements CommandLineRunner {
         // Adds the role-specific row only if that user has none.
         switch (account.role()) {
             case CUSTOMER -> jdbc.update("""
-                    INSERT INTO public."Customer" (id, created_at, user_id, address)
-                    SELECT ?, CURRENT_TIMESTAMP, ?, ?
+                    INSERT INTO public."Customer" (id, created_at, user_id, address, latitude, longitude)
+                    SELECT ?, CURRENT_TIMESTAMP, ?, ?, ?, ?
                     WHERE NOT EXISTS (SELECT 1 FROM public."Customer" WHERE user_id = ?)
-                    """, account.profileId(), userId, account.address(), userId);
+                    """, account.profileId(), userId, account.address(),
+                    account.latitude(), account.longitude(), userId);
             case COURIER -> jdbc.update("""
-                    INSERT INTO public."Courier" (id, created_at, user_id, state, location)
-                    SELECT ?, CURRENT_TIMESTAMP, ?, ?, ?
+                    INSERT INTO public."Courier" (id, created_at, user_id, state, latitude, longitude)
+                    SELECT ?, CURRENT_TIMESTAMP, ?, ?, ?, ?
                     WHERE NOT EXISTS (SELECT 1 FROM public."Courier" WHERE user_id = ?)
-                    """, account.profileId(), userId, account.state(), account.location(), userId);
+                    """, account.profileId(), userId, account.state(),
+                    account.latitude(), account.longitude(), userId);
             case RESTAURANT -> jdbc.update("""
                     INSERT INTO public."Restaurant" (id, created_at, user_id, name, status, latitude, longitude)
                     SELECT ?, CURRENT_TIMESTAMP, ?, ?, ?, ?, ?
