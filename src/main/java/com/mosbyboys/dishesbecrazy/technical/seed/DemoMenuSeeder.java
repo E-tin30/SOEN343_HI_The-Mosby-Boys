@@ -85,5 +85,4 @@ public class DemoMenuSeeder implements CommandLineRunner {
 
     public record MenuSeed(UUID id, UUID restaurantId, String name, BigDecimal price,
                        int stockQuantity, MenuItemStatus status, String description) {}
-
 }
