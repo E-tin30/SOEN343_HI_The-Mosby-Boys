@@ -3,6 +3,7 @@ package com.mosbyboys.dishesbecrazy.technical.security;
 
 import java.util.List;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -17,6 +18,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 /* TEMPORARY: every request is open until REG auth (Supabase JWT, R-REG-02) is wired in. */
 @Configuration
+@ConditionalOnWebApplication
 public class SecurityConfig {
 
     @Bean
