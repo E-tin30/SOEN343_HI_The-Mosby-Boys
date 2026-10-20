@@ -30,7 +30,7 @@ public class AuthController {
     }
 
     public record RegistrationRequest(String firstName, String lastName, String email, String username, String password,
-            String role) {
+            String role, String address, String restaurantName) {
     }
 
     public record LoginRequest(String email, String password) {
@@ -39,7 +39,7 @@ public class AuthController {
     @PostMapping("/register")
     public String register(@RequestBody RegistrationRequest request) {
         regFacade.createUser(request.firstName(), request.lastName(), request.email(), request.username(),
-                request.password(), request.role());
+                request.password(), request.role(), request.address(), request.restaurantName());
         return "Registration successful";
     }
 

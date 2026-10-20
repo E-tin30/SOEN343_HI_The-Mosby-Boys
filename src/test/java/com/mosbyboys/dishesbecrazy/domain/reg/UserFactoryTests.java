@@ -1,6 +1,7 @@
 package com.mosbyboys.dishesbecrazy.domain.reg;
 
 import com.mosbyboys.dishesbecrazy.domain.reg.UserFactory.UserData;
+import com.mosbyboys.dishesbecrazy.domain.ord.Location;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -48,8 +49,9 @@ class UserFactoryTests {
 
     @Test
     void createsCourierWithItsProfile() {
+        var location = new Location(45.5017, -73.5673);
         var data = sharedData().profileId(profileId).profileCreatedAt(profileCreatedAt)
-                .state("OFF_DUTY").location("Montreal").build();
+                .state("OFF_DUTY").location(location).build();
 
         var courier = assertInstanceOf(Courier.class, factory.createUser(Role.COURIER, data));
 
@@ -57,7 +59,7 @@ class UserFactoryTests {
         assertEquals(profileId, courier.getCourierId());
         assertEquals(profileCreatedAt, courier.getCourierCreatedAt());
         assertEquals("OFF_DUTY", courier.getState());
-        assertEquals("Montreal", courier.getLocation());
+        assertSame(location, courier.getLocation());
     }
 
     @Test
