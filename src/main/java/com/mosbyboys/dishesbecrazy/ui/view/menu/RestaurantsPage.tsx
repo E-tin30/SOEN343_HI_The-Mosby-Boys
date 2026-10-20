@@ -6,7 +6,7 @@ import type { Restaurant } from "./types/menu";
 
 export default function RestaurantsPage() {
   const { accessToken } = useAuth();
-  const [restaurants, setRestaurants] = useState<Restaurant[] | null>(null); // null = still loading
+  const [restaurants, setRestaurants] = useState<Restaurant[] | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {

@@ -6,8 +6,6 @@ import java.util.UUID;
 
 import lombok.Getter;
 
-/* One dish on a restaurant's menu. Stock never goes below 0, and the item is SOLD_OUT when stock hits 0.
-Plain domain class: MenuItemEntity is the database row, MenuService converts between them. */
 @Getter
 public class MenuItem {
 
@@ -52,7 +50,6 @@ public class MenuItem {
         this.createdAt = createdAt;
     }
 
-    // R-ORD-02: only available items with stock can be ordered
     public boolean isAvailable() {
         return status == MenuItemStatus.AVAILABLE && stockQuantity > 0;
     }
@@ -61,7 +58,6 @@ public class MenuItem {
         return this.restaurantId.equals(restaurantId);
     }
 
-    // UC-ORD-05: the owner flips availability by hand
     public void markSoldOut() {
         this.status = MenuItemStatus.SOLD_OUT;
     }
@@ -73,7 +69,6 @@ public class MenuItem {
         this.status = MenuItemStatus.AVAILABLE;
     }
 
-    // Takes stock for an order. Never below 0; the item sells out at 0.
     public void decreaseStock(int quantity) {
         if (quantity <= 0) {
             throw new IllegalArgumentException("Quantity must be greater than 0");

@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
-/* Loads restaurants and converts between RestaurantEntity rows and Restaurant domain objects. */
 @Service
 @RequiredArgsConstructor
 public class RestaurantService {
@@ -42,7 +41,6 @@ public class RestaurantService {
         return restaurantRepo.findByOwnerId(ownerId).stream().map(this::toDomain).toList();
     }
 
-    // Writes the restaurant's current state back to its row (e.g. after pause/reopen)
     @Transactional
     public void save(Restaurant restaurant) {
         RestaurantEntity entity = restaurantRepo.findById(restaurant.getId()).orElseGet(RestaurantEntity::new);

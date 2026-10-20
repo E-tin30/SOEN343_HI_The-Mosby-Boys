@@ -29,7 +29,6 @@ public class DemoMenuSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        // Loads the four fictional profiles from JSON.
         MenuSeed[] items;
         try (var input = new ClassPathResource("demo/menu.json").getInputStream()) {
             items = json.readValue(input, MenuSeed[].class);
@@ -52,8 +51,7 @@ public class DemoMenuSeeder implements CommandLineRunner {
                 """, item.id(), item.restaurantId(), item.name(), item.price(), item.stockQuantity(), item.status().name(), item.description());
     }
 
-    // Requires valid, uniquely identified menu items before anything is inserted.
-    private void validate(MenuSeed[] items) {
+    void validate(MenuSeed[] items) {
         if (items.length == 0) {
             throw new IllegalArgumentException("Menu seed configuration has no items.");
         }

@@ -11,8 +11,6 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
-/* Menu browsing (UC-ORD-01) now, menu editing (UC-ORD-05) later.
-Converts between MenuItemEntity rows and MenuItem domain objects. */
 @Service
 @RequiredArgsConstructor
 public class MenuService {
@@ -33,7 +31,6 @@ public class MenuService {
                 .orElseThrow(() -> new NoSuchElementException("Menu item not found: " + menuItemId));
     }
 
-    // Writes the item's current stock/status back to its row (e.g. after decreaseStock or markSoldOut)
     @Transactional
     public void save(MenuItem item) {
         MenuItemEntity entity = menuItemRepo.findById(item.getId()).orElseGet(MenuItemEntity::new);

@@ -9,7 +9,6 @@ import lombok.Setter;
 import java.time.Instant;
 import java.util.UUID;
 
-/* Database row for public."Restaurant". RestaurantService turns it into the Restaurant domain object. */
 @Entity
 @Table(name = "\"Restaurant\"")
 @Getter @Setter

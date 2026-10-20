@@ -5,7 +5,7 @@ import { getMenu } from "./api/menuApi";
 import type { MenuItem } from "./types/menu";
 
 export default function MenuPage() {
-  const { restaurantId } = useParams<{ restaurantId: string }>(); // from the URL /restaurants/:restaurantId/menu
+  const { restaurantId } = useParams<{ restaurantId: string }>();
   const { accessToken } = useAuth();
   const [items, setItems] = useState<MenuItem[] | null>(null);
   const [error, setError] = useState("");

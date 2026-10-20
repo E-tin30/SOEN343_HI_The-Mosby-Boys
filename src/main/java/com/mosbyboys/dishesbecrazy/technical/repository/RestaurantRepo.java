@@ -7,7 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.UUID;
 
-/* Saves and loads restaurant rows. */
 public interface RestaurantRepo extends JpaRepository<RestaurantEntity, UUID> {
     List<RestaurantEntity> findByOwnerId(UUID ownerId);
     List<RestaurantEntity> findByStatus(RestaurantStatus status);
