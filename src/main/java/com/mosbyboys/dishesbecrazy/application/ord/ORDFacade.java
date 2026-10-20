@@ -5,6 +5,7 @@ import com.mosbyboys.dishesbecrazy.domain.ord.OrderLine;
 import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
 import com.mosbyboys.dishesbecrazy.domain.reg.User;
 import com.mosbyboys.dishesbecrazy.domain.ord.MenuItem;
+import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,13 @@ public class ORDFacade {
     private final OrderEventService orderEventService;
     private final PermissionPolicy permissionPolicy;
     private final MenuService menuService;
+    private final RestaurantService restaurantService;
+    private final REGFacade regFacade;
+
+    @Transactional
+    public List<Restaurant> getRestaurants(User user) {
+        return restaurantService.getAllRestaurants();
+    }
 
     @Transactional
     public Order placeOrder(User user, UUID restaurantId, List<OrderLine> orderLineItems) {
