@@ -3,6 +3,7 @@ package com.mosbyboys.dishesbecrazy.technical.security;
 
 import java.util.List;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -15,8 +16,10 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-/* TEMPORARY: every request is open until REG auth (Supabase JWT, R-REG-02) is wired in. */
+/* R-REG-02: only POST /register and POST /login are public; every other request needs a valid Supabase JWT.
+   Applies to web applications only, so the demo-seed profile can run without a server. */
 @Configuration
+@ConditionalOnWebApplication
 public class SecurityConfig {
 
     @Bean

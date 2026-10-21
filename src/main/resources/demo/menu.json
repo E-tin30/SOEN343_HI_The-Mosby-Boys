@@ -1,0 +1,38 @@
+[
+  {
+    "id": "34300000-0000-4000-8000-000000000101",
+    "restaurantId": "34300000-0000-4000-8000-000000000002",
+    "name": "Grandma's Tourtière",
+    "price": 18.50,
+    "stockQuantity": 6,
+    "status": "AVAILABLE",
+    "description": "Spiced pork pie, family recipe"
+  },
+  {
+    "id": "34300000-0000-4000-8000-000000000102",
+    "restaurantId": "34300000-0000-4000-8000-000000000002",
+    "name": "Butter Chicken",
+    "price": 16.00,
+    "stockQuantity": 10,
+    "status": "AVAILABLE",
+    "description": "With basmati rice"
+  },
+  {
+    "id": "34300000-0000-4000-8000-000000000103",
+    "restaurantId": "34300000-0000-4000-8000-000000000002",
+    "name": "Pierogi (6)",
+    "price": 12.00,
+    "stockQuantity": 15,
+    "status": "AVAILABLE",
+    "description": "Potato and cheese, fried onions"
+  },
+  {
+    "id": "34300000-0000-4000-8000-000000000104",
+    "restaurantId": "34300000-0000-4000-8000-000000000002",
+    "name": "Pouding Chômeur",
+    "price": 7.50,
+    "stockQuantity": 0,
+    "status": "SOLD_OUT",
+    "description": "Maple syrup cake"
+  }
+]

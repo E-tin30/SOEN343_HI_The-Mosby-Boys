@@ -2,57 +2,58 @@ package com.mosbyboys.dishesbecrazy.domain.ord;
 
 import java.time.Instant;
 import java.util.UUID;
-import java.util.List;
-import java.util.ArrayList;
 
-import jakarta.persistence.*;
-import lombok.*;
-
-import com.mosbyboys.dishesbecrazy.domain.ord.MenuItemStatus;
-
+import lombok.Getter;
 
 @Getter
-@Setter
-@Entity
-@NoArgsConstructor
-@AllArgsConstructor
-@Table(name = "\"Restaurant\"")
 public class Restaurant {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID) 
-    private UUID id;
 
-    @Column(name = "created_at")
-    private Instant createdAt; 
-    private String name;
+    private final UUID id;
+    private final UUID ownerId;
+    private final String name;
+    private final Location location;
+    private final Instant createdAt;
+    private RestaurantStatus status;
 
-    @Enumerated(EnumType.STRING)        
-    @Column(nullable = false, length = 20) 
-    private RestaurantStatus status; 
-
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "restaurant_id")   
-    private List<MenuItem> menu = new ArrayList<>();
-
-    @Embedded
-    private Location location;    
-
-    @Column(name = "user_id")
-    private UUID ownerId; 
+    public Restaurant(UUID id, UUID ownerId, String name, RestaurantStatus status, Location location, Instant createdAt) {
+        if (id == null) {
+            throw new IllegalArgumentException("Restaurant id must not be null");
+        }
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("Restaurant name must not be blank");
+        }
+        if (status == null) {
+            throw new IllegalArgumentException("Restaurant status must not be null");
+        }
+        this.id = id;
+        this.ownerId = ownerId;
+        this.name = name;
+        this.status = status;
+        this.location = location;
+        this.createdAt = createdAt;
+    }
 
     public void pause() {
         this.status = RestaurantStatus.PAUSED;
     }
 
-    public void open() { 
+    public void reopen() {
         this.status = RestaurantStatus.OPEN;
     }
 
     public void close() {
-        this.status = RestaurantStatus.CLOSED; 
+        this.status = RestaurantStatus.CLOSED;
     }
 
     public boolean isOpen() {
         return this.status == RestaurantStatus.OPEN;
+    }
+
+    public boolean acceptsOrders() {
+        return isOpen();
+    }
+
+    public boolean isOwnedBy(UUID userId) {
+        return ownerId != null && ownerId.equals(userId);
     }
 }

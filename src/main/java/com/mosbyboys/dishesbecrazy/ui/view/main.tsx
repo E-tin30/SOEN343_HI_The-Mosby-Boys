@@ -12,6 +12,8 @@ import {
 import LoginPage from "./LoginPage";
 import RegistrationPage from "./RegistrationPage";
 import HomePage from "./HomePage";
+import RestaurantsPage from "./menu/RestaurantsPage";
+import MenuPage from "./menu/menuPage";
 
 createRoot(document.getElementById("root")!).render(
   <BrowserRouter>
@@ -29,6 +31,23 @@ createRoot(document.getElementById("root")!).render(
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/restaurants"
+          element={
+            <ProtectedRoute>
+              <RestaurantsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/restaurants/:restaurantId/menu"
+          element={
+            <ProtectedRoute>
+              <MenuPage />
+            </ProtectedRoute>
+          }
+        />
+
       </Routes>
     </AuthProvider>
   </BrowserRouter>

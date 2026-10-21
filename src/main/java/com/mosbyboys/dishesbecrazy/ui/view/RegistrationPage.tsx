@@ -1,4 +1,4 @@
-import type { FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "./components/Button";
 import Heading from "./components/Heading";
@@ -6,9 +6,9 @@ import Input from "./components/Input";
 import TextLogo from "./components/TextLogo";
 import "./styles/RegistrationPage.css";
 
-export default function Register() {
+export default function Register(){
     const navigate = useNavigate();
-
+    const [role, setRole] = useState("CUSTOMER");
     async function handleSubmit(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
 
@@ -95,6 +95,8 @@ export default function Register() {
                             id="registration-role"
                             className="input registration-card__role"
                             name="role"
+                            value={role}
+                            onChange={(e) => setRole(e.target.value)} 
                             required
                         >
                             <option value="CUSTOMER">Customer</option>
@@ -102,6 +104,16 @@ export default function Register() {
                             <option value="COURIER">Courier</option>
                         </select>
                     </div>
+                    {role === "CUSTOMER" && (
+                        <p><input name="address" placeholder="Delivery address" required /></p>
+                    )}
+
+                    {role === "RESTAURANT" && (
+                        <>
+                        <p><input name="restaurantName" placeholder="Restaurant name" required /></p>
+                        <p><input name="address" placeholder="Restaurant address" required /></p>
+                        </>
+                    )}
                 </div>
 
                 <Button type="submit" block>

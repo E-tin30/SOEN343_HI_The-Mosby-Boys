@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -12,10 +13,13 @@ import org.junit.jupiter.api.Test;
 
 import com.mosbyboys.dishesbecrazy.domain.ord.Order;
 import com.mosbyboys.dishesbecrazy.domain.ord.OrderLine;
+import com.mosbyboys.dishesbecrazy.domain.ord.Restaurant;
+import com.mosbyboys.dishesbecrazy.domain.ord.RestaurantStatus;
 import com.mosbyboys.dishesbecrazy.domain.reg.Courier;
 import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
 import com.mosbyboys.dishesbecrazy.domain.reg.Operator;
 import com.mosbyboys.dishesbecrazy.domain.reg.RestaurantOwner;
+import com.mosbyboys.dishesbecrazy.domain.ord.Location;
 
 public class PermissionPolicyTest {
 
@@ -24,9 +28,8 @@ public class PermissionPolicyTest {
     // Helper functions to create users and orders
     private Customer customer(UUID customerId) {
         return new Customer(UUID.randomUUID(), OffsetDateTime.now(), "A", "B", "a@b.c", "ab", "hash",
-                customerId, OffsetDateTime.now(), "123 Street");
+                customerId, OffsetDateTime.now(), "123 Street", new Location(45.5, -73.6));
     }
-
     private RestaurantOwner restaurant(UUID restaurantId) {
         return new RestaurantOwner(UUID.randomUUID(), OffsetDateTime.now(), "A", "B", "a@b.c", "ab", "hash",
                 restaurantId, OffsetDateTime.now(), "Resto", "OPEN");
@@ -38,7 +41,7 @@ public class PermissionPolicyTest {
 
     private Courier courier() {
         return new Courier(UUID.randomUUID(), OffsetDateTime.now(), "A", "B", "a@b.c", "ab", "hash",
-                UUID.randomUUID(), OffsetDateTime.now(), "OFF_DUTY", "Montreal");
+                UUID.randomUUID(), OffsetDateTime.now(), "OFF_DUTY", new Location(45.5, -73.6));
     }
 
     private Order orderFor(UUID customerId, UUID restaurantId) {
@@ -165,5 +168,68 @@ public class PermissionPolicyTest {
         Order order = orderFor(UUID.randomUUID(), UUID.randomUUID());
 
         assertDoesNotThrow(() -> policy.checkCanView(operator(), order));
+    }
+
+    // --- Browse menu (UC-ORD-01) ---
+
+    private Restaurant restaurantWithStatus(UUID ownerId, RestaurantStatus status) {
+        return new Restaurant(UUID.randomUUID(), ownerId, "Resto", status, null, Instant.now());
+    }
+
+    // check that customers can browse an open restaurant's menu
+    @Test
+    void customerCanBrowseOpenRestaurant() {
+        Restaurant open = restaurantWithStatus(UUID.randomUUID(), RestaurantStatus.OPEN);
+
+        assertDoesNotThrow(() -> policy.checkCanBrowseMenu(customer(UUID.randomUUID()), open));
+    }
+
+    // check that customers cannot browse a paused restaurant's menu
+    @Test
+    void customerCannotBrowsePausedRestaurant() {
+        Restaurant paused = restaurantWithStatus(UUID.randomUUID(), RestaurantStatus.PAUSED);
+
+        assertThrows(PermissionDeniedException.class, () -> policy.checkCanBrowseMenu(customer(UUID.randomUUID()), paused));
+    }
+
+    // check that owners can browse their own menu, even while paused
+    @Test
+    void ownerCanBrowseOwnPausedRestaurant() {
+        RestaurantOwner owner = restaurant(UUID.randomUUID());
+        Restaurant paused = restaurantWithStatus(owner.getUserId(), RestaurantStatus.PAUSED);
+
+        assertDoesNotThrow(() -> policy.checkCanBrowseMenu(owner, paused));
+    }
+
+    // check that owners cannot browse another restaurant's menu
+    @Test
+    void ownerCannotBrowseOtherRestaurant() {
+        Restaurant other = restaurantWithStatus(UUID.randomUUID(), RestaurantStatus.OPEN);
+
+        assertThrows(PermissionDeniedException.class, () -> policy.checkCanBrowseMenu(restaurant(UUID.randomUUID()), other));
+    }
+
+    // check that operators can browse any menu, even a closed restaurant's
+    @Test
+    void operatorCanBrowseClosedRestaurant() {
+        Restaurant closed = restaurantWithStatus(UUID.randomUUID(), RestaurantStatus.CLOSED);
+
+        assertDoesNotThrow(() -> policy.checkCanBrowseMenu(operator(), closed));
+    }
+
+    // check that couriers cannot browse menus
+    @Test
+    void courierCannotBrowseMenu() {
+        Restaurant open = restaurantWithStatus(UUID.randomUUID(), RestaurantStatus.OPEN);
+
+        assertThrows(PermissionDeniedException.class, () -> policy.checkCanBrowseMenu(courier(), open));
+    }
+
+    // check that a null caller is denied
+    @Test
+    void nullCallerCannotBrowseMenu() {
+        Restaurant open = restaurantWithStatus(UUID.randomUUID(), RestaurantStatus.OPEN);
+
+        assertThrows(PermissionDeniedException.class, () -> policy.checkCanBrowseMenu(null, open));
     }
 }
