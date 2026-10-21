@@ -21,5 +21,4 @@ public final class Customer extends User {
         this.customerCreatedAt = customerCreatedAt;
         this.address = address;
     }
-
 }

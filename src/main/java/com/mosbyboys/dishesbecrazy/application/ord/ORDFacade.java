@@ -56,15 +56,14 @@ public class ORDFacade {
     }
 
     @Transactional
-    public Order placeOrder(User user, UUID restaurantId, List<OrderLine> orderLineItems) {
+    public Order placeOrder(User user, UUID userId, UUID restaurantId, List<OrderLine> orderLineItems) {
         //Check Permission
         permissionPolicy.checkCanPlace(user);
 
-        if(!(user instanceof Customer customer)){
+        if (!(user instanceof Customer)) {
             throw new PermissionDeniedException("Only a customer can place an order.");
         }
-
-        Order order = new Order(user.getUserId(), restaurantId, orderLineItems);  
+        Order order = new Order(userId, restaurantId, orderLineItems);
         order.getOrderLineItems().forEach(this::checkAgainstMenu);
 
         //save order to db
