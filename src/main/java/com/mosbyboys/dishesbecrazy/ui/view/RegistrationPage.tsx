@@ -22,13 +22,27 @@ export default function Register(){
             throw new Error(`Registration failed: ${response.status}`);
         }
 
-        const result = await response.text();
-        alert(result);
-        navigate("/login");
+        try {
+            const response = await fetch("http://localhost:8080/register", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(data)
+            });
 
-    } catch (error) {
-        console.error("Registration error:", error);
-        alert("Registration failed!");
+            if (!response.ok) {
+                throw new Error(`Registration failed: ${response.status}`);
+            }
+
+            const result = await response.text();
+            alert(result);
+            navigate("/login");
+
+        } catch (error) {
+            console.error("Registration error:", error);
+            alert("Registration failed!");
+        }
     }
   }
 
