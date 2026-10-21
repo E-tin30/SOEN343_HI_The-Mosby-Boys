@@ -64,8 +64,8 @@ public class UserRepo{
             "INSERT INTO public.\"User\" (id, first_name, last_name, username, role) VALUES (?, ?, ?, ?, ?)",
             id, firstName, lastName, username, role);
 
-        Double lat = location == null ? null : location.getLatitude();
-        Double lon = location == null ? null : location.getLongitude();
+        Double lat = location == null ? null : location.latitude();
+        Double lon = location == null ? null : location.longitude();
 
         switch (role) {
             case "CUSTOMER" -> jdbcTemplate.update(

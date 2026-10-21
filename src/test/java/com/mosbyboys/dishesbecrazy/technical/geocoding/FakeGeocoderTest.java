@@ -15,8 +15,8 @@ class FakeGeocoderTest {
         Location first = geocoder.geocode("123 Demo Street");
         Location second = geocoder.geocode("123 Demo Street");
 
-        assertEquals(first.getLatitude(), second.getLatitude());
-        assertEquals(first.getLongitude(), second.getLongitude());
+        assertEquals(first.latitude(), second.latitude());
+        assertEquals(first.longitude(), second.longitude());
     }
 
     @Test
@@ -24,8 +24,8 @@ class FakeGeocoderTest {
         Location a = geocoder.geocode("123 Demo Street");
         Location b = geocoder.geocode("  123 DEMO street ");
 
-        assertEquals(a.getLatitude(), b.getLatitude());
-        assertEquals(a.getLongitude(), b.getLongitude());
+        assertEquals(a.latitude(), b.latitude());
+        assertEquals(a.longitude(), b.longitude());
     }
 
     @Test
@@ -33,8 +33,8 @@ class FakeGeocoderTest {
         Location a = geocoder.geocode("123 Demo Street");
         Location b = geocoder.geocode("456 Other Avenue");
 
-        assertFalse(a.getLatitude().equals(b.getLatitude())
-                && a.getLongitude().equals(b.getLongitude()));
+        assertFalse(a.latitude() == b.latitude()
+                && a.longitude() == b.longitude());
     }
 
     @Test
@@ -42,8 +42,8 @@ class FakeGeocoderTest {
         for (String address : new String[] {"1 A St", "22 B Ave", "333 C Blvd", "4444 D Rd", "x"}) {
             Location location = geocoder.geocode(address);
 
-            assertTrue(location.getLatitude() >= 45.42 && location.getLatitude() <= 45.65, address);
-            assertTrue(location.getLongitude() >= -73.98 && location.getLongitude() <= -73.47, address);
+            assertTrue(location.latitude() >= 45.42 && location.latitude() <= 45.65, address);
+            assertTrue(location.longitude() >= -73.98 && location.longitude() <= -73.47, address);
         }
     }
 

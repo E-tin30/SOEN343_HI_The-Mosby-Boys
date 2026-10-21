@@ -9,15 +9,14 @@ import static org.mockito.Mockito.*;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
 import com.mosbyboys.dishesbecrazy.domain.ord.Location;
 import com.mosbyboys.dishesbecrazy.domain.ord.MenuItem;
-import com.mosbyboys.dishesbecrazy.domain.ord.MenuItemStatus;
 import com.mosbyboys.dishesbecrazy.domain.ord.Order;
 import com.mosbyboys.dishesbecrazy.domain.ord.OrderLine;
 import com.mosbyboys.dishesbecrazy.domain.ord.Restaurant;
@@ -27,15 +26,14 @@ import com.mosbyboys.dishesbecrazy.domain.ord.state.PlacedState;
 import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
 import com.mosbyboys.dishesbecrazy.domain.reg.Operator;
 import com.mosbyboys.dishesbecrazy.domain.reg.RestaurantOwner;
-import com.mosbyboys.dishesbecrazy.technical.repository.MenuItemRepo;
-import com.mosbyboys.dishesbecrazy.technical.repository.RestaurantRepo;
 
 class ORDFacadeTest {
 
     private OrderService orderService;
     private OrderEventService orderEventService;
-    private MenuItemRepo menuItemRepo;
-    private RestaurantRepo restaurantRepo;
+    private MenuService menuService;
+    private RestaurantService restaurantService;
+    private REGFacade regFacade;
     private OrderQueues queues;
     private ORDFacade facade;
 
@@ -47,12 +45,13 @@ class ORDFacadeTest {
     void setUp() {
         orderService = mock(OrderService.class);
         orderEventService = mock(OrderEventService.class);
-        menuItemRepo = mock(MenuItemRepo.class);
-        restaurantRepo = mock(RestaurantRepo.class);
+        menuService = mock(MenuService.class);
+        restaurantService = mock(RestaurantService.class);
+        regFacade = mock(REGFacade.class);
         queues = new OrderQueues();
         // same order as the fields in ORDFacade
         facade = new ORDFacade(orderService, orderEventService, new PermissionPolicy(),
-                menuItemRepo, restaurantRepo, queues);
+                queues, menuService, restaurantService, regFacade);
     }
 
     // helpers
@@ -78,15 +77,15 @@ class ORDFacadeTest {
     private void restaurantIsOpen(boolean open) {
         Restaurant restaurant = mock(Restaurant.class);
         when(restaurant.isOpen()).thenReturn(open);
-        when(restaurantRepo.findById(restaurantId)).thenReturn(Optional.of(restaurant));
+        when(restaurantService.load(restaurantId)).thenReturn(restaurant);
     }
 
     private void menuHasAvailableItem() {
         MenuItem item = mock(MenuItem.class);
-        when(item.getStatus()).thenReturn(MenuItemStatus.AVAILABLE);
+        when(item.isAvailable()).thenReturn(true);
         when(item.getPrice()).thenReturn(new BigDecimal("10.00"));
         when(item.getName()).thenReturn("Pizza");
-        when(menuItemRepo.findById(menuItemId)).thenReturn(Optional.of(item));
+        when(menuService.load(menuItemId)).thenReturn(item);
     }
 
     // a stored order the facade will "load"
@@ -139,7 +138,7 @@ class ORDFacadeTest {
         verify(orderService, never()).save(any());
     }
 
-    // accept / reject
+    // accept/reject
 
     @Test
     void acceptingMovesTheOrderFromPlacedToPreparation() {
@@ -220,7 +219,7 @@ class ORDFacadeTest {
 
     @Test
     void anIllegalTransitionLeavesTheQueuesAsTheyWere() {
-        Order order = storedOrder();                       // still placed, so it can't become ready
+        Order order = storedOrder(); // still placed, so it can't become ready
         queues.placed(restaurantId).enqueue(order.getId());
 
         assertThrows(IllegalTransitionException.class,

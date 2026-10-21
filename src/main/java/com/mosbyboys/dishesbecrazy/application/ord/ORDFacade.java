@@ -14,13 +14,10 @@ import com.mosbyboys.dishesbecrazy.domain.ord.PreparationQueue;
 import com.mosbyboys.dishesbecrazy.domain.ord.Restaurant;
 import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
 import com.mosbyboys.dishesbecrazy.domain.reg.User;
-import com.mosbyboys.dishesbecrazy.technical.repository.MenuItemRepo;
-import com.mosbyboys.dishesbecrazy.technical.repository.RestaurantRepo;
 import com.mosbyboys.dishesbecrazy.domain.ord.MenuItem;
 import com.mosbyboys.dishesbecrazy.domain.ord.Restaurant;
 
 import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -37,8 +34,6 @@ public class ORDFacade {
     private final OrderService orderService;
     private final OrderEventService orderEventService;
     private final PermissionPolicy permissionPolicy;
-    private final MenuItemRepo menuItemRepo;
-    private final RestaurantRepo restaurantRepo;
     private final OrderQueues queues;
     private final MenuService menuService;
     private final RestaurantService restaurantService;
@@ -79,8 +74,7 @@ public class ORDFacade {
         }
 
         // no orders at a paused or closed restaurant
-        Restaurant restaurant = restaurantRepo.findById(restaurantId)
-                .orElseThrow(() -> new IllegalArgumentException("Restaurant not found: " + restaurantId));
+        Restaurant restaurant = restaurantService.load(restaurantId);
         if (!restaurant.isOpen()) {
             throw new IllegalArgumentException("Restaurant is not accepting orders");
         }

@@ -10,8 +10,8 @@ class LocationTest {
     void validCoordinatesAreKept() {
         Location location = new Location(45.5017, -73.5673);
 
-        assertEquals(45.5017, location.getLatitude());
-        assertEquals(-73.5673, location.getLongitude());
+        assertEquals(45.5017, location.latitude());
+        assertEquals(-73.5673, location.longitude());
     }
 
     @Test
