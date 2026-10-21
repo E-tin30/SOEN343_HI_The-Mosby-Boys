@@ -16,6 +16,13 @@ import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
 import com.mosbyboys.dishesbecrazy.domain.reg.User;
 import com.mosbyboys.dishesbecrazy.technical.repository.MenuItemRepo;
 import com.mosbyboys.dishesbecrazy.technical.repository.RestaurantRepo;
+import com.mosbyboys.dishesbecrazy.domain.ord.MenuItem;
+import com.mosbyboys.dishesbecrazy.domain.ord.Restaurant;
+
+import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
 
@@ -33,6 +40,35 @@ public class ORDFacade {
     private final MenuItemRepo menuItemRepo;
     private final RestaurantRepo restaurantRepo;
     private final OrderQueues queues;
+    private final MenuService menuService;
+    private final RestaurantService restaurantService;
+    private final REGFacade regFacade;
+
+    @Transactional
+    public List<Restaurant> getRestaurants(User user) {
+        switch (user.getRole()) {
+            case CUSTOMER -> {
+                return restaurantService.findOpen();
+            }
+            case RESTAURANT-> {
+                return restaurantService.findByOwner(user.getUserId());
+            }
+            case OPERATOR -> {
+                return restaurantService.findAll();
+            }
+            case COURIER -> {
+                throw new PermissionDeniedException("Couriers cannot view restaurants.");
+            }
+            default -> throw new IllegalArgumentException("Unknown role: " + user.getRole());
+        }
+    }
+
+    @Transactional
+    public List<MenuItem> getMenuForRestaurant(User user,UUID restaurantId) {
+        Restaurant restaurant = restaurantService.load(restaurantId);   
+        permissionPolicy.checkCanBrowseMenu(user, restaurant);        
+        return menuService.getMenu(restaurantId); 
+    }
 
     @Transactional
     public Order placeOrder(User user, UUID restaurantId, List<OrderLine> orderLineItems) {
@@ -63,9 +99,8 @@ public class ORDFacade {
     }
 
     private void checkAgainstMenu(OrderLine line) {
-        MenuItem item = menuItemRepo.findById(line.getMenuItemId())
-                .orElseThrow(() -> new IllegalArgumentException("Menu item not found: " + line.getMenuItemId()));
-        if (item.getStatus() != MenuItemStatus.AVAILABLE) {
+        MenuItem item = menuService.load(line.getMenuItemId());
+        if (!item.isAvailable()) {
             throw new IllegalArgumentException("Item is sold out: " + item.getName());
         }
         if (line.getUnitPrice().compareTo(item.getPrice()) != 0) {

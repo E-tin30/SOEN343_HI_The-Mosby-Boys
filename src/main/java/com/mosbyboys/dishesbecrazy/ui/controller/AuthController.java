@@ -60,9 +60,4 @@ public class AuthController {
     public ResponseEntity<String> handleInvalidCredentials(InvalidCredentialsException e) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid email or password");
     }
-
-    @ExceptionHandler(NoSuchElementException.class)
-    public ResponseEntity<String> handleUserNotFound(NoSuchElementException e) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User profile not found");
-    }
 }
