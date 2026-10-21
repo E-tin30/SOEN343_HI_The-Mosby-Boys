@@ -10,7 +10,6 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
-/* Database row for public."MenuItem". MenuService turns it into the MenuItem domain object. */
 @Entity
 @Table(name = "\"MenuItem\"")
 @Getter @Setter

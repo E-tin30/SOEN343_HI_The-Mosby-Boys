@@ -5,8 +5,6 @@ import java.util.UUID;
 
 import lombok.Getter;
 
-/* A home restaurant and its open/paused/closed status. Only an OPEN restaurant takes new orders (R-ORD-02).
-Plain domain class: RestaurantEntity is the database row, RestaurantService converts between them. */
 @Getter
 public class Restaurant {
 
@@ -35,7 +33,6 @@ public class Restaurant {
         this.createdAt = createdAt;
     }
 
-    // UC-ORD-10: a paused restaurant keeps its menu but takes no new orders
     public void pause() {
         this.status = RestaurantStatus.PAUSED;
     }
@@ -52,7 +49,6 @@ public class Restaurant {
         return this.status == RestaurantStatus.OPEN;
     }
 
-    // R-ORD-02: only an open restaurant accepts new orders
     public boolean acceptsOrders() {
         return isOpen();
     }

@@ -114,10 +114,10 @@ public class PermissionPolicy {
         }
           switch (caller.getRole()) {
         case OPERATOR -> {
-             return;  // can pause/reopen any restaurant, so sees all
+             return;
              }  
         case RESTAURANT -> {
-            if (restaurant.isOwnedBy(caller.getUserId())) return;   // own menu, any status
+            if (restaurant.isOwnedBy(caller.getUserId())) return;
             throw new PermissionDeniedException("Cannot view another restaurant's menu.");
         }
         case CUSTOMER -> {
