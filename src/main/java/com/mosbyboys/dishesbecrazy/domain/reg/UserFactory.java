@@ -3,6 +3,7 @@ package com.mosbyboys.dishesbecrazy.domain.reg;
 import java.time.OffsetDateTime;
 import java.util.Objects;
 import java.util.UUID;
+import com.mosbyboys.dishesbecrazy.domain.ord.Location;
 
 import lombok.Builder;
 
@@ -16,7 +17,7 @@ public final class UserFactory {
             case CUSTOMER -> new Customer(
                     data.userId(), data.createdAt(), data.firstName(), data.lastName(),
                     data.email(), data.username(), data.hashedPassword(),
-                    data.profileId(), data.profileCreatedAt(), data.address());
+                    data.profileId(), data.profileCreatedAt(), data.address(), data.location());
             case COURIER -> new Courier(
                     data.userId(), data.createdAt(), data.firstName(), data.lastName(),
                     data.email(), data.username(), data.hashedPassword(),
@@ -42,7 +43,7 @@ public final class UserFactory {
     public record UserData(UUID userId, OffsetDateTime createdAt,
                            String firstName, String lastName, String email, String username,
                            String hashedPassword, UUID profileId, OffsetDateTime profileCreatedAt,
-                           String address, String state, String location,
+                           String address, String state, Location location,
                            String restaurantName, String status) {
         // Avoid the record's default output, which would expose the password hash.
         @Override

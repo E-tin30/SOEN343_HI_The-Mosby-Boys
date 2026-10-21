@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.Optional;
 
+import com.mosbyboys.dishesbecrazy.domain.ord.Location;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -58,9 +59,29 @@ public class UserRepo{
         return UUID.fromString(userId);
     }
 
-    public void saveUser(UUID id, String firstName, String lastName, String username, String role) {//Writes to our custom public.User table
-        String sql = "INSERT INTO public.\"User\" (id, first_name, last_name, username, role) VALUES (?, ?, ?, ?, ?)";
-        jdbcTemplate.update(sql, id, firstName, lastName, username, role);
+    public void saveUser(UUID id, String firstName, String lastName, String username, String role, String address, String restaurantName, Location location) {
+        jdbcTemplate.update(
+            "INSERT INTO public.\"User\" (id, first_name, last_name, username, role) VALUES (?, ?, ?, ?, ?)",
+            id, firstName, lastName, username, role);
+
+        Double lat = location == null ? null : location.latitude();
+        Double lon = location == null ? null : location.longitude();
+
+        switch (role) {
+            case "CUSTOMER" -> jdbcTemplate.update(
+                "INSERT INTO public.\"Customer\" (id, created_at, user_id, address, latitude, longitude) "
+            + "VALUES (?, CURRENT_TIMESTAMP, ?, ?, ?, ?)",
+                UUID.randomUUID(), id, address, lat, lon);
+            case "RESTAURANT" -> jdbcTemplate.update(
+                "INSERT INTO public.\"Restaurant\" (id, created_at, user_id, name, status, latitude, longitude) "
+            + "VALUES (?, CURRENT_TIMESTAMP, ?, ?, 'OPEN', ?, ?)",
+                UUID.randomUUID(), id, restaurantName, lat, lon);
+            case "COURIER" -> jdbcTemplate.update(
+                "INSERT INTO public.\"Courier\" (id, created_at, user_id, state) "
+            + "VALUES (?, CURRENT_TIMESTAMP, ?, 'OFF_DUTY')",
+                UUID.randomUUID(), id);
+            default -> { }
+        }
     }
 
     public LoginTokens login(String email, String password){

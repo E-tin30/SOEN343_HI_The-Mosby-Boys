@@ -1,8 +1,9 @@
-import type { FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function Register(){
   const navigate = useNavigate();
+  const [role, setRole] = useState("CUSTOMER");
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
@@ -42,12 +43,28 @@ export default function Register(){
       <p><input name="password" type="password" placeholder="Password" required /></p>
 
       <p>
-        <select name="role" required>
+        <select
+          name="role"
+          value={role}
+          onChange={(e) => setRole(e.target.value)}  
+          required
+        >
           <option value="CUSTOMER">Customer</option>
           <option value="RESTAURANT">Restaurant</option>
           <option value="COURIER">Courier</option>
         </select>
       </p>
+
+      {role === "CUSTOMER" && (
+        <p><input name="address" placeholder="Delivery address" required /></p>
+      )}
+
+      {role === "RESTAURANT" && (
+        <>
+          <p><input name="restaurantName" placeholder="Restaurant name" required /></p>
+          <p><input name="address" placeholder="Restaurant address" required /></p>
+        </>
+      )}
 
       <button type="submit">Register</button>
     </form>
