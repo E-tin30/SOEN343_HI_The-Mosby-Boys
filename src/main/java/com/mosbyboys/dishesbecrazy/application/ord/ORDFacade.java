@@ -66,14 +66,12 @@ public class ORDFacade {
     }
 
     @Transactional
-    public Order placeOrder(User user, UUID userId, UUID restaurantId, List<OrderLine> orderLineItems) {
-        //Check Permission
+    public Order placeOrder(User user, UUID restaurantId, List<OrderLine> orderLineItems) {
         permissionPolicy.checkCanPlace(user);
 
-        if (!(user instanceof Customer)) {
+        if (!(user instanceof Customer customer)) {
             throw new PermissionDeniedException("Only a customer can place an order.");
         }
-        Order order = new Order(userId, restaurantId, orderLineItems);
 
         // no orders at a paused or closed restaurant
         Restaurant restaurant = restaurantService.load(restaurantId);
@@ -81,6 +79,7 @@ public class ORDFacade {
             throw new IllegalArgumentException("Restaurant is not accepting orders");
         }
 
+        Order order = new Order(customer.getCustomerId(), restaurantId, orderLineItems);
         order.getOrderLineItems().forEach(this::checkAgainstMenu);
 
         orderService.save(order);
