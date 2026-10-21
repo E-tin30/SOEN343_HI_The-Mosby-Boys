@@ -1,15 +1,12 @@
-import {useEffect, useState} from "react";
-import {Link, useParams} from "react-router-dom";
-import {useAuth} from "../AuthContext";
-import {getMenu} from "./api/menuApi";
-import type {MenuItem} from "./types/menu";
-import {useCart} from "../CartContext";
+import { useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import { useAuth } from "../AuthContext";
+import { getMenu } from "./api/menuApi";
+import type { MenuItem } from "./types/menu";
 
 export default function MenuPage() {
-    const {restaurantId} = useParams<{ restaurantId: string }>(); // from the URL /restaurants/:restaurantId/menu
-    const {accessToken, user} = useAuth();
-    const {addItem, itemCount} = useCart();
-
+    const { restaurantId } = useParams<{ restaurantId: string }>();
+    const { accessToken } = useAuth();
     const [items, setItems] = useState<MenuItem[] | null>(null);
     const [error, setError] = useState("");
 
@@ -23,13 +20,6 @@ export default function MenuPage() {
     return (
         <main>
             <h1>Menu</h1>
-
-            {user?.role === "CUSTOMER" && (
-                <p>
-                    <Link to="/cart">View Cart ({itemCount})</Link>
-                </p>
-            )}
-
             {error && <p>Error: {error}</p>}
             {!error && items === null && <p>Loading…</p>}
             {items?.length === 0 && <p>This restaurant has no menu items yet.</p>}
@@ -37,13 +27,7 @@ export default function MenuPage() {
             {items && items.length > 0 && (
                 <table border={1}>
                     <thead>
-                    <tr>
-                        <th>Dish</th>
-                        <th>Description</th>
-                        <th>Price</th>
-                        <th>Status</th>
-                        {user?.role === "CUSTOMER" && <th>Action</th>}
-                    </tr>
+                    <tr><th>Dish</th><th>Description</th><th>Price</th><th>Status</th></tr>
                     </thead>
                     <tbody>
                     {items.map((item) => (
@@ -52,21 +36,6 @@ export default function MenuPage() {
                             <td>{item.description ?? ""}</td>
                             <td>${item.price.toFixed(2)}</td>
                             <td>{item.status === "SOLD_OUT" ? "SOLD OUT" : "Available"}</td>
-                            {user?.role === "CUSTOMER" && (
-                                <td>
-                                    <button
-                                        type="button"
-                                        disabled={item.status === "SOLD_OUT"}
-                                        onClick={() => {
-                                            if (restaurantId) {
-                                                addItem(restaurantId, item); // adds item to cart
-                                            }
-                                        }}
-                                    >
-                                        Add to Cart
-                                    </button>
-                                </td>
-                            )}
                         </tr>
                     ))}
                     </tbody>
