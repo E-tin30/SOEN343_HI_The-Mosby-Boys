@@ -1,0 +1,43 @@
+.heading {
+  margin: 0;
+  color: var(--espresso);
+  font-family: var(--font-display);
+  line-height: 1.15;
+}
+
+.heading--1 {
+  font-size: var(--text-h1);
+  font-weight: 800;
+}
+
+.heading--2 {
+  font-size: var(--text-h2);
+  font-weight: 800;
+}
+
+.heading--underline {
+  text-decoration: underline;
+  text-decoration-color: var(--espresso);
+  text-decoration-thickness: 0.12em;
+  text-underline-offset: 0.12em;
+}
+
+.heading__text--underline,
+.heading__accent--underline {
+  text-decoration: underline;
+  text-decoration-thickness: 0.12em;
+  text-underline-offset: 0.12em;
+}
+
+.heading__text--underline {
+  text-decoration-color: var(--espresso);
+}
+
+.heading__accent {
+  color: var(--tomato);
+  font-style: italic;
+}
+
+.heading__accent--underline {
+  text-decoration-color: var(--tomato);
+}
