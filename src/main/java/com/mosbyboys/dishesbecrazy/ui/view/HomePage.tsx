@@ -1,6 +1,10 @@
+import { Link } from "react-router-dom";
+
 export default function HomePage() {
   return (
     <main>
+      <p><Link to="/restaurants">Browse restaurants</Link></p>
+
       <h1>Dishes Be Crazy</h1>
       <h2>Home Page</h2>
 

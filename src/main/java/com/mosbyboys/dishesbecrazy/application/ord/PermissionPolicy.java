@@ -3,6 +3,8 @@ package com.mosbyboys.dishesbecrazy.application.ord;
 import org.springframework.stereotype.Component;
 
 import com.mosbyboys.dishesbecrazy.domain.ord.Order;
+import com.mosbyboys.dishesbecrazy.domain.ord.Restaurant;
+import com.mosbyboys.dishesbecrazy.domain.ord.RestaurantStatus;
 import com.mosbyboys.dishesbecrazy.domain.ord.state.PlacedState;
 import com.mosbyboys.dishesbecrazy.domain.reg.User;
 import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
@@ -101,5 +103,28 @@ public class PermissionPolicy {
             throw new PermissionDeniedException("Couriers cannot view orders yet (DLV not implemented).");
         }
         throw new PermissionDeniedException("Cannot view this order.");
+    }
+
+    public void checkCanBrowseMenu(User caller, Restaurant restaurant) {
+        if (caller == null) {
+            throw new PermissionDeniedException("No caller.");
+        }
+        if (restaurant == null) {
+            throw new PermissionDeniedException("No restaurant.");
+        }
+          switch (caller.getRole()) {
+        case OPERATOR -> {
+             return;
+             }  
+        case RESTAURANT -> {
+            if (restaurant.isOwnedBy(caller.getUserId())) return;
+            throw new PermissionDeniedException("Cannot view another restaurant's menu.");
+        }
+        case CUSTOMER -> {
+            if (restaurant.isOpen()) return;
+            throw new PermissionDeniedException("This restaurant is paused and not taking orders.");
+        }
+        case COURIER -> throw new PermissionDeniedException("Couriers cannot view restaurant menus yet (DLV not implemented).");
+        }
     }
 }

@@ -9,5 +9,5 @@
     "noEmit": true,
     "types": ["react"]
   },
-  "include": ["src/main/java/com/mosbyboys/dishesbecrazy/ui/view/**/*.tsx"]
+  "include": ["src/main/java/com/mosbyboys/dishesbecrazy/ui/view/**/*"]
 }
