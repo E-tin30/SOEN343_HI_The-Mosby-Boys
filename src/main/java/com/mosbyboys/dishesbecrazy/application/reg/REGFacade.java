@@ -21,8 +21,9 @@ public class REGFacade {
     private final JdbcTemplate jdbcTemplate;
 
 
-    public void createUser(String firstName, String lastName, String email, String username, String password, String role) {
-        authService.createUser(firstName, lastName, email, username, password, role);
+    public void createUser(String firstName, String lastName, String email, String username, String password, String role, 
+        String address, String restaurantName) {
+        authService.createUser(firstName, lastName, email, username, password, role, address, restaurantName);
     }
 
     public LoginTokens login(String email, String password) {

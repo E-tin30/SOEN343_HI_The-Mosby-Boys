@@ -19,6 +19,7 @@ import com.mosbyboys.dishesbecrazy.domain.reg.Courier;
 import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
 import com.mosbyboys.dishesbecrazy.domain.reg.Operator;
 import com.mosbyboys.dishesbecrazy.domain.reg.RestaurantOwner;
+import com.mosbyboys.dishesbecrazy.domain.ord.Location;
 
 public class PermissionPolicyTest {
 
@@ -27,9 +28,8 @@ public class PermissionPolicyTest {
     // Helper functions to create users and orders
     private Customer customer(UUID customerId) {
         return new Customer(customerId, OffsetDateTime.now(), "A", "B", "a@b.c", "ab", "hash",
-                OffsetDateTime.now(), "123 Street");
+                OffsetDateTime.now(), "123 Street", new Location(45.5, -73.6));
     }
-
     private RestaurantOwner restaurant(UUID restaurantId) {
         return new RestaurantOwner(restaurantId, OffsetDateTime.now(), "A", "B", "a@b.c", "ab", "hash",
                 OffsetDateTime.now(), "Resto", "OPEN");
@@ -41,7 +41,7 @@ public class PermissionPolicyTest {
 
     private Courier courier() {
         return new Courier(UUID.randomUUID(), OffsetDateTime.now(), "A", "B", "a@b.c", "ab", "hash",
-                OffsetDateTime.now(), "OFF_DUTY", "Montreal");
+                OffsetDateTime.now(), "OFF_DUTY", new Location(45.5, -73.6));
     }
 
     private Order orderFor(UUID customerId, UUID restaurantId) {

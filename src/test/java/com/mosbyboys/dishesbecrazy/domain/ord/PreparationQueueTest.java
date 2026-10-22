@@ -8,19 +8,12 @@ import org.junit.jupiter.api.Test;
 
 class PreparationQueueTest {
 
-    // helper: a fresh, empty queue
-    private PreparationQueue newQueue() {
-        return new PreparationQueue(UUID.randomUUID());
-    }
+    private final UUID restaurantId = UUID.randomUUID();
 
-    // orders come out in the order they went in (FIFO, R-ORD-03)
     @Test
-    void ordersComeOutInArrivalOrder() {
-        PreparationQueue queue = newQueue();
-        UUID a = UUID.randomUUID();
-        UUID b = UUID.randomUUID();
-        UUID c = UUID.randomUUID();
-
+    void ordersComeOutInTheOrderTheyWentIn() {
+        PreparationQueue queue = new PreparationQueue(restaurantId);
+        UUID a = UUID.randomUUID(), b = UUID.randomUUID(), c = UUID.randomUUID();
         queue.enqueue(a);
         queue.enqueue(b);
         queue.enqueue(c);
@@ -30,60 +23,92 @@ class PreparationQueueTest {
         assertEquals(c, queue.dequeue());
     }
 
-    // same id twice throws IllegalArgumentException
     @Test
-    void sameIdThrowsIllegalArgumentException() {
-        PreparationQueue queue = newQueue();
+    void enqueueingTheSameOrderTwiceThrows() {
+        PreparationQueue queue = new PreparationQueue(restaurantId);
         UUID a = UUID.randomUUID();
-
         queue.enqueue(a);
 
         assertThrows(IllegalArgumentException.class, () -> queue.enqueue(a));
         assertEquals(1, queue.size());
     }
 
-    // dequeue on an empty queue throws IllegalStateException
     @Test
-    void dequeueOnEmptyQueueThrowsIllegalStateException() {
-        PreparationQueue queue = newQueue();
+    void dequeueOnEmptyQueueThrows() {
+        PreparationQueue queue = new PreparationQueue(restaurantId);
 
-        assertThrows(IllegalStateException.class, () -> queue.dequeue());
+        assertThrows(IllegalStateException.class, queue::dequeue);
     }
 
-    // remove the middle id: the rest keep their order; removing a missing id returns false
     @Test
-    void removeMiddleIdKeepsOrder() {
-        PreparationQueue queue = newQueue();
-        UUID a = UUID.randomUUID();
-        UUID b = UUID.randomUUID();
-        UUID c = UUID.randomUUID();
-
+    void removingFromTheMiddleKeepsTheRestInOrder() {
+        PreparationQueue queue = new PreparationQueue(restaurantId);
+        UUID a = UUID.randomUUID(), b = UUID.randomUUID(), c = UUID.randomUUID();
         queue.enqueue(a);
         queue.enqueue(b);
         queue.enqueue(c);
 
         assertTrue(queue.remove(b));
+
         assertEquals(a, queue.dequeue());
         assertEquals(c, queue.dequeue());
     }
 
-    // removing a missing id returns false
     @Test
-    void removingMissingIdReturnsFalse() {
-        PreparationQueue queue = newQueue();
+    void removingAnIdThatIsNotThereReturnsFalse() {
+        PreparationQueue queue = new PreparationQueue(restaurantId);
 
-       assertFalse(queue.remove(UUID.randomUUID()));
+        assertFalse(queue.remove(UUID.randomUUID()));
     }
 
-    // 1000 orders fit, size() is 1000
     @Test
-    void queueHasNoCapacity() {
-        PreparationQueue queue = newQueue();
-
-        for(int i=0; i < 1000; i++){
+    void aThousandOrdersFit() {
+        PreparationQueue queue = new PreparationQueue(restaurantId);
+        for (int i = 0; i < 1000; i++) {
             queue.enqueue(UUID.randomUUID());
         }
 
-       assertEquals(1000, queue.size());
+        assertEquals(1000, queue.size());
+    }
+
+    @Test
+    void nullRestaurantOrOrderIsRejected() {
+        assertThrows(IllegalArgumentException.class, () -> new PreparationQueue(null));
+        PreparationQueue queue = new PreparationQueue(restaurantId);
+        assertThrows(IllegalArgumentException.class, () -> queue.enqueue(null));
+    }
+
+    // R-ORD-03: turn rule
+    @Test
+    void dequeueIfFirstRemovesTheFrontOrder() {
+        PreparationQueue queue = new PreparationQueue(restaurantId);
+        UUID a = UUID.randomUUID(), b = UUID.randomUUID();
+        queue.enqueue(a);
+        queue.enqueue(b);
+
+        queue.dequeueIfFirst(a);
+
+        assertEquals(b, queue.peek());
+        assertEquals(1, queue.size());
+    }
+
+    @Test
+    void dequeueIfFirstRejectsAnOrderThatIsNotFirst() {
+        PreparationQueue queue = new PreparationQueue(restaurantId);
+        UUID a = UUID.randomUUID(), b = UUID.randomUUID();
+        queue.enqueue(a);
+        queue.enqueue(b);
+
+        assertThrows(IllegalStateException.class, () -> queue.dequeueIfFirst(b));
+        assertEquals(a, queue.peek());   // front unchanged
+        assertEquals(2, queue.size());   // nothing removed
+    }
+
+    @Test
+    void dequeueIfFirstOnEmptyOrNullThrows() {
+        PreparationQueue queue = new PreparationQueue(restaurantId);
+
+        assertThrows(IllegalStateException.class, () -> queue.dequeueIfFirst(UUID.randomUUID()));
+        assertThrows(IllegalArgumentException.class, () -> queue.dequeueIfFirst(null));
     }
 }

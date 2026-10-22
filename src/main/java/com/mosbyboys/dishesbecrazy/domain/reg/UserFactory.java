@@ -3,6 +3,7 @@ package com.mosbyboys.dishesbecrazy.domain.reg;
 import java.time.OffsetDateTime;
 import java.util.Objects;
 import java.util.UUID;
+import com.mosbyboys.dishesbecrazy.domain.ord.Location;
 
 import lombok.Builder;
 
@@ -16,7 +17,7 @@ public final class UserFactory {
             case CUSTOMER -> new Customer(
                     data.userId(), data.createdAt(), data.firstName(), data.lastName(),
                     data.email(), data.username(), data.hashedPassword(),
-                    data.profileCreatedAt(), data.address());
+                    data.profileCreatedAt(), data.address(), data.location());
             case COURIER -> new Courier(
                     data.userId(), data.createdAt(), data.firstName(), data.lastName(),
                     data.email(), data.username(), data.hashedPassword(),
