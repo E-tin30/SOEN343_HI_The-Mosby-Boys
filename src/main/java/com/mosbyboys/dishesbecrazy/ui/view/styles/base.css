@@ -35,6 +35,21 @@ a:hover {
   outline-offset: var(--focus-width);
 }
 
+/* Page shell: Cream page with a centred content column. */
+.page {
+  min-height: 100vh;
+  padding: var(--space-4);
+}
+
+.page__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  width: 100%;
+  max-width: var(--card-width-2);
+  margin: 0 auto;
+}
+
 .card {
   background: var(--porcelain);
   border-radius: var(--radius-lg);

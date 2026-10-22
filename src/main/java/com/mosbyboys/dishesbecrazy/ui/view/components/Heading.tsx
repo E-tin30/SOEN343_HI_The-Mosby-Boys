@@ -1,7 +1,7 @@
 import "./Heading.css";
 
 type HeadingProps = {
-    level?: 1 | 2;
+    level?: 1 | 2 | 3;
     className?: string;
     underline?: boolean;
     underlineText?: boolean;
@@ -18,7 +18,7 @@ export default function Heading({
     underlineAccent = false,
     children,
 }: HeadingProps) {
-    const Tag = level === 1 ? "h1" : "h2";
+    const Tag = `h${level}` as const;
     const match = children.match(/^(.*?)~(.+?)~(.*)$/);
     const prefix = match?.[1].replace(/\s+$/, "") ?? "";
     const prefixSpacing = match?.[1].slice(prefix.length) || (prefix ? " " : "");
