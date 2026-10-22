@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 import Button from "./components/Button";
 import Heading from "./components/Heading";
+import PlateLogo from "./components/PlateLogo";
 import TextLogo from "./components/TextLogo";
 import "./styles/HomePage.css";
 
@@ -17,7 +18,10 @@ export default function HomePage() {
   return (
     <div className="home-page">
       <header className="home-page__bar">
-        <TextLogo />
+        <div className="home-page__brand">
+          <PlateLogo />
+          <TextLogo />
+        </div>
         <Button variant="secondary" onClick={handleLogout}>
           Log out
         </Button>

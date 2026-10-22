@@ -18,6 +18,13 @@
   padding: var(--space-4) 0 var(--space-6);
 }
 
+.home-page__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  --plate-logo-size: 64px;
+}
+
 .home-page__content {
   display: flex;
   flex-direction: column;
@@ -40,7 +47,6 @@
   margin-top: var(--space-2);
 }
 
-/* H3: Inter 600 / 18 */
 .home-card__title {
   margin: 0;
   font-size: var(--text-h3);

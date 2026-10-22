@@ -1,0 +1,7 @@
+/* Resize by setting --plate-logo-size on the logo or any parent. */
+.plate-logo {
+  display: block;
+  height: var(--plate-logo-size, var(--control-height));
+  width: auto;
+  border-radius: var(--radius-sm);
+}
