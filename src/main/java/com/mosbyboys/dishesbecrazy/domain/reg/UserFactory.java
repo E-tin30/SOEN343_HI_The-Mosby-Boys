@@ -43,7 +43,7 @@ public final class UserFactory {
     public record UserData(UUID userId, OffsetDateTime createdAt,
                            String firstName, String lastName, String email, String username,
                            String hashedPassword, OffsetDateTime profileCreatedAt,
-                           String address, String state, String location,
+                           String address, String state, Location location,
                            String restaurantName, String status) {
         // Avoid the record's default output, which would expose the password hash.
         @Override

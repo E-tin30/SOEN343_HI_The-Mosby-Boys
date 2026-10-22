@@ -7,16 +7,13 @@ import com.mosbyboys.dishesbecrazy.domain.ord.Restaurant;
 import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
 import com.mosbyboys.dishesbecrazy.domain.reg.User;
 import com.mosbyboys.dishesbecrazy.domain.ord.MenuItem;
-import com.mosbyboys.dishesbecrazy.domain.ord.Restaurant;
 
 import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
-import com.mosbyboys.dishesbecrazy.technical.repository.UserRepo;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 /* Runs the ORD use cases (place, accept, reject, prepare, ready, cancel).
@@ -33,7 +30,6 @@ public class ORDFacade {
     private final OrderQueues queues;
     private final MenuService menuService;
     private final RestaurantService restaurantService;
-    private final UserRepo userRepo;
     private final REGFacade regFacade;
 
     @Transactional

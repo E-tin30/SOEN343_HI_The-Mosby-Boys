@@ -16,7 +16,7 @@ public final class Courier extends User {
 
     public Courier(UUID userId, OffsetDateTime createdAt, String firstName, String lastName, String email,
                     String username, String hashedPassword,
-                    OffsetDateTime courierCreatedAt, String state, String location) {
+                    OffsetDateTime courierCreatedAt, String state, Location location) {
         // The subclass fixes one role; callers cannot supply a conflicting role.
         super(userId, createdAt, firstName, lastName, email, username, hashedPassword, Role.COURIER);
         this.courierCreatedAt = courierCreatedAt;
