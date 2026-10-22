@@ -33,13 +33,12 @@
 }
 
 .btn--secondary {
-  background: transparent;
-  border-color: var(--espresso);
-  color: var(--espresso);
+  background: var(--cocoa);
+  color: var(--porcelain);
 }
 
 .btn--secondary:hover:not(:disabled) {
-  background: var(--linen);
+  background: var(--espresso);
 }
 
 .btn--link {
