@@ -1,10 +1,16 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../AuthContext";
+import AppHeader from "../components/AppHeader";
+import Button from "../components/Button";
+import Heading from "../components/Heading";
+import Tag from "../components/Tag";
 import { getMenu } from "./api/menuApi";
 import type { MenuItem } from "./types/menu";
+import "../styles/MenuPage.css";
 
 export default function MenuPage() {
+  const navigate = useNavigate();
   const { restaurantId } = useParams<{ restaurantId: string }>();
   const { accessToken } = useAuth();
   const [items, setItems] = useState<MenuItem[] | null>(null);
@@ -18,31 +24,56 @@ export default function MenuPage() {
   }, [accessToken, restaurantId]);
 
   return (
-    <main>
-      <h1>Menu</h1>
-      {error && <p>Error: {error}</p>}
-      {!error && items === null && <p>Loading…</p>}
-      {items?.length === 0 && <p>This restaurant has no menu items yet.</p>}
+    <div className="page">
+      <AppHeader>
+        <Button variant="secondary" onClick={() => navigate("/restaurants")}>
+          Back to restaurants
+        </Button>
+      </AppHeader>
 
-      {items && items.length > 0 && (
-        <table border={1}>
-          <thead>
-            <tr><th>Dish</th><th>Description</th><th>Price</th><th>Status</th></tr>
-          </thead>
-          <tbody>
-            {items.map((item) => (
-              <tr key={item.id}>
-                <td>{item.name}</td>
-                <td>{item.description ?? ""}</td>
-                <td>${item.price.toFixed(2)}</td>
-                <td>{item.status === "SOLD_OUT" ? "SOLD OUT" : "Available"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      <main className="page__content card">
+        <header className="page__intro">
+          <Heading>What's on the ~menu.~</Heading>
+          <p className="meta">Everything this kitchen is cooking today.</p>
+        </header>
 
-      <Link to="/restaurants">Back to restaurants</Link>
-    </main>
+        {error && (
+          <p className="page__status page__status--error" role="alert">
+            Error: {error}
+          </p>
+        )}
+        {!error && items === null && <p className="page__status meta">Loading…</p>}
+        {items?.length === 0 && (
+          <p className="page__status meta">This restaurant has no menu items yet.</p>
+        )}
+
+        {items && items.length > 0 && (
+          <ul className="page__list">
+            {items.map((item) => {
+              const soldOut = item.status === "SOLD_OUT";
+              return (
+                <li
+                  key={item.id}
+                  className={`list-card menu-item${soldOut ? " menu-item--sold-out" : ""}`}
+                >
+                  <div className="list-card__info">
+                    <Heading level={3}>{item.name}</Heading>
+                    {item.description && <p className="menu-item__description meta">{item.description}</p>}
+                  </div>
+                  <div className="menu-item__side">
+                    <span className="menu-item__price">${item.price.toFixed(2)}</span>
+                    {soldOut && <Tag>Sold out</Tag>}
+                  </div>
+                  {/* TODO: hook up ordering once the order flow exists. */}
+                  <Button  variant="secondary" disabled={soldOut}>
+                    Order
+                  </Button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </main>
+    </div>
   );
 }

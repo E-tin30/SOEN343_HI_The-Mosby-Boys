@@ -37,29 +37,29 @@ export default function RestaurantsPage() {
       </AppHeader>
 
       <main className="page__content card">
-        <header className="restaurants-page__intro">
+        <header className="page__intro">
           <Heading>Pick a ~kitchen.~</Heading>
           <p className="meta">Choose a restaurant to see what's on the menu.</p>
         </header>
 
         {error && (
-          <p className="restaurants-page__status restaurants-page__status--error" role="alert">
+          <p className="page__status page__status--error" role="alert">
             Error: {error}
           </p>
         )}
         {!error && restaurants === null && (
-          <p className="restaurants-page__status meta">Loading…</p>
+          <p className="page__status meta">Loading…</p>
         )}
         {restaurants?.length === 0 && (
-          <p className="restaurants-page__status meta">No restaurants to show.</p>
+          <p className="page__status meta">No restaurants to show.</p>
         )}
 
         {restaurants && restaurants.length > 0 && (
-          <ul className="restaurant-list">
+          <ul className="page__list">
             {restaurants.map((r) => (
               <li key={r.id}>
-                <Link to={`/restaurants/${r.id}/menu`} className="restaurant-card">
-                  <div className="restaurant-card__info">
+                <Link to={`/restaurants/${r.id}/menu`} className="list-card restaurant-card">
+                  <div className="list-card__info">
                     <Heading level={3}>{r.name}</Heading>
                     <span className="restaurant-card__cta">View menu →</span>
                   </div>

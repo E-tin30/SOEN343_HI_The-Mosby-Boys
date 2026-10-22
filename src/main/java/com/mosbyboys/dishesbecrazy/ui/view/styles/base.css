@@ -50,6 +50,50 @@ a:hover {
   margin: 0 auto;
 }
 
+.page__intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.page__intro p,
+.page__status {
+  margin: 0;
+}
+
+.page__status--error {
+  color: var(--tomato-dark);
+  font-weight: 500;
+}
+
+.page__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A row inside a card: Cream on the Porcelain parent so it stands apart. */
+.list-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  background: var(--cream);
+  border: var(--border-width) solid var(--linen);
+  border-radius: var(--radius-md);
+  color: var(--espresso);
+}
+
+.list-card__info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
 .card {
   background: var(--porcelain);
   border-radius: var(--radius-lg);
