@@ -1,0 +1,56 @@
+.registration-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: var(--space-4);
+  background: var(--cream) url("../assets/dishes-be-crazy-background.jpg") right center / cover no-repeat;
+}
+
+@media (min-width: 1200px) {
+  .registration-page {
+    justify-content: flex-start;
+    padding-left: 22vw;
+  }
+}
+
+.registration-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  width: 100%;
+  max-width: var(--card-width-2);
+}
+
+.registration-card__header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  text-align: center;
+}
+
+.registration-card__subtitle,
+.registration-card__footer {
+  margin: 0;
+}
+
+.registration-card__fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.registration-card__role {
+  width: 100%;
+}
+
+.registration-card__footer {
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .registration-card__fields {
+    grid-template-columns: 1fr;
+  }
+}

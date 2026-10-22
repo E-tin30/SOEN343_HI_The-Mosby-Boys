@@ -73,6 +73,7 @@ supabase/.temp/
 *.dtmp
 
 HELP.md
+ui.md
 target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/

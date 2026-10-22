@@ -1,0 +1,44 @@
+.text-logo {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-family: var(--font-display);
+  font-size: var(--text-h1);
+  font-weight: 800;
+  line-height: 1;
+  color: var(--espresso);
+}
+
+.text-logo--stacked {
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.text-logo__crazy {
+  display: inline-block;
+  color: var(--tomato);
+  font-style: italic;
+  animation: text-logo-bounce 1.6s ease-in-out infinite;
+}
+
+.text-logo--mono,
+.text-logo--mono .text-logo__crazy {
+  color: var(--espresso);
+}
+
+.text-logo--reversed,
+.text-logo--reversed .text-logo__crazy {
+  color: var(--porcelain);
+}
+
+@keyframes text-logo-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(calc(-1 * var(--space-1))); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .text-logo__crazy {
+    animation: none;
+  }
+}
