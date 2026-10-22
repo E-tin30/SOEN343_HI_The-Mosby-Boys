@@ -13,7 +13,7 @@ import LoginPage from "./LoginPage";
 import RegistrationPage from "./RegistrationPage";
 import HomePage from "./HomePage";
 import RestaurantsPage from "./menu/RestaurantsPage";
-import MenuPage from "./menu/menuPage";
+import MenuPage from "./menu/MenuPage";
 
 createRoot(document.getElementById("root")!).render(
   <BrowserRouter>
