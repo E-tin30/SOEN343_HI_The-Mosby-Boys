@@ -120,7 +120,6 @@ export default function CartPage() {
                                     Authorization: `Bearer ${accessToken}`,
                                 },
                                 body: JSON.stringify({
-                                    user: user,
                                     userId: user?.id,
                                     restaurantId: cart.restaurantId,
                                     items: cart.items.map((item) => ({

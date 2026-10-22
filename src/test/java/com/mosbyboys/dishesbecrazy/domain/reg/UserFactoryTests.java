@@ -35,26 +35,24 @@ class UserFactoryTests {
 
     @Test
     void createsCustomerWithItsProfile() {
-        var data = sharedData().profileId(profileId).profileCreatedAt(profileCreatedAt)
+        var data = sharedData().profileCreatedAt(profileCreatedAt)
                 .address("123 Demo Street").build();
 
         var customer = assertInstanceOf(Customer.class, factory.createUser(Role.CUSTOMER, data));
 
         assertSharedFields(customer, Role.CUSTOMER);
-        assertEquals(profileId, customer.getCustomerId());
         assertEquals(profileCreatedAt, customer.getCustomerCreatedAt());
         assertEquals("123 Demo Street", customer.getAddress());
     }
 
     @Test
     void createsCourierWithItsProfile() {
-        var data = sharedData().profileId(profileId).profileCreatedAt(profileCreatedAt)
+        var data = sharedData().profileCreatedAt(profileCreatedAt)
                 .state("OFF_DUTY").location("Montreal").build();
 
         var courier = assertInstanceOf(Courier.class, factory.createUser(Role.COURIER, data));
 
         assertSharedFields(courier, Role.COURIER);
-        assertEquals(profileId, courier.getCourierId());
         assertEquals(profileCreatedAt, courier.getCourierCreatedAt());
         assertEquals("OFF_DUTY", courier.getState());
         assertEquals("Montreal", courier.getLocation());
@@ -62,13 +60,12 @@ class UserFactoryTests {
 
     @Test
     void createsRestaurantOwnerWithItsRestaurant() {
-        var data = sharedData().profileId(profileId).profileCreatedAt(profileCreatedAt)
+        var data = sharedData().profileCreatedAt(profileCreatedAt)
                 .restaurantName("Demo Diner").status("OPEN").build();
 
         var owner = assertInstanceOf(RestaurantOwner.class, factory.createUser(Role.RESTAURANT, data));
 
         assertSharedFields(owner, Role.RESTAURANT);
-        assertEquals(profileId, owner.getRestaurantId());
         assertEquals(profileCreatedAt, owner.getRestaurantCreatedAt());
         assertEquals("Demo Diner", owner.getName());
         assertEquals("OPEN", owner.getStatus());

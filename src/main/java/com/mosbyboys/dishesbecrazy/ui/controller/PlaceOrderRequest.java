@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.UUID;
 
 public record PlaceOrderRequest(
-        Customer user,
         UUID userId,
         UUID restaurantId,
         List<OrderLineRequest> items

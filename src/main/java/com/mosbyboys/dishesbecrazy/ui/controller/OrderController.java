@@ -34,7 +34,6 @@ public class OrderController {
                 ))
                 .toList();
         Order order = ordFacade.placeOrder(
-                request.user(),
                 request.userId(),
                 request.restaurantId(),
                 orderLines

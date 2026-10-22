@@ -46,7 +46,7 @@ public class PermissionPolicy {
             throw new PermissionDeniedException("Customer can only cancel order before it is accepted.");
         }
         if(caller instanceof Customer customer){
-            if(customer.getCustomerId().equals(order.getCustomerId())){
+            if(customer.getUserId().equals(order.getCustomerId())){
                 return;
             }
         }
@@ -67,7 +67,7 @@ public class PermissionPolicy {
             throw new PermissionDeniedException("Only a restaurant owner can change order status.");
         }
         if(caller instanceof RestaurantOwner owner){
-            if(owner.getRestaurantId().equals(order.getRestaurantId())){
+            if(owner.getUserId().equals(order.getRestaurantId())){
                 return;
             }
         }
@@ -88,12 +88,12 @@ public class PermissionPolicy {
             return; // operators can see everything
         }
         if(caller instanceof Customer customer){
-            if(customer.getCustomerId().equals(order.getCustomerId())){
+            if(customer.getUserId().equals(order.getCustomerId())){
                 return;
             }
         }
         if(caller instanceof RestaurantOwner restaurantOwner){
-            if(order.getRestaurantId().equals(restaurantOwner.getRestaurantId())){
+            if(order.getRestaurantId().equals(restaurantOwner.getUserId())){
                 return;
             }
         }

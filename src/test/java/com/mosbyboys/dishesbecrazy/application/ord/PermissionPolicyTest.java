@@ -26,13 +26,13 @@ public class PermissionPolicyTest {
 
     // Helper functions to create users and orders
     private Customer customer(UUID customerId) {
-        return new Customer(UUID.randomUUID(), OffsetDateTime.now(), "A", "B", "a@b.c", "ab", "hash",
-                customerId, OffsetDateTime.now(), "123 Street");
+        return new Customer(customerId, OffsetDateTime.now(), "A", "B", "a@b.c", "ab", "hash",
+                OffsetDateTime.now(), "123 Street");
     }
 
     private RestaurantOwner restaurant(UUID restaurantId) {
-        return new RestaurantOwner(UUID.randomUUID(), OffsetDateTime.now(), "A", "B", "a@b.c", "ab", "hash",
-                restaurantId, OffsetDateTime.now(), "Resto", "OPEN");
+        return new RestaurantOwner(restaurantId, OffsetDateTime.now(), "A", "B", "a@b.c", "ab", "hash",
+                OffsetDateTime.now(), "Resto", "OPEN");
     }
 
     private Operator operator() {
@@ -41,7 +41,7 @@ public class PermissionPolicyTest {
 
     private Courier courier() {
         return new Courier(UUID.randomUUID(), OffsetDateTime.now(), "A", "B", "a@b.c", "ab", "hash",
-                UUID.randomUUID(), OffsetDateTime.now(), "OFF_DUTY", "Montreal");
+                OffsetDateTime.now(), "OFF_DUTY", "Montreal");
     }
 
     private Order orderFor(UUID customerId, UUID restaurantId) {

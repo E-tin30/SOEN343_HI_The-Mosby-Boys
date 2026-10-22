@@ -16,15 +16,15 @@ public final class UserFactory {
             case CUSTOMER -> new Customer(
                     data.userId(), data.createdAt(), data.firstName(), data.lastName(),
                     data.email(), data.username(), data.hashedPassword(),
-                    data.profileId(), data.profileCreatedAt(), data.address());
+                    data.profileCreatedAt(), data.address());
             case COURIER -> new Courier(
                     data.userId(), data.createdAt(), data.firstName(), data.lastName(),
                     data.email(), data.username(), data.hashedPassword(),
-                    data.profileId(), data.profileCreatedAt(), data.state(), data.location());
+                    data.profileCreatedAt(), data.state(), data.location());
             case RESTAURANT -> new RestaurantOwner(
                     data.userId(), data.createdAt(), data.firstName(), data.lastName(),
                     data.email(), data.username(), data.hashedPassword(),
-                    data.profileId(), data.profileCreatedAt(), data.restaurantName(), data.status());
+                    data.profileCreatedAt(), data.restaurantName(), data.status());
             case OPERATOR -> new Operator(
                     data.userId(), data.createdAt(), data.firstName(), data.lastName(),
                     data.email(), data.username(), data.hashedPassword());
@@ -41,13 +41,13 @@ public final class UserFactory {
     @Builder
     public record UserData(UUID userId, OffsetDateTime createdAt,
                            String firstName, String lastName, String email, String username,
-                           String hashedPassword, UUID profileId, OffsetDateTime profileCreatedAt,
+                           String hashedPassword, OffsetDateTime profileCreatedAt,
                            String address, String state, String location,
                            String restaurantName, String status) {
         // Avoid the record's default output, which would expose the password hash.
         @Override
         public String toString() {
-            return "UserData[userId=" + userId + ", profileId=" + profileId + "]";
+            return "UserData[userId=" + userId + "]";
         }
 
         public static class UserDataBuilder {

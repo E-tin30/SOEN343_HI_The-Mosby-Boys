@@ -8,11 +8,13 @@ import com.mosbyboys.dishesbecrazy.domain.ord.MenuItem;
 import com.mosbyboys.dishesbecrazy.domain.ord.Restaurant;
 
 import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
+import com.mosbyboys.dishesbecrazy.technical.repository.UserRepo;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /* Runs the ORD use cases (place, accept, reject, prepare, ready, cancel, get).
@@ -27,6 +29,7 @@ public class ORDFacade {
     private final PermissionPolicy permissionPolicy;
     private final MenuService menuService;
     private final RestaurantService restaurantService;
+    private final UserRepo userRepo;
     private final REGFacade regFacade;
 
     @Transactional
@@ -56,7 +59,9 @@ public class ORDFacade {
     }
 
     @Transactional
-    public Order placeOrder(User user, UUID userId, UUID restaurantId, List<OrderLine> orderLineItems) {
+    public Order placeOrder(UUID userId, UUID restaurantId, List<OrderLine> orderLineItems) {
+        User user = regFacade.getCurrentUser(userId);
+
         //Check Permission
         permissionPolicy.checkCanPlace(user);
 
@@ -83,8 +88,9 @@ public class ORDFacade {
     }
 
     @Transactional
-    public void acceptOrder(User user, UUID orderId) {
+    public void acceptOrder(UUID userId, UUID orderId) {
         Order order = orderService.load(orderId);
+        User user = regFacade.getCurrentUser(userId);
 
         //Check Permission
         permissionPolicy.checkCanActAsRestaurant(user, order);
@@ -99,7 +105,8 @@ public class ORDFacade {
     }
 
     @Transactional
-    public void rejectOrder(User user, UUID orderId, String reason) {
+    public void rejectOrder(UUID userId, UUID orderId, String reason) {
+        User user = regFacade.getCurrentUser(userId);
         Order order = orderService.load(orderId);
 
         //Check Permission
@@ -115,7 +122,8 @@ public class ORDFacade {
     }
 
     @Transactional
-    public void cancelOrder(User user, UUID orderId) {
+    public void cancelOrder(UUID userId, UUID orderId) {
+        User user = regFacade.getCurrentUser(userId);
         Order order = orderService.load(orderId);
 
         //Check Permission
@@ -131,7 +139,8 @@ public class ORDFacade {
     }
 
     @Transactional
-    public void prepareOrder(User user, UUID orderId) {
+    public void prepareOrder(UUID userId, UUID orderId) {
+        User user = regFacade.getCurrentUser(userId);
         Order order = orderService.load(orderId);
 
         //Check Permission
@@ -147,7 +156,8 @@ public class ORDFacade {
     }
 
     @Transactional
-    public void markOrderReady(User user, UUID orderId) {
+    public void markOrderReady(UUID userId, UUID orderId) {
+        User user = regFacade.getCurrentUser(userId);
         Order order = orderService.load(orderId);
 
         //Check Permission
