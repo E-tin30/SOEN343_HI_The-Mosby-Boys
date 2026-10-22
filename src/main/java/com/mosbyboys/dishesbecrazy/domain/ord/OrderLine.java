@@ -1,13 +1,9 @@
 package com.mosbyboys.dishesbecrazy.domain.ord;
 
-import lombok.Getter;
-import lombok.Setter;
-
 import java.math.BigDecimal;
 import java.util.UUID;
 
 /* One menu item plus a quantity inside an order. Quantity must be above 0. */
-@Getter
 public class OrderLine {
 
     private final UUID menuItemId;
@@ -46,4 +42,16 @@ public class OrderLine {
         return unitPrice.multiply(BigDecimal.valueOf(quantity));
     }
 
+    // Getters
+    public UUID getMenuItemId(){
+        return this.menuItemId;
+    }
+
+    public int getQuantity(){
+        return this.quantity;
+    }
+
+    public BigDecimal getUnitPrice(){
+        return this.unitPrice;
+    }
 }

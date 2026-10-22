@@ -22,4 +22,5 @@ public final class Customer extends User {
         this.address = address;
         this.location = location;
     }
+
 }

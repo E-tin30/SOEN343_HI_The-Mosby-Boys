@@ -2,6 +2,11 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth, type LoginTokens } from "./AuthContext";
+import Button from "./components/Button";
+import Heading from "./components/Heading";
+import Input from "./components/Input";
+import TextLogo from "./components/TextLogo";
+import "./styles/LoginPage.css";
 
 export default function LoginPage() {
     const [error, setError] = useState("");
@@ -60,35 +65,53 @@ export default function LoginPage() {
     };
 
     return (
-        <form onSubmit={handleSubmit}>
-            <h1>Login</h1>
+        <main className="login-page">
+            <form className="login-card card" onSubmit={handleSubmit}>
+                <header className="login-card__header">
+                    <TextLogo layout="stacked" />
+                    <Heading level={2}>Welcome ~back.~</Heading>
+                    <p className="login-card__subtitle meta">
+                        Log in to see what's cooking near you.
+                    </p>
+                </header>
 
-            <input
-                type="email"
-                name="email"
-                placeholder="Email"
-                required
-            />
+                <div className="login-card__fields">
+                    <Input
+                        label="Email"
+                        type="email"
+                        name="email"
+                        placeholder="you@example.com"
+                        autoComplete="email"
+                        required
+                    />
 
-            <input
-                type="password"
-                name="password"
-                placeholder="Password"
-                required
-            />
+                    <Input
+                        label="Password"
+                        type="password"
+                        name="password"
+                        placeholder="Password"
+                        autoComplete="current-password"
+                        required
+                    />
+                </div>
 
-            <button type="submit" disabled={loading}>
-                {loading ? "Logging in..." : "Login"}
-            </button>
+                {error && (
+                    <p className="login-card__error" role="alert">
+                        {error}
+                    </p>
+                )}
 
-            {error && <p role="alert">{error}</p>}
+                <Button type="submit" block disabled={loading}>
+                    {loading ? "Logging in..." : "Login"}
+                </Button>
 
-            <button
-                type="button"
-                onClick={() => navigate("/register")}
-            >
-                Register
-            </button>
-        </form>
+                <p className="login-card__footer meta">
+                    New here?{" "}
+                    <Button variant="link" onClick={() => navigate("/register")}>
+                        Create an account
+                    </Button>
+                </p>
+            </form>
+        </main>
     );
 }

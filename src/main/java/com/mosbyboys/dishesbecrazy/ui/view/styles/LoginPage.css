@@ -1,0 +1,53 @@
+.login-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: var(--space-4);
+  background: var(--cream) url("../assets/dishes-be-crazy-background.jpg") right center / cover no-repeat;
+}
+
+/* The plates sit on the right of the image, so wide screens nudge the card left of centre. */
+@media (min-width: 1200px) {
+  .login-page {
+    justify-content: flex-start;
+    padding-left: 22vw;
+  }
+}
+
+.login-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  width: 100%;
+  max-width: var(--card-width-1);
+}
+
+.login-card__header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  text-align: center;
+}
+
+.login-card__subtitle {
+  margin: 0;
+}
+
+.login-card__fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.login-card__error {
+  margin: 0;
+  color: var(--tomato-dark);
+  font-weight: 500;
+}
+
+.login-card__footer {
+  margin: 0;
+  text-align: center;
+}

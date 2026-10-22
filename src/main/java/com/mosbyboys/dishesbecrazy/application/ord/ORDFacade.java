@@ -65,10 +65,9 @@ public class ORDFacade {
         //Check Permission
         permissionPolicy.checkCanPlace(user);
 
-        if (!(user instanceof Customer)) {
+        if (!(user instanceof Customer customer)) {
             throw new PermissionDeniedException("Only a customer can place an order.");
         }
-        Order order = new Order(userId, restaurantId, orderLineItems);
 
         // no orders at a paused or closed restaurant
         Restaurant restaurant = restaurantService.load(restaurantId);
@@ -76,6 +75,7 @@ public class ORDFacade {
             throw new IllegalArgumentException("Restaurant is not accepting orders");
         }
 
+        Order order = new Order(customer.getUserId(), restaurantId, orderLineItems);
         order.getOrderLineItems().forEach(this::checkAgainstMenu);
 
         orderService.save(order);

@@ -1,0 +1,54 @@
+/* Dishes Be Crazy design tokens */
+:root {
+  /* Neutrals */
+  --cream: #F6EEDF;
+  --porcelain: #FBF5EA;
+  --linen: #E4D6BF;
+  --cocoa: #6B5A4E;
+  --espresso: #2A1D17;
+
+  /* Accents (base / dark shade for hover and edges) */
+  --tomato: #E8492E;
+  --tomato-dark: #B8331C;
+  --terracotta: #D9714F;
+  --terracotta-dark: #A8462C;
+  --mustard: #EFBD5A;
+  --mustard-dark: #C8902C;
+  --sage: #9FB39A;
+  --sage-dark: #6F8A6A;
+  --navy: #3D4F72;
+  --navy-dark: #25324D;
+
+  /* Type */
+  --font-display: "Fraunces", Georgia, serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --text-h1: 32px;
+  --text-h2: 24px;
+  --text-h3: 18px;
+  --text-body: 16px;
+  --text-caption: 12px;
+  --tracking-caption: 0.08em;
+
+  /* Radii */
+  --radius-sm: 10px; /* chips, inputs, tags */
+  --radius-md: 16px; /* buttons */
+  --radius-lg: 24px; /* cards */
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  /* Sizing */
+  --control-height: 48px;
+  --border-width: 1px;
+  --focus-width: 2px;
+  --card-width-1: 400px;
+  --card-width-2: 800px;
+
+  /* Warm, espresso-tinted shadows */
+  --shadow-card: 0 2px 4px rgba(42, 29, 23, 0.06), 0 12px 32px rgba(42, 29, 23, 0.1);
+}

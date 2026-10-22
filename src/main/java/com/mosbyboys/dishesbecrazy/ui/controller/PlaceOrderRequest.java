@@ -1,6 +1,5 @@
 package com.mosbyboys.dishesbecrazy.ui.controller;
 
-import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
 
 import java.math.BigDecimal;
 import java.util.List;

@@ -1,32 +1,26 @@
-import {Link, Navigate} from "react-router-dom";
-import {useAuth} from "./AuthContext";
+import { Link } from "react-router-dom";
 
 export default function HomePage() {
-    const { user } = useAuth();
-    if (!user) {
-        return <Navigate to="/login" replace/>;
-    }
+  return (
+    <main>
+      <p><Link to="/restaurants">Browse restaurants</Link></p>
 
-    return (
-        <main>
-            {user.role == "CUSTOMER" && <p><Link to="/restaurants">Browse restaurants</Link></p>}
+      <h1>Dishes Be Crazy</h1>
+      <h2>Home Page</h2>
 
-            <h1>Dishes Be Crazy</h1>
-            <h2>Home Page</h2>
+      <p>Login successful! Welcome to Dishes Be Crazy.</p>
 
-            <p>Login successful! Welcome to Dishes Be Crazy, {user.firstName}.</p>
+      <hr />
 
-            <hr/>
+      <h3>Development Placeholder</h3>
+      <p>
+        This is the starting point for integrating the
+        application's features.
+      </p>
 
-            <h3>Development Placeholder</h3>
-            <p>
-                This is the starting point for integrating the
-                application's features.
-            </p>
-
-            <p>
-                Team members can add their pages and components here.
-            </p>
-        </main>
-    );
+      <p>
+        Team members can add their pages and components here.
+      </p>
+    </main>
+  );
 }

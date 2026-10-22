@@ -3,7 +3,6 @@ package com.mosbyboys.dishesbecrazy.ui.controller;
 import com.mosbyboys.dishesbecrazy.application.ord.ORDFacade;
 import com.mosbyboys.dishesbecrazy.domain.ord.Order;
 import com.mosbyboys.dishesbecrazy.domain.ord.OrderLine;
-import com.mosbyboys.dishesbecrazy.domain.reg.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
