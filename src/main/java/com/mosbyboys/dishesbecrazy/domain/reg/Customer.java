@@ -7,21 +7,16 @@ import com.mosbyboys.dishesbecrazy.domain.ord.Location;
 
 import lombok.Getter;
 
-// Customer fields mirror its Supabase row; inherited userId is Customer.user_id.
+// Customer fields mirror its Supabase row; the inherited userId is also Customer's primary key (user_id).
 @Getter
 public final class Customer extends User {
-    private final UUID customerId;
-    private final OffsetDateTime customerCreatedAt;
     private final String address;
     private final Location location;
 
     public Customer(UUID userId, OffsetDateTime createdAt, String firstName, String lastName, String email,
-                    String username, String hashedPassword,
-                    UUID customerId, OffsetDateTime customerCreatedAt, String address, Location location) {
+                    String username, String hashedPassword, String address, Location location) {
         // The subclass fixes one role; callers cannot supply a conflicting role.
         super(userId, createdAt, firstName, lastName, email, username, hashedPassword, Role.CUSTOMER);
-        this.customerId = customerId;
-        this.customerCreatedAt = customerCreatedAt;
         this.address = address;
         this.location = location;
     }

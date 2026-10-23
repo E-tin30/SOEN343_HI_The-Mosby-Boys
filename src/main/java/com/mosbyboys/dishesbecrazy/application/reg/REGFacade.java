@@ -5,6 +5,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 
+import com.mosbyboys.dishesbecrazy.application.ord.RestaurantService;
 import com.mosbyboys.dishesbecrazy.domain.reg.UserFactory;
 import com.mosbyboys.dishesbecrazy.domain.reg.User;
 import com.mosbyboys.dishesbecrazy.domain.reg.Role;
@@ -15,6 +16,7 @@ import com.mosbyboys.dishesbecrazy.technical.repository.UserRepo.UserProfile;
 @RequiredArgsConstructor 
 public class REGFacade {
     private final AuthService authService;
+    private final RestaurantService restaurantService;
     private final UserFactory userFactory = new UserFactory();
 
 
@@ -34,6 +36,10 @@ public class REGFacade {
     public User getCurrentUser(UUID id) {
         UserProfile p = authService.getUserById(id);
         Role role = Role.valueOf(p.role().toUpperCase());
+        if (role == Role.RESTAURANT) {
+            // A restaurant account is its Restaurant; RestaurantService loads it with its User fields.
+            return restaurantService.load(id);
+        }
         return userFactory.createUser(role, UserFactory.UserData.builder()
             .userId(p.id())
             .firstName(p.firstName())
