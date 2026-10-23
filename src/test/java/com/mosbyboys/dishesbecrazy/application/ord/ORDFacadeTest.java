@@ -20,12 +20,12 @@ import com.mosbyboys.dishesbecrazy.domain.ord.MenuItem;
 import com.mosbyboys.dishesbecrazy.domain.ord.Order;
 import com.mosbyboys.dishesbecrazy.domain.ord.OrderLine;
 import com.mosbyboys.dishesbecrazy.domain.ord.Restaurant;
+import com.mosbyboys.dishesbecrazy.domain.ord.RestaurantStatus;
 import com.mosbyboys.dishesbecrazy.domain.ord.state.AcceptedState;
 import com.mosbyboys.dishesbecrazy.domain.ord.state.IllegalTransitionException;
 import com.mosbyboys.dishesbecrazy.domain.ord.state.PlacedState;
 import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
 import com.mosbyboys.dishesbecrazy.domain.reg.Operator;
-import com.mosbyboys.dishesbecrazy.domain.reg.RestaurantOwner;
 
 class ORDFacadeTest {
 
@@ -52,18 +52,21 @@ class ORDFacadeTest {
         // same order as the fields in ORDFacade
         facade = new ORDFacade(orderService, orderEventService, new PermissionPolicy(),
                 queues, menuService, restaurantService, regFacade);
+        // The facade looks the caller up through REGFacade, so tell the mock who each id is.
+        when(regFacade.getCurrentUser(customerId)).thenReturn(customer());
+        when(regFacade.getCurrentUser(restaurantId)).thenReturn(owner(restaurantId));
     }
 
     // helpers
 
     private Customer customer() {
-        return new Customer(UUID.randomUUID(), OffsetDateTime.now(), "A", "B", "a@b.c", "ab", "hash",
-                customerId, OffsetDateTime.now(), "123 Street", new Location(45.5, -73.6));
+        return new Customer(customerId, OffsetDateTime.now(), "A", "B", "a@b.c", "ab", "hash",
+                "123 Street", new Location(45.5, -73.6));
     }
 
-    private RestaurantOwner owner(UUID forRestaurant) {
-        return new RestaurantOwner(UUID.randomUUID(), OffsetDateTime.now(), "A", "B", "a@b.c", "ab", "hash",
-                forRestaurant, OffsetDateTime.now(), "Resto", "OPEN");
+    private Restaurant owner(UUID forRestaurant) {
+        return new Restaurant(forRestaurant, OffsetDateTime.now(), "A", "B", "a@b.c", "ab", "hash",
+                "Resto", RestaurantStatus.OPEN, null);
     }
     
     private Operator operator() {
@@ -145,7 +148,7 @@ class ORDFacadeTest {
         Order order = storedOrder();
         queues.placed(restaurantId).enqueue(order.getId());
 
-        facade.acceptOrder(owner(restaurantId), order.getId());
+        facade.acceptOrder(restaurantId, order.getId());
 
         assertInstanceOf(AcceptedState.class, order.getState());
         assertFalse(queues.placed(restaurantId).contains(order.getId()));
@@ -157,9 +160,11 @@ class ORDFacadeTest {
     void anotherRestaurantCannotAcceptAndTheQueuesAreUntouched() {
         Order order = storedOrder();
         queues.placed(restaurantId).enqueue(order.getId());
+        UUID otherRestaurant = UUID.randomUUID();
+        when(regFacade.getCurrentUser(otherRestaurant)).thenReturn(owner(otherRestaurant));
 
         assertThrows(PermissionDeniedException.class,
-                () -> facade.acceptOrder(owner(UUID.randomUUID()), order.getId()));
+                () -> facade.acceptOrder(otherRestaurant, order.getId()));
 
         assertInstanceOf(PlacedState.class, order.getState());
         assertTrue(queues.placed(restaurantId).contains(order.getId()));
@@ -172,7 +177,7 @@ class ORDFacadeTest {
         Order order = storedOrder();
         queues.placed(restaurantId).enqueue(order.getId());
 
-        facade.rejectOrder(owner(restaurantId), order.getId(), "Out of ingredients");
+        facade.rejectOrder(restaurantId, order.getId(), "Out of ingredients");
 
         assertFalse(queues.placed(restaurantId).contains(order.getId()));
         assertFalse(queues.preparation(restaurantId).contains(order.getId()));
@@ -185,7 +190,7 @@ class ORDFacadeTest {
         Order first = acceptedAndQueued();
         Order second = acceptedAndQueued();
 
-        facade.prepareOrder(owner(restaurantId), first.getId());
+        facade.prepareOrder(restaurantId, first.getId());
 
         assertFalse(queues.preparation(restaurantId).contains(first.getId()));
         assertEquals(second.getId(), queues.preparation(restaurantId).peek());
@@ -197,7 +202,7 @@ class ORDFacadeTest {
         Order second = acceptedAndQueued();
 
         assertThrows(IllegalStateException.class,
-                () -> facade.prepareOrder(owner(restaurantId), second.getId()));
+                () -> facade.prepareOrder(restaurantId, second.getId()));
 
         assertEquals(first.getId(), queues.preparation(restaurantId).peek()); // front unchanged
         assertEquals(2, queues.preparation(restaurantId).size()); // nothing removed
@@ -210,9 +215,9 @@ class ORDFacadeTest {
     @Test
     void markingReadyJoinsTheReadyQueue() {
         Order order = acceptedAndQueued();
-        facade.prepareOrder(owner(restaurantId), order.getId());
+        facade.prepareOrder(restaurantId, order.getId());
 
-        facade.markOrderReady(owner(restaurantId), order.getId());
+        facade.markOrderReady(restaurantId, order.getId());
 
         assertTrue(queues.ready(restaurantId).contains(order.getId()));
     }
@@ -223,7 +228,7 @@ class ORDFacadeTest {
         queues.placed(restaurantId).enqueue(order.getId());
 
         assertThrows(IllegalTransitionException.class,
-                () -> facade.markOrderReady(owner(restaurantId), order.getId()));
+                () -> facade.markOrderReady(restaurantId, order.getId()));
 
         assertTrue(queues.placed(restaurantId).contains(order.getId()));
         assertFalse(queues.ready(restaurantId).contains(order.getId()));
@@ -235,8 +240,9 @@ class ORDFacadeTest {
     void cancellingRemovesTheOrderFromWhicheverQueueHoldsIt() {
         Order order = acceptedAndQueued(); // waiting in preparation
         Operator operator = operator();
+        when(regFacade.getCurrentUser(operator.getUserId())).thenReturn(operator);
 
-        facade.cancelOrder(operator, order.getId());
+        facade.cancelOrder(operator.getUserId(), order.getId());
 
         assertFalse(queues.preparation(restaurantId).contains(order.getId()));
     }

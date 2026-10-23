@@ -26,7 +26,7 @@ public class RestaurantController {
 
     public record RestaurantResponse(UUID id, String name, String status) {
     static RestaurantResponse from(Restaurant r) {
-        return new RestaurantResponse(r.getId(), r.getName(), r.getStatus().name());
+        return new RestaurantResponse(r.getUserId(), r.getName(), r.getStatus().name());
     }
 }
 

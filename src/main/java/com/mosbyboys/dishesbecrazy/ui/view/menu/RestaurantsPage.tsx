@@ -21,12 +21,12 @@ export default function RestaurantsPage() {
   const [restaurants, setRestaurants] = useState<Restaurant[] | null>(null);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (!accessToken) return;
-    getRestaurants(accessToken)
-      .then(setRestaurants)
-      .catch((e: Error) => setError(e.message));
-  }, [accessToken]);
+    useEffect(() => {
+        if (!accessToken) return;
+        getRestaurants(accessToken)
+            .then(setRestaurants)
+            .catch((e: Error) => setError(e.message));
+    }, [accessToken]);
 
   return (
     <div className="page">

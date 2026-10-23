@@ -11,8 +11,9 @@
 ## Demo profile seed
 
 `src/main/resources/demo/profiles.json` defines one fictional profile per role.
-JSON does not support comments; `profileId` identifies the linked table row,
-while Supabase Auth supplies the shared user ID.
+Supabase Auth supplies each account's user ID, which is also the primary key of its
+`Customer`, `Courier`, or `Restaurant` row. `demo/menu.json` therefore names its
+restaurant by its username (`restaurantUsername`) instead of a fixed UUID.
 The current schema stores credentials in Supabase Auth: `public."User".id` must
 reference `auth.users.id`. The loader uses the Supabase Admin API to create missing
 confirmed Auth accounts, then links their profile rows. It does not send invitation emails.

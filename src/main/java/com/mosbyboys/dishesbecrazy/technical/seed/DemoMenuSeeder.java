@@ -37,18 +37,31 @@ public class DemoMenuSeeder implements CommandLineRunner {
 
         transaction.executeWithoutResult(status -> {
             for (MenuSeed item : items) {
-                seed(item);
+                seed(item, restaurantIdFor(item.restaurantUsername()));
             }
         });
         System.out.println("Demo menu items ready.");
     }
 
-    private void seed(MenuSeed item) {
+    // A restaurant's id is its user id, which Supabase Auth assigns when the profile seeder runs,
+    // so menu.json names the restaurant by username instead.
+    private UUID restaurantIdFor(String username) {
+        var ids = jdbc.queryForList("""
+                SELECT r.user_id FROM public."Restaurant" r
+                JOIN public."User" u ON u.id = r.user_id WHERE u.username = ?
+                """, UUID.class, username);
+        if (ids.size() != 1) {
+            throw new IllegalStateException("No single demo restaurant has username " + username);
+        }
+        return ids.getFirst();
+    }
+
+    private void seed(MenuSeed item, UUID restaurantId) {
         jdbc.update("""
                 INSERT INTO public."MenuItem" (id, restaurant_id, name, price, stock_quantity, status, description)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT (id) DO NOTHING
-                """, item.id(), item.restaurantId(), item.name(), item.price(), item.stockQuantity(), item.status().name(), item.description());
+                """, item.id(), restaurantId, item.name(), item.price(), item.stockQuantity(), item.status().name(), item.description());
     }
 
     void validate(MenuSeed[] items) {
@@ -60,8 +73,8 @@ public class DemoMenuSeeder implements CommandLineRunner {
             if (item.id() == null || !ids.add(item.id())) {
                 throw new IllegalArgumentException("Menu items require a unique id.");
             }
-            if (item.restaurantId() == null) {
-                throw new IllegalArgumentException("Menu item " + item.id() + " requires a restaurantId.");
+            if (item.restaurantUsername() == null || item.restaurantUsername().isBlank()) {
+                throw new IllegalArgumentException("Menu item " + item.id() + " requires a restaurantUsername.");
             }
             if (item.name() == null || item.name().isBlank()) {
                 throw new IllegalArgumentException("Menu item " + item.id() + " requires a name.");
@@ -81,6 +94,6 @@ public class DemoMenuSeeder implements CommandLineRunner {
         }
     }
 
-    public record MenuSeed(UUID id, UUID restaurantId, String name, BigDecimal price,
+    public record MenuSeed(UUID id, String restaurantUsername, String name, BigDecimal price,
                        int stockQuantity, MenuItemStatus status, String description) {}
 }

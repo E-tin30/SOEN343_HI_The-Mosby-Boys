@@ -5,7 +5,6 @@
     "lastName": "Demo",
     "username": "demo_customer",
     "role": "CUSTOMER",
-    "profileId": "34300000-0000-4000-8000-000000000001",
     "address": "123 Demo Street, Montreal",
     "latitude": 45.5088,
     "longitude": -73.5540
@@ -16,7 +15,6 @@
     "lastName": "Demo",
     "username": "demo_restaurant",
     "role": "RESTAURANT",
-    "profileId": "34300000-0000-4000-8000-000000000002",
     "restaurantName": "Dishes Be Crazy Demo",
     "status": "OPEN",
     "latitude": 45.5017,
@@ -28,7 +26,6 @@
     "lastName": "Demo",
     "username": "demo_courier",
     "role": "COURIER",
-    "profileId": "34300000-0000-4000-8000-000000000003",
     "state": "OFF_DUTY",
     "latitude": 45.5200,
     "longitude": -73.5800

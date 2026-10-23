@@ -17,7 +17,7 @@ export type CurrentUser = {
   firstName: string;
   lastName: string;
   username: string;
-  role: "customer" | "restaurant" | "courier" | "operator";
+  role: "CUSTOMER" | "RESTAURANT" | "COURIER" | "OPERATOR";
 };
 
 type AuthContextType = {

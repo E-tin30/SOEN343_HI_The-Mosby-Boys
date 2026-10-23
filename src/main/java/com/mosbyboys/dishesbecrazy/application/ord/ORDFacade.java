@@ -1,13 +1,5 @@
 package com.mosbyboys.dishesbecrazy.application.ord;
 
-import java.util.List;
-import java.util.UUID;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;   // CHANGED: Spring's, not jakarta
-
-import com.mosbyboys.dishesbecrazy.domain.ord.MenuItem;
-import com.mosbyboys.dishesbecrazy.domain.ord.MenuItemStatus;
 import com.mosbyboys.dishesbecrazy.domain.ord.Order;
 import com.mosbyboys.dishesbecrazy.domain.ord.OrderLine;
 import com.mosbyboys.dishesbecrazy.domain.ord.PreparationQueue;
@@ -15,13 +7,14 @@ import com.mosbyboys.dishesbecrazy.domain.ord.Restaurant;
 import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
 import com.mosbyboys.dishesbecrazy.domain.reg.User;
 import com.mosbyboys.dishesbecrazy.domain.ord.MenuItem;
-import com.mosbyboys.dishesbecrazy.domain.ord.Restaurant;
 
 import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+import java.util.UUID;
 
 /* Runs the ORD use cases (place, accept, reject, prepare, ready, cancel).
 Every command: load, check permission, change the order's state, save it, record an event,
@@ -46,7 +39,8 @@ public class ORDFacade {
                 return restaurantService.findOpen();
             }
             case RESTAURANT-> {
-                return restaurantService.findByOwner(user.getUserId());
+                // A restaurant account is exactly one restaurant.
+                return List.of(restaurantService.load(user.getUserId()));
             }
             case OPERATOR -> {
                 return restaurantService.findAll();
@@ -67,6 +61,7 @@ public class ORDFacade {
 
     @Transactional
     public Order placeOrder(User user, UUID restaurantId, List<OrderLine> orderLineItems) {
+        //Check Permission
         permissionPolicy.checkCanPlace(user);
 
         if (!(user instanceof Customer customer)) {
@@ -79,7 +74,7 @@ public class ORDFacade {
             throw new IllegalArgumentException("Restaurant is not accepting orders");
         }
 
-        Order order = new Order(customer.getCustomerId(), restaurantId, orderLineItems);
+        Order order = new Order(customer.getUserId(), restaurantId, orderLineItems);
         order.getOrderLineItems().forEach(this::checkAgainstMenu);
 
         orderService.save(order);
@@ -103,8 +98,11 @@ public class ORDFacade {
     }
 
     @Transactional
-    public void acceptOrder(User user, UUID orderId) {
+    public void acceptOrder(UUID userId, UUID orderId) {
         Order order = orderService.load(orderId);
+        User user = regFacade.getCurrentUser(userId);
+
+        //Check Permission
         permissionPolicy.checkCanActAsRestaurant(user, order);
         String before = order.getState().toString();
 
@@ -119,7 +117,8 @@ public class ORDFacade {
     }
 
     @Transactional
-    public void rejectOrder(User user, UUID orderId, String reason) {
+    public void rejectOrder(UUID userId, UUID orderId, String reason) {
+        User user = regFacade.getCurrentUser(userId);
         Order order = orderService.load(orderId);
         permissionPolicy.checkCanActAsRestaurant(user, order);
         String before = order.getState().toString();
@@ -134,7 +133,8 @@ public class ORDFacade {
     }
 
     @Transactional
-    public void cancelOrder(User user, UUID orderId) {
+    public void cancelOrder(UUID userId, UUID orderId) {
+        User user = regFacade.getCurrentUser(userId);
         Order order = orderService.load(orderId);
         permissionPolicy.checkCanCancel(user, order);
         String before = order.getState().toString();
@@ -151,7 +151,8 @@ public class ORDFacade {
     }
 
     @Transactional
-    public void prepareOrder(User user, UUID orderId) {
+    public void prepareOrder(UUID userId, UUID orderId) {
+        User user = regFacade.getCurrentUser(userId);
         Order order = orderService.load(orderId);
         permissionPolicy.checkCanActAsRestaurant(user, order);
 
@@ -172,7 +173,8 @@ public class ORDFacade {
     }
 
     @Transactional
-    public void markOrderReady(User user, UUID orderId) {
+    public void markOrderReady(UUID userId, UUID orderId) {
+        User user = regFacade.getCurrentUser(userId);
         Order order = orderService.load(orderId);
         permissionPolicy.checkCanActAsRestaurant(user, order);
         String before = order.getState().toString();
@@ -181,7 +183,6 @@ public class ORDFacade {
 
         orderService.save(order);
         orderEventService.save(orderId, before, order.getState().toString(), user.getUserId(), "READY");
-        // NEW
         queues.ready(order.getRestaurantId()).enqueue(orderId);
     }
 
