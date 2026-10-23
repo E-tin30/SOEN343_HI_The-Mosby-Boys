@@ -9,6 +9,7 @@ import static org.mockito.Mockito.*;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -232,6 +233,30 @@ class ORDFacadeTest {
 
         assertTrue(queues.placed(restaurantId).contains(order.getId()));
         assertFalse(queues.ready(restaurantId).contains(order.getId()));
+    }
+
+    // restaurant orders
+
+    @Test
+    void aRestaurantSeesItsOrdersWithItemNamesAndWhichIsNextToPrepare() {
+        Order first = acceptedAndQueued();
+        Order second = acceptedAndQueued();
+        when(orderService.findForRestaurant(eq(restaurantId), any())).thenReturn(List.of(first, second));
+        when(menuService.getNames(any())).thenReturn(Map.of(menuItemId, "Pizza"));
+
+        List<RestaurantOrderView> views = facade.getRestaurantOrders(owner(restaurantId));
+
+        assertEquals(2, views.size());
+        assertEquals("Pizza", views.get(0).itemNames().get(menuItemId));
+        assertTrue(views.get(0).nextToPrepare());
+        assertFalse(views.get(1).nextToPrepare());
+    }
+
+    @Test
+    void aCustomerCannotViewARestaurantsOrders() {
+        assertThrows(PermissionDeniedException.class, () -> facade.getRestaurantOrders(customer()));
+
+        verify(orderService, never()).findForRestaurant(any(), any());
     }
 
     // cancel

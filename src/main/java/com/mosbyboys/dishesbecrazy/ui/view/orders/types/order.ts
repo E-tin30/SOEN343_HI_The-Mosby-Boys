@@ -14,4 +14,6 @@ export type RestaurantOrder = {
   placedAt: string;
   lines: OrderLine[];
   total: number;
+  // True only for the accepted order at the front of the preparation line.
+  nextToPrepare: boolean;
 };

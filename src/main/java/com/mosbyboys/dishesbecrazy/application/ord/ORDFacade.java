@@ -14,7 +14,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /* Runs the ORD use cases (place, accept, reject, prepare, ready, cancel).
 Every command: load, check permission, change the order's state, save it, record an event,
@@ -57,6 +59,32 @@ public class ORDFacade {
         Restaurant restaurant = restaurantService.load(restaurantId);   
         permissionPolicy.checkCanBrowseMenu(user, restaurant);        
         return menuService.getMenu(restaurantId); 
+    }
+
+    // States that still show on a restaurant's queue screen.
+    private static final List<String> QUEUE_STATES =
+            List.of("PlacedState", "AcceptedState", "PreparingState", "ReadyState");
+
+    @Transactional
+    public List<RestaurantOrderView> getRestaurantOrders(User user) {
+        // A restaurant account is exactly one restaurant, so it only ever sees its own orders.
+        if (!(user instanceof Restaurant restaurant)) {
+            throw new PermissionDeniedException("Only a restaurant can view its order queues.");
+        }
+        UUID restaurantId = restaurant.getUserId();
+
+        List<Order> orders = orderService.findForRestaurant(restaurantId, QUEUE_STATES);
+        Map<UUID, String> itemNames = menuService.getNames(orders.stream()
+                .flatMap(o -> o.getOrderLineItems().stream())
+                .map(OrderLine::getMenuItemId)
+                .collect(Collectors.toSet()));
+
+        PreparationQueue line = queues.preparation(restaurantId);
+        UUID next = line.size() > 0 ? line.peek() : null;
+
+        return orders.stream()
+                .map(o -> new RestaurantOrderView(o, itemNames, o.getId().equals(next)))
+                .toList();
     }
 
     @Transactional
