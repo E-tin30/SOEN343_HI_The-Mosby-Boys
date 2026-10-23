@@ -45,6 +45,10 @@
   width: 100%;
 }
 
+.registration-card__full {
+  grid-column: 1 / -1;
+}
+
 .registration-card__footer {
   text-align: center;
 }

@@ -105,13 +105,33 @@ export default function Register(){
                         </select>
                     </div>
                     {role === "CUSTOMER" && (
-                        <p><input name="address" placeholder="Delivery address" required /></p>
+                        <div className="registration-card__full">
+                            <Input
+                                label="Delivery address"
+                                name="address"
+                                placeholder="1455 De Maisonneuve Blvd. W., Montreal"
+                                autoComplete="street-address"
+                                required
+                            />
+                        </div>
                     )}
 
                     {role === "RESTAURANT" && (
                         <>
-                        <p><input name="restaurantName" placeholder="Restaurant name" required /></p>
-                        <p><input name="address" placeholder="Restaurant address" required /></p>
+                            <Input
+                                label="Restaurant name"
+                                name="restaurantName"
+                                placeholder="Restaurant name"
+                                autoComplete="organization"
+                                required
+                            />
+                            <Input
+                                label="Restaurant address"
+                                name="address"
+                                placeholder="1455 De Maisonneuve Blvd. W., Montreal"
+                                autoComplete="street-address"
+                                required
+                            />
                         </>
                     )}
                 </div>

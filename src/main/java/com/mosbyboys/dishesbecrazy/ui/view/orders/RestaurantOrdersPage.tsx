@@ -31,7 +31,7 @@ const ACTIONS: Record<QueueStatus, OrderAction[]> = {
   READY: [],
 };
 
-// TODO: replace with the restaurant's orders once the backend is set up.
+// Sample Orders: replace with the restaurant's orders once the backend is set up.
 const SAMPLE_ORDERS: RestaurantOrder[] = [
   {
     id: "a3f9c2d1-0000-0000-0000-000000000001",
@@ -81,7 +81,7 @@ const formatTime = (iso: string) =>
 
 export default function RestaurantOrdersPage() {
   const navigate = useNavigate();
-  const orders = SAMPLE_ORDERS;
+  const orders = SAMPLE_ORDERS; // Replace with the restaurant's orders once the backend is set up.
 
   return (
     <div className="page">
