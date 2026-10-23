@@ -7,7 +7,7 @@ import com.mosbyboys.dishesbecrazy.domain.ord.Location;
 
 import lombok.Getter;
 
-// Courier state stays text, matching Supabase; location is lat/long, userId is Courier.user_id.
+// Courier state stays text, matching Supabase; location is lat/long; userId is also Courier's primary key (user_id).
 @Getter
 public final class Courier extends User {
     private final OffsetDateTime courierCreatedAt;

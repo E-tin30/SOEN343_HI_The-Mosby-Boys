@@ -8,6 +8,5 @@ import java.util.List;
 import java.util.UUID;
 
 public interface RestaurantRepo extends JpaRepository<RestaurantEntity, UUID> {
-    List<RestaurantEntity> findByOwnerId(UUID ownerId);
     List<RestaurantEntity> findByStatus(RestaurantStatus status);
 }

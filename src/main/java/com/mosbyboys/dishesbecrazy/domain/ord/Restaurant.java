@@ -1,22 +1,27 @@
 package com.mosbyboys.dishesbecrazy.domain.ord;
 
-import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.UUID;
+
+import com.mosbyboys.dishesbecrazy.domain.reg.Role;
+import com.mosbyboys.dishesbecrazy.domain.reg.User;
 
 import lombok.Getter;
 
+// The restaurant account type: one account is one restaurant, so getUserId() is the restaurant's id.
 @Getter
-public class Restaurant {
+public class Restaurant extends User {
 
-    private final UUID id;
-    private final UUID ownerId;
     private final String name;
     private final Location location;
-    private final Instant createdAt;
     private RestaurantStatus status;
 
-    public Restaurant(UUID id, UUID ownerId, String name, RestaurantStatus status, Location location, Instant createdAt) {
-        if (id == null) {
+    public Restaurant(UUID userId, OffsetDateTime createdAt, String firstName, String lastName, String email,
+                      String username, String hashedPassword,
+                      String name, RestaurantStatus status, Location location) {
+        // The subclass fixes one role; callers cannot supply a conflicting role.
+        super(userId, createdAt, firstName, lastName, email, username, hashedPassword, Role.RESTAURANT);
+        if (userId == null) {
             throw new IllegalArgumentException("Restaurant id must not be null");
         }
         if (name == null || name.isBlank()) {
@@ -25,12 +30,9 @@ public class Restaurant {
         if (status == null) {
             throw new IllegalArgumentException("Restaurant status must not be null");
         }
-        this.id = id;
-        this.ownerId = ownerId;
         this.name = name;
         this.status = status;
         this.location = location;
-        this.createdAt = createdAt;
     }
 
     public void pause() {
@@ -51,9 +53,5 @@ public class Restaurant {
 
     public boolean acceptsOrders() {
         return isOpen();
-    }
-
-    public boolean isOwnedBy(UUID userId) {
-        return ownerId != null && ownerId.equals(userId);
     }
 }

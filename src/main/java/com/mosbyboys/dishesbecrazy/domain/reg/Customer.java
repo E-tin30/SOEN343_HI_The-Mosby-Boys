@@ -7,7 +7,7 @@ import com.mosbyboys.dishesbecrazy.domain.ord.Location;
 
 import lombok.Getter;
 
-// Customer fields mirror its Supabase row; inherited userId is Customer.user_id.
+// Customer fields mirror its Supabase row; the inherited userId is also Customer's primary key (user_id).
 @Getter
 public final class Customer extends User {
     private final OffsetDateTime customerCreatedAt;

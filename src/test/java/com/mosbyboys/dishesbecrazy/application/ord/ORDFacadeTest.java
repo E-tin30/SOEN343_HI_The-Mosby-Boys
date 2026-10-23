@@ -11,7 +11,6 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import com.mosbyboys.dishesbecrazy.technical.repository.UserRepo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -21,12 +20,12 @@ import com.mosbyboys.dishesbecrazy.domain.ord.MenuItem;
 import com.mosbyboys.dishesbecrazy.domain.ord.Order;
 import com.mosbyboys.dishesbecrazy.domain.ord.OrderLine;
 import com.mosbyboys.dishesbecrazy.domain.ord.Restaurant;
+import com.mosbyboys.dishesbecrazy.domain.ord.RestaurantStatus;
 import com.mosbyboys.dishesbecrazy.domain.ord.state.AcceptedState;
 import com.mosbyboys.dishesbecrazy.domain.ord.state.IllegalTransitionException;
 import com.mosbyboys.dishesbecrazy.domain.ord.state.PlacedState;
 import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
 import com.mosbyboys.dishesbecrazy.domain.reg.Operator;
-import com.mosbyboys.dishesbecrazy.domain.reg.RestaurantOwner;
 
 class ORDFacadeTest {
 
@@ -59,12 +58,12 @@ class ORDFacadeTest {
 
     private Customer customer() {
         return new Customer(customerId, OffsetDateTime.now(), "A", "B", "a@b.c", "ab", "hash",
-                OffsetDateTime.now(), "123 Street", new Location(45.5, -73.6));
+                "123 Street", new Location(45.5, -73.6));
     }
 
-    private RestaurantOwner owner(UUID forRestaurant) {
-        return new RestaurantOwner(forRestaurant, OffsetDateTime.now(), "A", "B", "a@b.c", "ab", "hash",
-                OffsetDateTime.now(), "Resto", "OPEN");
+    private Restaurant owner(UUID forRestaurant) {
+        return new Restaurant(forRestaurant, OffsetDateTime.now(), "A", "B", "a@b.c", "ab", "hash",
+                "Resto", RestaurantStatus.OPEN, null);
     }
     
     private Operator operator() {

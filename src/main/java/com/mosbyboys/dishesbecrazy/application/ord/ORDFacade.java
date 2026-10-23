@@ -39,7 +39,8 @@ public class ORDFacade {
                 return restaurantService.findOpen();
             }
             case RESTAURANT-> {
-                return restaurantService.findByOwner(user.getUserId());
+                // A restaurant account is exactly one restaurant.
+                return List.of(restaurantService.load(user.getUserId()));
             }
             case OPERATOR -> {
                 return restaurantService.findAll();

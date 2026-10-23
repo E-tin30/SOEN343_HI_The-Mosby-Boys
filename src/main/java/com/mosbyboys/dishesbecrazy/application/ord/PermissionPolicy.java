@@ -4,11 +4,9 @@ import org.springframework.stereotype.Component;
 
 import com.mosbyboys.dishesbecrazy.domain.ord.Order;
 import com.mosbyboys.dishesbecrazy.domain.ord.Restaurant;
-import com.mosbyboys.dishesbecrazy.domain.ord.RestaurantStatus;
 import com.mosbyboys.dishesbecrazy.domain.ord.state.PlacedState;
 import com.mosbyboys.dishesbecrazy.domain.reg.User;
 import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
-import com.mosbyboys.dishesbecrazy.domain.reg.RestaurantOwner;
 import com.mosbyboys.dishesbecrazy.domain.reg.Role;
 
 /* Checks if the logged-in user is allowed to do a command, based on their role
@@ -66,8 +64,8 @@ public class PermissionPolicy {
         if(caller.getRole() != Role.RESTAURANT){
             throw new PermissionDeniedException("Only a restaurant owner can change order status.");
         }
-        if(caller instanceof RestaurantOwner owner){
-            if(owner.getUserId().equals(order.getRestaurantId())){
+        if(caller instanceof Restaurant restaurant){
+            if(restaurant.getUserId().equals(order.getRestaurantId())){
                 return;
             }
         }
@@ -92,8 +90,8 @@ public class PermissionPolicy {
                 return;
             }
         }
-        if(caller instanceof RestaurantOwner restaurantOwner){
-            if(order.getRestaurantId().equals(restaurantOwner.getUserId())){
+        if(caller instanceof Restaurant restaurant){
+            if(order.getRestaurantId().equals(restaurant.getUserId())){
                 return;
             }
         }
@@ -117,7 +115,7 @@ public class PermissionPolicy {
              return;
              }  
         case RESTAURANT -> {
-            if (restaurant.isOwnedBy(caller.getUserId())) return;
+            if (restaurant.getUserId().equals(caller.getUserId())) return;
             throw new PermissionDeniedException("Cannot view another restaurant's menu.");
         }
         case CUSTOMER -> {
