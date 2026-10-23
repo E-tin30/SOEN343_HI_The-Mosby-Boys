@@ -12,18 +12,20 @@ export type LoginTokens = {
   expiresIn: number;
 };
 
+export type Role = "CUSTOMER" | "RESTAURANT" | "COURIER" | "OPERATOR";
+
 export type CurrentUser = {
   id: string;
   firstName: string;
   lastName: string;
   username: string;
-  role: "CUSTOMER" | "RESTAURANT" | "COURIER" | "OPERATOR";
+  role: Role;
 };
 
 type AuthContextType = {
   user: CurrentUser | null;
   accessToken: string | null;
-  completeLogin: (tokens: LoginTokens) => Promise<void>;
+  completeLogin: (tokens: LoginTokens) => Promise<CurrentUser>;
   logout: () => void;
 };
 
@@ -35,7 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
 
-  async function completeLogin(tokens: LoginTokens) {
+  async function completeLogin(tokens: LoginTokens): Promise<CurrentUser> {
     const response = await fetch("http://localhost:8080/api/auth/me", {
       headers: {
         Authorization: `Bearer ${tokens.accessToken}`,
@@ -50,6 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     setAccessToken(tokens.accessToken);
     setUser(profile);
+    return profile;
   }
 
   function logout() {

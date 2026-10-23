@@ -12,6 +12,7 @@ import {
 import LoginPage from "./LoginPage";
 import RegistrationPage from "./RegistrationPage";
 import HomePage from "./HomePage";
+import RestaurantHomePage from "./RestaurantHomePage";
 import RestaurantsPage from "./menu/RestaurantsPage";
 import MenuPage from "./menu/MenuPage";
 import {CartProvider} from "./CartContext";
@@ -29,15 +30,23 @@ createRoot(document.getElementById("root")!).render(
                     <Route
                         path="/home"
                         element={
-                            <ProtectedRoute>
+                            <ProtectedRoute allowedRoles={["CUSTOMER", "COURIER", "OPERATOR"]}>
                                 <HomePage/>
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/restaurant/home"
+                        element={
+                            <ProtectedRoute allowedRoles={["RESTAURANT"]}>
+                                <RestaurantHomePage/>
                             </ProtectedRoute>
                         }
                     />
                     <Route
                         path="/restaurants"
                         element={
-                            <ProtectedRoute>
+                            <ProtectedRoute allowedRoles={["CUSTOMER"]}>
                                 <RestaurantsPage/>
                             </ProtectedRoute>
                         }
@@ -45,14 +54,18 @@ createRoot(document.getElementById("root")!).render(
                     <Route
                         path="/restaurants/:restaurantId/menu"
                         element={
-                            <ProtectedRoute>
+                            <ProtectedRoute allowedRoles={["CUSTOMER"]}>
                                 <MenuPage/>
                             </ProtectedRoute>
                         }
                     />
                     <Route
                         path="/cart"
-                        element={<CartPage/>}
+                        element={
+                            <ProtectedRoute allowedRoles={["CUSTOMER"]}>
+                                <CartPage/>
+                            </ProtectedRoute>
+                        }
                     />
                 </Routes>
             </CartProvider>
