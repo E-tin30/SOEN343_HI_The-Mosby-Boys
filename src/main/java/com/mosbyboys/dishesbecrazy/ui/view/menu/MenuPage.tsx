@@ -69,8 +69,8 @@ export default function MenuPage() {
                     <Heading level={3}>{item.name}</Heading>
                     {item.description && <p className="menu-item__description meta">{item.description}</p>}
                   </div>
-                  <div className="menu-item__side">
-                    <span className="menu-item__price">${item.price.toFixed(2)}</span>
+                  <div className="list-card__side">
+                    <span className="list-card__price">${item.price.toFixed(2)}</span>
                     {soldOut && <Tag>Sold out</Tag>}
                   </div>
                   {isCustomer && (
