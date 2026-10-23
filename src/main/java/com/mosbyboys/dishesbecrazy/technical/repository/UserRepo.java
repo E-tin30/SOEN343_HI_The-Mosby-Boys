@@ -1,13 +1,17 @@
 package com.mosbyboys.dishesbecrazy.technical.repository;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.UUID;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.mosbyboys.dishesbecrazy.domain.ord.Location;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.HttpClientErrorException;
@@ -27,6 +31,9 @@ public class UserRepo{
     public record UserProfile(UUID id, String firstName, String lastName, String username, String role) {
 
     }
+
+    private static final RowMapper<UserProfile> PROFILE = (rs, rowNum) -> new UserProfile(rs.getObject("id", UUID.class),
+        rs.getString("first_name"), rs.getString("last_name"), rs.getString("username"), rs.getString("role"));
 
 	public UserRepo(JdbcTemplate jdbcTemplate, @Value("${spring.supabase.url}") String url, @Value("${spring.supabase.publishable-key}") String key) {
         this.jdbcTemplate = jdbcTemplate;
@@ -69,17 +76,17 @@ public class UserRepo{
 
         switch (role) {
             case "CUSTOMER" -> jdbcTemplate.update(
-                "INSERT INTO public.\"Customer\" (id, created_at, user_id, address, latitude, longitude) "
-            + "VALUES (?, CURRENT_TIMESTAMP, ?, ?, ?, ?)",
-                UUID.randomUUID(), id, address, lat, lon);
+                "INSERT INTO public.\"Customer\" (user_id, created_at, address, latitude, longitude) "
+            + "VALUES (?, CURRENT_TIMESTAMP, ?, ?, ?)",
+                id, address, lat, lon);
             case "RESTAURANT" -> jdbcTemplate.update(
-                "INSERT INTO public.\"Restaurant\" (id, created_at, user_id, name, status, latitude, longitude) "
-            + "VALUES (?, CURRENT_TIMESTAMP, ?, ?, 'OPEN', ?, ?)",
-                UUID.randomUUID(), id, restaurantName, lat, lon);
+                "INSERT INTO public.\"Restaurant\" (user_id, created_at, name, status, latitude, longitude) "
+            + "VALUES (?, CURRENT_TIMESTAMP, ?, 'OPEN', ?, ?)",
+                id, restaurantName, lat, lon);
             case "COURIER" -> jdbcTemplate.update(
-                "INSERT INTO public.\"Courier\" (id, created_at, user_id, state) "
-            + "VALUES (?, CURRENT_TIMESTAMP, ?, 'OFF_DUTY')",
-                UUID.randomUUID(), id);
+                "INSERT INTO public.\"Courier\" (user_id, created_at, state) "
+            + "VALUES (?, CURRENT_TIMESTAMP, 'OFF_DUTY')",
+                id);
             default -> { }
         }
     }
@@ -110,6 +117,17 @@ public class UserRepo{
     public Optional<UserProfile> findUserById(UUID id) {
         String sql = "SELECT id, first_name, last_name, username, role FROM public.\"User\" WHERE id = ?";
 
-        return jdbcTemplate.query(sql, (rs, rowNum) -> new UserProfile(rs.getObject("id", UUID.class), rs.getString("first_name"), rs.getString("last_name"), rs.getString("username"), rs.getString("role")), id).stream().findFirst();
+        return jdbcTemplate.query(sql, PROFILE, id).stream().findFirst();
+    }
+
+    // Loads many users in one query, keyed by id.
+    public Map<UUID, UserProfile> findUsersByIds(Collection<UUID> ids) {
+        if (ids.isEmpty()) {
+            return Map.of();
+        }
+        String placeholders = String.join(", ", Collections.nCopies(ids.size(), "?"));
+        String sql = "SELECT id, first_name, last_name, username, role FROM public.\"User\" WHERE id IN (" + placeholders + ")";
+
+        return jdbcTemplate.query(sql, PROFILE, ids.toArray()).stream().collect(Collectors.toMap(UserProfile::id, p -> p));
     }
 }

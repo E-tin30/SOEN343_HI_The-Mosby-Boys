@@ -17,6 +17,7 @@ public class Order {
     
     private final UUID id;
     private OrderState state;
+    // Both are User ids: the customer's, and the restaurant owner's (which is the restaurant's id).
     private final UUID customerId;
     private final UUID restaurantId;
     private final List<OrderLine> orderLineItems;

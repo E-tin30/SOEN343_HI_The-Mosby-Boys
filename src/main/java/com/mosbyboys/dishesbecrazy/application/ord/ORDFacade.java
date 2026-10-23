@@ -46,7 +46,8 @@ public class ORDFacade {
                 return restaurantService.findOpen();
             }
             case RESTAURANT-> {
-                return restaurantService.findByOwner(user.getUserId());
+                // A restaurant account is exactly one restaurant.
+                return List.of(restaurantService.load(user.getUserId()));
             }
             case OPERATOR -> {
                 return restaurantService.findAll();
@@ -79,7 +80,7 @@ public class ORDFacade {
             throw new IllegalArgumentException("Restaurant is not accepting orders");
         }
 
-        Order order = new Order(customer.getCustomerId(), restaurantId, orderLineItems);
+        Order order = new Order(customer.getUserId(), restaurantId, orderLineItems);
         order.getOrderLineItems().forEach(this::checkAgainstMenu);
 
         orderService.save(order);

@@ -1,7 +1,7 @@
 [
   {
     "id": "34300000-0000-4000-8000-000000000101",
-    "restaurantId": "34300000-0000-4000-8000-000000000002",
+    "restaurantUsername": "demo_restaurant",
     "name": "Grandma's Tourtière",
     "price": 18.50,
     "stockQuantity": 6,
@@ -10,7 +10,7 @@
   },
   {
     "id": "34300000-0000-4000-8000-000000000102",
-    "restaurantId": "34300000-0000-4000-8000-000000000002",
+    "restaurantUsername": "demo_restaurant",
     "name": "Butter Chicken",
     "price": 16.00,
     "stockQuantity": 10,
@@ -19,7 +19,7 @@
   },
   {
     "id": "34300000-0000-4000-8000-000000000103",
-    "restaurantId": "34300000-0000-4000-8000-000000000002",
+    "restaurantUsername": "demo_restaurant",
     "name": "Pierogi (6)",
     "price": 12.00,
     "stockQuantity": 15,
@@ -28,7 +28,7 @@
   },
   {
     "id": "34300000-0000-4000-8000-000000000104",
-    "restaurantId": "34300000-0000-4000-8000-000000000002",
+    "restaurantUsername": "demo_restaurant",
     "name": "Pouding Chômeur",
     "price": 7.50,
     "stockQuantity": 0,

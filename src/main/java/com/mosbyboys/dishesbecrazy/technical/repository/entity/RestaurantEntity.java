@@ -15,7 +15,9 @@ import java.util.UUID;
 @NoArgsConstructor
 public class RestaurantEntity {
 
+    // The restaurant's id is its owner's User.id.
     @Id
+    @Column(name = "user_id")
     private UUID id;
 
     @Column(name = "created_at", insertable = false, updatable = false)
@@ -29,7 +31,4 @@ public class RestaurantEntity {
 
     private Double latitude;
     private Double longitude;
-
-    @Column(name = "user_id")
-    private UUID ownerId;
 }

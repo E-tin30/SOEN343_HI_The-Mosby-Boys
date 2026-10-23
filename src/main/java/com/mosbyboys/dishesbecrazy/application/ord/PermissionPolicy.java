@@ -8,7 +8,6 @@ import com.mosbyboys.dishesbecrazy.domain.ord.RestaurantStatus;
 import com.mosbyboys.dishesbecrazy.domain.ord.state.PlacedState;
 import com.mosbyboys.dishesbecrazy.domain.reg.User;
 import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
-import com.mosbyboys.dishesbecrazy.domain.reg.RestaurantOwner;
 import com.mosbyboys.dishesbecrazy.domain.reg.Role;
 
 /* Checks if the logged-in user is allowed to do a command, based on their role
@@ -46,7 +45,7 @@ public class PermissionPolicy {
             throw new PermissionDeniedException("Customer can only cancel order before it is accepted.");
         }
         if(caller instanceof Customer customer){
-            if(customer.getCustomerId().equals(order.getCustomerId())){
+            if(customer.getUserId().equals(order.getCustomerId())){
                 return;
             }
         }
@@ -66,8 +65,8 @@ public class PermissionPolicy {
         if(caller.getRole() != Role.RESTAURANT){
             throw new PermissionDeniedException("Only a restaurant owner can change order status.");
         }
-        if(caller instanceof RestaurantOwner owner){
-            if(owner.getRestaurantId().equals(order.getRestaurantId())){
+        if(caller instanceof Restaurant restaurant){
+            if(restaurant.getUserId().equals(order.getRestaurantId())){
                 return;
             }
         }
@@ -88,12 +87,12 @@ public class PermissionPolicy {
             return; // operators can see everything
         }
         if(caller instanceof Customer customer){
-            if(customer.getCustomerId().equals(order.getCustomerId())){
+            if(customer.getUserId().equals(order.getCustomerId())){
                 return;
             }
         }
-        if(caller instanceof RestaurantOwner restaurantOwner){
-            if(order.getRestaurantId().equals(restaurantOwner.getRestaurantId())){
+        if(caller instanceof Restaurant restaurant){
+            if(order.getRestaurantId().equals(restaurant.getUserId())){
                 return;
             }
         }
@@ -117,7 +116,7 @@ public class PermissionPolicy {
              return;
              }  
         case RESTAURANT -> {
-            if (restaurant.isOwnedBy(caller.getUserId())) return;
+            if (restaurant.getUserId().equals(caller.getUserId())) return;
             throw new PermissionDeniedException("Cannot view another restaurant's menu.");
         }
         case CUSTOMER -> {

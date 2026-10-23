@@ -2,6 +2,8 @@ package com.mosbyboys.dishesbecrazy.domain.reg;
 
 import com.mosbyboys.dishesbecrazy.domain.reg.UserFactory.UserData;
 import com.mosbyboys.dishesbecrazy.domain.ord.Location;
+import com.mosbyboys.dishesbecrazy.domain.ord.Restaurant;
+import com.mosbyboys.dishesbecrazy.domain.ord.RestaurantStatus;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -13,9 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class UserFactoryTests {
     private final UserFactory factory = new UserFactory();
     private final UUID userId = UUID.randomUUID();
-    private final UUID profileId = UUID.randomUUID();
     private final OffsetDateTime createdAt = OffsetDateTime.parse("2026-10-19T10:00:00-04:00");
-    private final OffsetDateTime profileCreatedAt = createdAt.plusMinutes(1);
 
     private UserData.UserDataBuilder sharedData() {
         return UserData.builder().userId(userId).createdAt(createdAt)
@@ -36,44 +36,37 @@ class UserFactoryTests {
 
     @Test
     void createsCustomerWithItsProfile() {
-        var data = sharedData().profileId(profileId).profileCreatedAt(profileCreatedAt)
-                .address("123 Demo Street").build();
+        var data = sharedData().address("123 Demo Street").build();
 
         var customer = assertInstanceOf(Customer.class, factory.createUser(Role.CUSTOMER, data));
 
         assertSharedFields(customer, Role.CUSTOMER);
-        assertEquals(profileId, customer.getCustomerId());
-        assertEquals(profileCreatedAt, customer.getCustomerCreatedAt());
         assertEquals("123 Demo Street", customer.getAddress());
     }
 
     @Test
     void createsCourierWithItsProfile() {
         var location = new Location(45.5017, -73.5673);
-        var data = sharedData().profileId(profileId).profileCreatedAt(profileCreatedAt)
-                .state("OFF_DUTY").location(location).build();
+        var data = sharedData().state("OFF_DUTY").location(location).build();
 
         var courier = assertInstanceOf(Courier.class, factory.createUser(Role.COURIER, data));
 
         assertSharedFields(courier, Role.COURIER);
-        assertEquals(profileId, courier.getCourierId());
-        assertEquals(profileCreatedAt, courier.getCourierCreatedAt());
         assertEquals("OFF_DUTY", courier.getState());
         assertSame(location, courier.getLocation());
     }
 
     @Test
-    void createsRestaurantOwnerWithItsRestaurant() {
-        var data = sharedData().profileId(profileId).profileCreatedAt(profileCreatedAt)
-                .restaurantName("Demo Diner").status("OPEN").build();
+    void createsRestaurant() {
+        var location = new Location(45.5017, -73.5673);
+        var data = sharedData().restaurantName("Demo Diner").status(RestaurantStatus.OPEN).location(location).build();
 
-        var owner = assertInstanceOf(RestaurantOwner.class, factory.createUser(Role.RESTAURANT, data));
+        var restaurant = assertInstanceOf(Restaurant.class, factory.createUser(Role.RESTAURANT, data));
 
-        assertSharedFields(owner, Role.RESTAURANT);
-        assertEquals(profileId, owner.getRestaurantId());
-        assertEquals(profileCreatedAt, owner.getRestaurantCreatedAt());
-        assertEquals("Demo Diner", owner.getName());
-        assertEquals("OPEN", owner.getStatus());
+        assertSharedFields(restaurant, Role.RESTAURANT);
+        assertEquals("Demo Diner", restaurant.getName());
+        assertEquals(RestaurantStatus.OPEN, restaurant.getStatus());
+        assertSame(location, restaurant.getLocation());
     }
 
     @Test

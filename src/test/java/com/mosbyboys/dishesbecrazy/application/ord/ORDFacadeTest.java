@@ -20,12 +20,12 @@ import com.mosbyboys.dishesbecrazy.domain.ord.MenuItem;
 import com.mosbyboys.dishesbecrazy.domain.ord.Order;
 import com.mosbyboys.dishesbecrazy.domain.ord.OrderLine;
 import com.mosbyboys.dishesbecrazy.domain.ord.Restaurant;
+import com.mosbyboys.dishesbecrazy.domain.ord.RestaurantStatus;
 import com.mosbyboys.dishesbecrazy.domain.ord.state.AcceptedState;
 import com.mosbyboys.dishesbecrazy.domain.ord.state.IllegalTransitionException;
 import com.mosbyboys.dishesbecrazy.domain.ord.state.PlacedState;
 import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
 import com.mosbyboys.dishesbecrazy.domain.reg.Operator;
-import com.mosbyboys.dishesbecrazy.domain.reg.RestaurantOwner;
 
 class ORDFacadeTest {
 
@@ -57,13 +57,13 @@ class ORDFacadeTest {
     // helpers
 
     private Customer customer() {
-        return new Customer(UUID.randomUUID(), OffsetDateTime.now(), "A", "B", "a@b.c", "ab", "hash",
-                customerId, OffsetDateTime.now(), "123 Street", new Location(45.5, -73.6));
+        return new Customer(customerId, OffsetDateTime.now(), "A", "B", "a@b.c", "ab", "hash",
+                "123 Street", new Location(45.5, -73.6));
     }
 
-    private RestaurantOwner owner(UUID forRestaurant) {
-        return new RestaurantOwner(UUID.randomUUID(), OffsetDateTime.now(), "A", "B", "a@b.c", "ab", "hash",
-                forRestaurant, OffsetDateTime.now(), "Resto", "OPEN");
+    private Restaurant owner(UUID forRestaurant) {
+        return new Restaurant(forRestaurant, OffsetDateTime.now(), "A", "B", "a@b.c", "ab", "hash",
+                "Resto", RestaurantStatus.OPEN, null);
     }
     
     private Operator operator() {

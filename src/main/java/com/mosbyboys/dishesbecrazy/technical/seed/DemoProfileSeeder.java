@@ -72,31 +72,26 @@ public class DemoProfileSeeder implements CommandLineRunner {
         if (!account.role().name().equals(role)) {
             throw new IllegalStateException("Existing demo profile has a different role: " + account.email());
         }
-        // Adds the role-specific row only if that user has none.
+        // Adds the role-specific row, keyed by the user's id, only if that user has none.
         switch (account.role()) {
             case CUSTOMER -> jdbc.update("""
-                    INSERT INTO public."Customer" (id, created_at, user_id, address, latitude, longitude)
-                    SELECT ?, CURRENT_TIMESTAMP, ?, ?, ?, ?
-                    WHERE NOT EXISTS (SELECT 1 FROM public."Customer" WHERE user_id = ?)
-                    """, account.profileId(), userId, account.address(),
-                    account.latitude(), account.longitude(), userId);
+                    INSERT INTO public."Customer" (user_id, created_at, address, latitude, longitude)
+                    VALUES (?, CURRENT_TIMESTAMP, ?, ?, ?) ON CONFLICT (user_id) DO NOTHING
+                    """, userId, account.address(), account.latitude(), account.longitude());
             case COURIER -> jdbc.update("""
-                    INSERT INTO public."Courier" (id, created_at, user_id, state, latitude, longitude)
-                    SELECT ?, CURRENT_TIMESTAMP, ?, ?, ?, ?
-                    WHERE NOT EXISTS (SELECT 1 FROM public."Courier" WHERE user_id = ?)
-                    """, account.profileId(), userId, account.state(),
-                    account.latitude(), account.longitude(), userId);
+                    INSERT INTO public."Courier" (user_id, created_at, state, latitude, longitude)
+                    VALUES (?, CURRENT_TIMESTAMP, ?, ?, ?) ON CONFLICT (user_id) DO NOTHING
+                    """, userId, account.state(), account.latitude(), account.longitude());
             case RESTAURANT -> jdbc.update("""
-                    INSERT INTO public."Restaurant" (id, created_at, user_id, name, status, latitude, longitude)
-                    SELECT ?, CURRENT_TIMESTAMP, ?, ?, ?, ?, ?
-                    WHERE NOT EXISTS (SELECT 1 FROM public."Restaurant" WHERE user_id = ?)
-                    """, account.profileId(), userId, account.restaurantName(), account.status(),
-                    account.latitude(), account.longitude(), userId);
+                    INSERT INTO public."Restaurant" (user_id, created_at, name, status, latitude, longitude)
+                    VALUES (?, CURRENT_TIMESTAMP, ?, ?, ?, ?) ON CONFLICT (user_id) DO NOTHING
+                    """, userId, account.restaurantName(), account.status(),
+                    account.latitude(), account.longitude());
             case OPERATOR -> { /* Operators need only their Users row. */ }
         }
     }
 
-    // Requires one unique demo account per role and IDs for linked profiles.
+    // Requires one unique demo account per role.
     private void validate(Account[] accounts) {
         var roles = EnumSet.noneOf(Role.class);
         var emails = new HashSet<String>();
@@ -104,9 +99,6 @@ public class DemoProfileSeeder implements CommandLineRunner {
             if (account.email() == null || !account.email().endsWith(".demo@example.com")
                     || !emails.add(account.email()) || account.role() == null || !roles.add(account.role())) {
                 throw new IllegalArgumentException("Seed configuration requires unique demo emails and roles.");
-            }
-            if (account.role() != Role.OPERATOR && account.profileId() == null) {
-                throw new IllegalArgumentException("Role-specific profiles require a UUID.");
             }
             if (account.role() == Role.RESTAURANT && (account.latitude() == null || account.longitude() == null)) {
                 throw new IllegalArgumentException("Restaurant profiles require latitude and longitude.");
@@ -119,7 +111,7 @@ public class DemoProfileSeeder implements CommandLineRunner {
 
     // Holds the JSON fields; passwords stay in the environment.
     public record Account(String email, String firstName, String lastName, String username,
-                          Role role, UUID profileId, String address, String state, String location,
+                          Role role, String address, String state, String location,
                           String restaurantName, String status, Double latitude, Double longitude) {
     }
 }
