@@ -52,6 +52,9 @@ class ORDFacadeTest {
         // same order as the fields in ORDFacade
         facade = new ORDFacade(orderService, orderEventService, new PermissionPolicy(),
                 queues, menuService, restaurantService, regFacade);
+        // The facade looks the caller up through REGFacade, so tell the mock who each id is.
+        when(regFacade.getCurrentUser(customerId)).thenReturn(customer());
+        when(regFacade.getCurrentUser(restaurantId)).thenReturn(owner(restaurantId));
     }
 
     // helpers
@@ -110,7 +113,7 @@ class ORDFacadeTest {
         restaurantIsOpen(true);
         menuHasAvailableItem();
 
-        Order order = facade.placeOrder(customerId, restaurantId, List.of(line()));
+        Order order = facade.placeOrder(customer(), restaurantId, List.of(line()));
 
         assertEquals(customerId, order.getCustomerId());
         assertTrue(queues.placed(restaurantId).contains(order.getId()));
@@ -124,7 +127,7 @@ class ORDFacadeTest {
         menuHasAvailableItem();
 
         assertThrows(IllegalArgumentException.class,
-                () -> facade.placeOrder(customerId, restaurantId, List.of(line())));
+                () -> facade.placeOrder(customer(), restaurantId, List.of(line())));
 
         verify(orderService, never()).save(any());
         assertEquals(0, queues.placed(restaurantId).size());
@@ -133,7 +136,7 @@ class ORDFacadeTest {
     @Test
     void aRestaurantCannotPlaceAnOrder() {
         assertThrows(PermissionDeniedException.class,
-                () -> facade.placeOrder(customerId, restaurantId, List.of(line())));
+                () -> facade.placeOrder(owner(restaurantId), restaurantId, List.of(line())));
 
         verify(orderService, never()).save(any());
     }
@@ -157,9 +160,11 @@ class ORDFacadeTest {
     void anotherRestaurantCannotAcceptAndTheQueuesAreUntouched() {
         Order order = storedOrder();
         queues.placed(restaurantId).enqueue(order.getId());
+        UUID otherRestaurant = UUID.randomUUID();
+        when(regFacade.getCurrentUser(otherRestaurant)).thenReturn(owner(otherRestaurant));
 
         assertThrows(PermissionDeniedException.class,
-                () -> facade.acceptOrder(UUID.randomUUID(), order.getId()));
+                () -> facade.acceptOrder(otherRestaurant, order.getId()));
 
         assertInstanceOf(PlacedState.class, order.getState());
         assertTrue(queues.placed(restaurantId).contains(order.getId()));
@@ -235,6 +240,7 @@ class ORDFacadeTest {
     void cancellingRemovesTheOrderFromWhicheverQueueHoldsIt() {
         Order order = acceptedAndQueued(); // waiting in preparation
         Operator operator = operator();
+        when(regFacade.getCurrentUser(operator.getUserId())).thenReturn(operator);
 
         facade.cancelOrder(operator.getUserId(), order.getId());
 

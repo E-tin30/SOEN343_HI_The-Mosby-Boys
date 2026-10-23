@@ -60,9 +60,7 @@ public class ORDFacade {
     }
 
     @Transactional
-    public Order placeOrder(UUID userId, UUID restaurantId, List<OrderLine> orderLineItems) {
-        User user = regFacade.getCurrentUser(userId);
-
+    public Order placeOrder(User user, UUID restaurantId, List<OrderLine> orderLineItems) {
         //Check Permission
         permissionPolicy.checkCanPlace(user);
 
