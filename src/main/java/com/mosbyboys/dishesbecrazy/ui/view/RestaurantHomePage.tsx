@@ -25,10 +25,13 @@ export default function RestaurantHomePage() {
       <main className="page__content">
         <section className="home-card card">
           <p className="caption meta">Welcome back</p>
-          <Heading>{`Hey ${user?.firstName ?? "there"}, ~ready to cook?~`}</Heading>
+          <Heading>{`Hey ${user?.firstName ?? "there"}, ~ready to get cooking?~`}</Heading>
           <p className="home-card__text meta">
             Manage your menu and keep up with incoming orders.
           </p>
+          <Button onClick={() => navigate("/restaurant/orders")}>
+            View Orders
+          </Button>
         </section>
 
         <section className="home-card card">
