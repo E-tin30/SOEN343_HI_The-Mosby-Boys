@@ -10,15 +10,13 @@ import lombok.Getter;
 // Customer fields mirror its Supabase row; the inherited userId is also Customer's primary key (user_id).
 @Getter
 public final class Customer extends User {
-    private final OffsetDateTime customerCreatedAt;
     private final String address;
     private final Location location;
 
     public Customer(UUID userId, OffsetDateTime createdAt, String firstName, String lastName, String email,
-                    String username, String hashedPassword, OffsetDateTime customerCreatedAt, String address, Location location) {
+                    String username, String hashedPassword, String address, Location location) {
         // The subclass fixes one role; callers cannot supply a conflicting role.
         super(userId, createdAt, firstName, lastName, email, username, hashedPassword, Role.CUSTOMER);
-        this.customerCreatedAt = customerCreatedAt;
         this.address = address;
         this.location = location;
     }

@@ -2,6 +2,7 @@ package com.mosbyboys.dishesbecrazy.application.reg;
 
 import java.util.UUID;
 
+import com.mosbyboys.dishesbecrazy.domain.ord.RestaurantStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
@@ -45,20 +46,20 @@ public class REGFacade {
                 .username(p.username());
         switch (role) {
             case CUSTOMER -> jdbcTemplate.queryForObject(
-                    "SELECT created_at, address FROM \"Customer\" WHERE id = ?",
+                    "SELECT created_at, address FROM \"Customer\" WHERE user_id = ?",
                     (rs, i) -> b
                             .address(rs.getString("address")),
                     userId);
             case COURIER -> jdbcTemplate.queryForObject(
-                    "SELECT state FROM \"Courier\" WHERE id = ?",
+                    "SELECT state FROM \"Courier\" WHERE user_id = ?",
                     (rs, i) -> b
                             .state(rs.getString("state")),
                     userId);
             case RESTAURANT -> jdbcTemplate.queryForObject(
-                    "SELECT name, status FROM \"Restaurant\" WHERE id = ?",
+                    "SELECT name, status FROM \"Restaurant\" WHERE user_id = ?",
                     (rs, i) -> b
                             .restaurantName(rs.getString("name"))
-                            .status(rs.getString("status")),
+                            .status(RestaurantStatus.valueOf(rs.getString("status"))),
                     userId);
         }
 //        if (role == Role.RESTAURANT) {
