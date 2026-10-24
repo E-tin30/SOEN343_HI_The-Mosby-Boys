@@ -43,7 +43,7 @@ public class OrderController {
 
     // status is the state without the "State" suffix ("PreparingState" -> "PREPARING"), which is what the frontend uses.
     public record RestaurantOrderResponse(UUID id, String status, Instant placedAt, List<OrderLineResponse> lines,
-                                          BigDecimal total, boolean nextToPrepare) {
+                                          BigDecimal total, boolean nextToAccept, boolean nextToPrepare) {
         static RestaurantOrderResponse from(RestaurantOrderView view) {
             Order o = view.order();
             List<OrderLineResponse> lines = o.getOrderLineItems().stream()
@@ -53,7 +53,7 @@ public class OrderController {
                     .toList();
             String status = o.getState().toString().replace("State", "").toUpperCase();
             return new RestaurantOrderResponse(o.getId(), status, o.getPlacedAt(), lines, o.getTotal(),
-                    view.nextToPrepare());
+                    view.nextToAccept(), view.nextToPrepare());
         }
     }
 

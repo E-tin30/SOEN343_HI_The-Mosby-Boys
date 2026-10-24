@@ -2,6 +2,7 @@ package com.mosbyboys.dishesbecrazy.application.ord;
 
 import com.mosbyboys.dishesbecrazy.domain.ord.Order;
 import com.mosbyboys.dishesbecrazy.domain.ord.OrderLine;
+import com.mosbyboys.dishesbecrazy.domain.ord.PlacedQueue;
 import com.mosbyboys.dishesbecrazy.domain.ord.PreparationQueue;
 import com.mosbyboys.dishesbecrazy.domain.ord.Restaurant;
 import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
@@ -79,11 +80,14 @@ public class ORDFacade {
                 .map(OrderLine::getMenuItemId)
                 .collect(Collectors.toSet()));
 
+        PlacedQueue placed = queues.placed(restaurantId);
+        UUID nextAccept = placed.size() > 0 ? placed.peek() : null;
         PreparationQueue line = queues.preparation(restaurantId);
         UUID next = line.size() > 0 ? line.peek() : null;
 
         return orders.stream()
-                .map(o -> new RestaurantOrderView(o, itemNames, o.getId().equals(next)))
+                .map(o -> new RestaurantOrderView(o, itemNames,
+                        o.getId().equals(nextAccept), o.getId().equals(next)))
                 .toList();
     }
 
@@ -132,6 +136,13 @@ public class ORDFacade {
 
         //Check Permission
         permissionPolicy.checkCanActAsRestaurant(user, order);
+
+        // refuse anything that is not first in line, before changing anything
+        PlacedQueue line = queues.placed(order.getRestaurantId());
+        if (!orderId.equals(line.peek())) {
+            throw new IllegalStateException("Order " + orderId + " is not next in line");
+        }
+
         String before = order.getState().toString();
 
         order.accept();
@@ -139,8 +150,8 @@ public class ORDFacade {
         orderService.save(order);
         // record transition change event
         orderEventService.save(orderId, before, order.getState().toString(), user.getUserId(), "ACCEPT");
-        // placed queue -> preparation queue
-        queues.placed(order.getRestaurantId()).remove(orderId);
+        // placed queue -> preparation queue (FIFO)
+        line.dequeueIfFirst(orderId);
         queues.preparation(order.getRestaurantId()).enqueue(orderId);
     }
 

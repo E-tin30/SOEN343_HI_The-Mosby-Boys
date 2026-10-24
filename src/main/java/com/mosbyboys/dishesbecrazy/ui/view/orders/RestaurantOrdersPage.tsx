@@ -44,6 +44,16 @@ const ACTIONS: Record<QueueStatus, OrderAction[]> = {
   READY: [],
 };
 
+const outOfTurnReason = (order: RestaurantOrder, action: OrderAction): string | null => {
+  if (order.status === "PLACED" && action.next === "ACCEPTED" && !order.nextToAccept) {
+    return "Orders are accepted in the order they were placed.";
+  }
+  if (order.status === "ACCEPTED" && !order.nextToPrepare) {
+    return "Orders are prepared in the order they were accepted.";
+  }
+  return null;
+};
+
 const formatTime = (iso: string) =>
   new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 
@@ -163,15 +173,8 @@ export default function RestaurantOrdersPage() {
                                   <Button
                                     key={action.label}
                                     variant={action.variant}
-                                    disabled={
-                                      pendingId !== null ||
-                                      (order.status === "ACCEPTED" && !order.nextToPrepare)
-                                    }
-                                    title={
-                                      order.status === "ACCEPTED" && !order.nextToPrepare
-                                        ? "Orders are prepared in the order they were accepted."
-                                        : undefined
-                                    }
+                                    disabled={pendingId !== null || outOfTurnReason(order, action) !== null}
+                                    title={outOfTurnReason(order, action) ?? undefined}
                                     onClick={() => runAction(order, action)}
                                   >
                                     {pendingId === order.id ? "Saving…" : action.label}

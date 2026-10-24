@@ -69,7 +69,17 @@ public class OrderService {
     // A restaurant's orders in the given states, oldest first. Lines for all of them come from one query.
     @Transactional(readOnly = true)
     public List<Order> findForRestaurant(UUID restaurantId, Collection<String> states) {
-        List<OrderEntity> entities = orderRepo.findByRestaurantIdAndStateInOrderByCreatedAtAsc(restaurantId, states);
+        return withLines(orderRepo.findByRestaurantIdAndStateInOrderByCreatedAtAsc(restaurantId, states));
+    }
+
+    // Every restaurant's orders in the given states, oldest first. Used to rebuild the queues on startup.
+    @Transactional(readOnly = true)
+    public List<Order> findInStates(Collection<String> states) {
+        return withLines(orderRepo.findByStateInOrderByCreatedAtAsc(states));
+    }
+
+    // Loads the lines for all the orders in one query and builds the domain orders, keeping their order.
+    private List<Order> withLines(List<OrderEntity> entities) {
         if (entities.isEmpty()) {
             return List.of();
         }
