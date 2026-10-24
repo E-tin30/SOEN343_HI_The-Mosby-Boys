@@ -1,32 +1,47 @@
-import {Link, Navigate} from "react-router-dom";
-import {useAuth} from "./AuthContext";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "./AuthContext";
+import AppHeader from "./components/AppHeader";
+import Button from "./components/Button";
+import Heading from "./components/Heading";
+import "./styles/HomePage.css";
 
 export default function HomePage() {
-    const { user } = useAuth();
-    if (!user) {
-        return <Navigate to="/login" replace/>;
-    }
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
-    return (
-        <main>
-            {user.role == "CUSTOMER" && <p><Link to="/restaurants">Browse restaurants</Link></p>}
+  const handleLogout = () => {
+    logout();
+    navigate("/login", { replace: true });
+  };
 
-            <h1>Dishes Be Crazy</h1>
-            <h2>Home Page</h2>
+  return (
+    <div className="page">
+      <AppHeader>
+        <Button variant="secondary" onClick={handleLogout}>
+          Log out
+        </Button>
+      </AppHeader>
 
-            <p>Login successful! Welcome to Dishes Be Crazy, {user.firstName}.</p>
+      <main className="page__content">
+        <section className="home-card card">
+          <p className="caption meta">Welcome back</p>
+          <Heading>{`Hey ${user?.firstName ?? "there"}, ~hungry?~`}</Heading>
+          <p className="home-card__text meta">
+            Find home cooks and restaurants near you.
+          </p>
+          <Button onClick={() => navigate("/restaurants")}>
+            Browse restaurants
+          </Button>
+        </section>
 
-            <hr/>
-
-            <h3>Development Placeholder</h3>
-            <p>
-                This is the starting point for integrating the
-                application's features.
-            </p>
-
-            <p>
-                Team members can add their pages and components here.
-            </p>
-        </main>
-    );
+        <section className="home-card card">
+          <Heading level={3}>Development placeholder</Heading>
+          <p className="home-card__text meta">
+            This is the starting point for integrating the application's
+            features. Team members can add their pages and components here.
+          </p>
+        </section>
+      </main>
+    </div>
+  );
 }
