@@ -7,7 +7,9 @@ export default function OutputConsole() {
   const entries = useSyncExternalStore(subscribe, getEntries);
   const end = useRef<HTMLLIElement>(null);
 
-  useEffect(() => end.current?.scrollIntoView({ block: "nearest" }), [entries]);
+  useEffect(() => {
+    end.current?.scrollIntoView({ block: "nearest" });
+  }, [entries]);
 
   return (
     <details className="output-console" open>
