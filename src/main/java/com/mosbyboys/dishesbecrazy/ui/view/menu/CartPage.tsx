@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../CartContext";
 import { useAuth } from "../AuthContext";
+import { log } from "../outputLog";
 import AppHeader from "../components/AppHeader";
 import Button from "../components/Button";
 import Heading from "../components/Heading";
@@ -31,6 +32,7 @@ export default function CartPage() {
         setOrderError("");
 
         try {
+            log("command", "POST /placeOrder");
             const response = await fetch("http://localhost:8080/placeOrder", {
                 method: "POST",
                 headers: {
@@ -55,9 +57,9 @@ export default function CartPage() {
             clearCart();
             alert("Order placed successfully!");
         } catch (error) {
-            setOrderError(
-                error instanceof Error ? error.message : "Something went wrong."
-            );
+            const message = error instanceof Error ? error.message : "Something went wrong.";
+            log("error", `POST /placeOrder: ${message}`);
+            setOrderError(message);
         } finally {
             setPlacingOrder(false);
         }

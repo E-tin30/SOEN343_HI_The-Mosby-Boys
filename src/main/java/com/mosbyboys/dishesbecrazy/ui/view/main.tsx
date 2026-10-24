@@ -1,5 +1,6 @@
 import {createRoot} from "react-dom/client";
 import "./styles/base.css";
+import OutputConsole from "./components/OutputConsole";
 import {AuthProvider} from "./AuthContext";
 import ProtectedRoute from "./ProtectedRoute";
 import {
@@ -77,6 +78,7 @@ createRoot(document.getElementById("root")!).render(
                         }
                     />
                 </Routes>
+                <OutputConsole/>
             </CartProvider>
         </AuthProvider>
     </BrowserRouter>

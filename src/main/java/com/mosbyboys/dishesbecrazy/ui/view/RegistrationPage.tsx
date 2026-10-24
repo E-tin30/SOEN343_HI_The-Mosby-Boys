@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
+import { log } from "./outputLog";
 import Button from "./components/Button";
 import Heading from "./components/Heading";
 import Input from "./components/Input";
@@ -15,6 +16,7 @@ export default function Register(){
         const data = Object.fromEntries(new FormData(e.currentTarget));
 
         try {
+            log("command", "POST /register");
             const response = await fetch("http://localhost:8080/register", {
                 method: "POST",
                 headers: {
@@ -24,14 +26,14 @@ export default function Register(){
             });
 
             if (!response.ok) {
-                throw new Error(`Registration failed: ${response.status}`);
+                throw new Error(`${response.status}: ${await response.text()}`);
             }
 
             const result = await response.text();
             alert(result);
             navigate("/login");
         } catch (error) {
-            console.error("Registration error:", error);
+            log("error", `POST /register → ${error instanceof Error ? error.message : error}`);
             alert("Registration failed!");
         }
     }

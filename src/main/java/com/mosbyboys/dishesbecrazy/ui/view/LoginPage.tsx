@@ -3,6 +3,7 @@ import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth, type LoginTokens } from "./AuthContext";
 import { getHomeRoute } from "./roleRoutes";
+import { log } from "./outputLog";
 import Button from "./components/Button";
 import Heading from "./components/Heading";
 import Input from "./components/Input";
@@ -27,6 +28,7 @@ export default function LoginPage() {
         setLoading(true);
 
         try {
+            log("command", "POST /login");
             const response = await fetch("http://localhost:8080/login", {
                 method: "POST",
                 headers: {
@@ -37,11 +39,13 @@ export default function LoginPage() {
 
             if (response.status === 401) {
                 const message = await response.text();
+                log("error", `POST /login → 401: ${message || "Invalid email or password"}`);
                 setError(message || "Invalid email or password");
                 return;
             }
 
             if (!response.ok) {
+                log("error", `POST /login → ${response.status}`);
                 setError("Login failed. Please try again.");
                 return;
             }
@@ -55,7 +59,7 @@ export default function LoginPage() {
             navigate(getHomeRoute(profile.role), { replace: true });
 
         } catch (error) {
-            console.error("Login error:", error);
+            log("error", `Login: ${error instanceof Error ? error.message : error}`);
             setError(
                 "Could not complete login or load your profile. Please try again."
             );

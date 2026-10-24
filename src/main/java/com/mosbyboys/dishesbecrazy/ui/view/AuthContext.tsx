@@ -5,6 +5,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { log } from "./outputLog";
 
 export type LoginTokens = {
   accessToken: string;
@@ -38,6 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [accessToken, setAccessToken] = useState<string | null>(null);
 
   async function completeLogin(tokens: LoginTokens): Promise<CurrentUser> {
+    log("command", "GET /api/auth/me");
     const response = await fetch("http://localhost:8080/api/auth/me", {
       headers: {
         Authorization: `Bearer ${tokens.accessToken}`,

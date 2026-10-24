@@ -1,17 +1,18 @@
 import type { RestaurantOrder } from "../types/order";
+import { log } from "../../outputLog";
 
 const API = "http://localhost:8080";
 
 export async function getRestaurantOrders(token: string): Promise<RestaurantOrder[]> {
   const path = "/api/restaurant/orders";
-  console.log(`[command] GET ${path}`);
+  log("command", `GET ${path}`);
   const response = await fetch(API + path, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
   if (!response.ok) {
     const message = (await response.text()) || `Request failed (${response.status})`;
-    console.error(`[error] GET ${path} → ${response.status}: ${message}`);
+    log("error", `GET ${path} → ${response.status}: ${message}`);
     throw new Error(message);
   }
   return response.json();
@@ -19,7 +20,7 @@ export async function getRestaurantOrders(token: string): Promise<RestaurantOrde
 
 // The action endpoints reply 204 with no body, so there is nothing to parse on success.
 async function post(path: string, token: string, body?: unknown): Promise<void> {
-  console.log(`[command] POST ${path}`);
+  log("command", `POST ${path}`);
   const response = await fetch(API + path, {
     method: "POST",
     headers: {
@@ -31,7 +32,7 @@ async function post(path: string, token: string, body?: unknown): Promise<void> 
 
   if (!response.ok) {
     const message = (await response.text()) || `Request failed (${response.status})`;
-    console.error(`[error] POST ${path} → ${response.status}: ${message}`);
+    log("error", `POST ${path} → ${response.status}: ${message}`);
     throw new Error(message);
   }
 }
