@@ -1,0 +1,33 @@
+.output-console {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--espresso);
+  color: var(--porcelain);
+  font-size: var(--text-caption);
+  padding: var(--space-2) var(--space-4);
+}
+
+.output-console summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.output-console ol {
+  list-style: none;
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  max-height: 20vh;
+  overflow-y: auto;
+  font-family: ui-monospace, monospace;
+}
+
+.output-console__error {
+  color: var(--mustard);
+}
+
+/* keep page content from hiding behind the open console */
+body:has(.output-console[open]) {
+  padding-bottom: 25vh;
+}

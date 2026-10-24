@@ -1,16 +1,17 @@
 import type { Restaurant, MenuItem } from "../types/menu";
+import { log } from "../../outputLog";
 
 const API = "http://localhost:8080";
 
 async function get<T>(path: string, token: string): Promise<T> {
-  console.log(`[command] GET ${path}`);
+  log("command", `GET ${path}`);
   const response = await fetch(API + path, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
   if (!response.ok) {
     const message = (await response.text()) || `Request failed (${response.status})`;
-    console.error(`[error] GET ${path} → ${response.status}: ${message}`);
+    log("error", `GET ${path} → ${response.status}: ${message}`);
     throw new Error(message);
   }
   return response.json();
