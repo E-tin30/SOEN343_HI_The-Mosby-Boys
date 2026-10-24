@@ -7,9 +7,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +32,13 @@ public class MenuService {
         return menuItemRepo.findById(menuItemId)
                 .map(this::toDomain)
                 .orElseThrow(() -> new NoSuchElementException("Menu item not found: " + menuItemId));
+    }
+
+    // Item names by id, for showing order lines. Ids that no longer exist are left out.
+    @Transactional(readOnly = true)
+    public Map<UUID, String> getNames(Collection<UUID> menuItemIds) {
+        return menuItemRepo.findAllById(menuItemIds).stream()
+                .collect(Collectors.toMap(MenuItemEntity::getId, MenuItemEntity::getName));
     }
 
     @Transactional

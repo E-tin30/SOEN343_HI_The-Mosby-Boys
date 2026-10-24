@@ -11,9 +11,12 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 
 /*
@@ -58,8 +61,44 @@ public class OrderService {
     public Order load(UUID orderId) {
         OrderEntity entity = orderRepo.findById(orderId).orElseThrow(() -> new IllegalArgumentException("Order not found: " + orderId));
 
-        List<OrderLine> lines = lineItemRepo.findByOrderId(orderId).stream().map(e -> new OrderLine(e.getMenuItemId(), e.getQuantity(), e.getUnitPrice())).toList();
+        List<OrderLine> lines = lineItemRepo.findByOrderId(orderId).stream().map(OrderService::toLine).toList();
 
+        return toDomain(entity, lines);
+    }
+
+    // A restaurant's orders in the given states, oldest first. Lines for all of them come from one query.
+    @Transactional(readOnly = true)
+    public List<Order> findForRestaurant(UUID restaurantId, Collection<String> states) {
+        return withLines(orderRepo.findByRestaurantIdAndStateInOrderByCreatedAtAsc(restaurantId, states));
+    }
+
+    // Every restaurant's orders in the given states, oldest first. Used to rebuild the queues on startup.
+    @Transactional(readOnly = true)
+    public List<Order> findInStates(Collection<String> states) {
+        return withLines(orderRepo.findByStateInOrderByCreatedAtAsc(states));
+    }
+
+    // Loads the lines for all the orders in one query and builds the domain orders, keeping their order.
+    private List<Order> withLines(List<OrderEntity> entities) {
+        if (entities.isEmpty()) {
+            return List.of();
+        }
+
+        Map<UUID, List<OrderLine>> linesByOrder = lineItemRepo
+                .findByOrderIdIn(entities.stream().map(OrderEntity::getId).toList()).stream()
+                .collect(Collectors.groupingBy(OrderLineItemEntity::getOrderId,
+                        Collectors.mapping(OrderService::toLine, Collectors.toList())));
+
+        return entities.stream()
+                .map(e -> toDomain(e, linesByOrder.getOrDefault(e.getId(), List.of())))
+                .toList();
+    }
+
+    private static OrderLine toLine(OrderLineItemEntity e) {
+        return new OrderLine(e.getMenuItemId(), e.getQuantity(), e.getUnitPrice());
+    }
+
+    private static Order toDomain(OrderEntity entity, List<OrderLine> lines) {
         return Order.reconstitute(
             entity.getId(),
             OrderStates.fromName(entity.getState()),

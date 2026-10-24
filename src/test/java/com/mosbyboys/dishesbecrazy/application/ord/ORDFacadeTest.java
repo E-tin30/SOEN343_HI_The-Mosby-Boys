@@ -9,6 +9,7 @@ import static org.mockito.Mockito.*;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -157,6 +158,36 @@ class ORDFacadeTest {
     }
 
     @Test
+    void anOrderAcceptedOutOfTurnIsRefusedAndNothingChanges() {
+        Order first = storedOrder();
+        Order second = storedOrder();
+        queues.placed(restaurantId).enqueue(first.getId());
+        queues.placed(restaurantId).enqueue(second.getId());
+
+        assertThrows(IllegalStateException.class,
+                () -> facade.acceptOrder(restaurantId, second.getId()));
+
+        assertEquals(first.getId(), queues.placed(restaurantId).peek()); // front unchanged
+        assertEquals(2, queues.placed(restaurantId).size()); // nothing removed
+        assertInstanceOf(PlacedState.class, second.getState()); // state unchanged
+        assertFalse(queues.preparation(restaurantId).contains(second.getId()));
+        verify(orderService, never()).save(any());
+    }
+
+    @Test
+    void anyIncomingOrderCanBeRejected() {
+        Order first = storedOrder();
+        Order second = storedOrder();
+        queues.placed(restaurantId).enqueue(first.getId());
+        queues.placed(restaurantId).enqueue(second.getId());
+
+        facade.rejectOrder(restaurantId, second.getId(), "Out of ingredients");
+
+        assertEquals(first.getId(), queues.placed(restaurantId).peek());
+        assertFalse(queues.placed(restaurantId).contains(second.getId()));
+    }
+
+    @Test
     void anotherRestaurantCannotAcceptAndTheQueuesAreUntouched() {
         Order order = storedOrder();
         queues.placed(restaurantId).enqueue(order.getId());
@@ -232,6 +263,45 @@ class ORDFacadeTest {
 
         assertTrue(queues.placed(restaurantId).contains(order.getId()));
         assertFalse(queues.ready(restaurantId).contains(order.getId()));
+    }
+
+    // restaurant orders
+
+    @Test
+    void aRestaurantSeesItsOrdersWithItemNamesAndWhichIsNextToPrepare() {
+        Order first = acceptedAndQueued();
+        Order second = acceptedAndQueued();
+        when(orderService.findForRestaurant(eq(restaurantId), any())).thenReturn(List.of(first, second));
+        when(menuService.getNames(any())).thenReturn(Map.of(menuItemId, "Pizza"));
+
+        List<RestaurantOrderView> views = facade.getRestaurantOrders(owner(restaurantId));
+
+        assertEquals(2, views.size());
+        assertEquals("Pizza", views.get(0).itemNames().get(menuItemId));
+        assertTrue(views.get(0).nextToPrepare());
+        assertFalse(views.get(1).nextToPrepare());
+    }
+
+    @Test
+    void onlyTheFirstPlacedOrderIsMarkedNextToAccept() {
+        Order first = storedOrder();
+        Order second = storedOrder();
+        queues.placed(restaurantId).enqueue(first.getId());
+        queues.placed(restaurantId).enqueue(second.getId());
+        when(orderService.findForRestaurant(eq(restaurantId), any())).thenReturn(List.of(first, second));
+        when(menuService.getNames(any())).thenReturn(Map.of(menuItemId, "Pizza"));
+
+        List<RestaurantOrderView> views = facade.getRestaurantOrders(owner(restaurantId));
+
+        assertTrue(views.get(0).nextToAccept());
+        assertFalse(views.get(1).nextToAccept());
+    }
+
+    @Test
+    void aCustomerCannotViewARestaurantsOrders() {
+        assertThrows(PermissionDeniedException.class, () -> facade.getRestaurantOrders(customer()));
+
+        verify(orderService, never()).findForRestaurant(any(), any());
     }
 
     // cancel
