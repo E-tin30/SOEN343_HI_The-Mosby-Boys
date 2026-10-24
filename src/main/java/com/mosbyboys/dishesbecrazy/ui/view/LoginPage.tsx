@@ -2,6 +2,7 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth, type LoginTokens } from "./AuthContext";
+import { getHomeRoute } from "./roleRoutes";
 import Button from "./components/Button";
 import Heading from "./components/Heading";
 import Input from "./components/Input";
@@ -47,12 +48,11 @@ export default function LoginPage() {
 
             const loginTokens: LoginTokens = await response.json();
 
-            // Retrieve the authenticated user's profile
-            // and save it in the shared AuthContext.
-            await completeLogin(loginTokens);
+            // Retrieve the authenticated user's profile and save it in the shared AuthContext.
+            const profile = await completeLogin(loginTokens);
 
-            // Navigate only after authentication is complete.
-            navigate("/home", { replace: true });
+            // Navigate only after authentication is complete, to the dashboard that matches the account's role.
+            navigate(getHomeRoute(profile.role), { replace: true });
 
         } catch (error) {
             console.error("Login error:", error);

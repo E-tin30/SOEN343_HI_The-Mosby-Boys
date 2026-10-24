@@ -1,9 +1,14 @@
-import {Link} from "react-router-dom";
-import {useCart} from "../CartContext";
-import {useAuth} from "../AuthContext";
-import {useState} from "react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useCart } from "../CartContext";
+import { useAuth } from "../AuthContext";
+import AppHeader from "../components/AppHeader";
+import Button from "../components/Button";
+import Heading from "../components/Heading";
+import "../styles/CartPage.css";
 
 export default function CartPage() {
+    const navigate = useNavigate();
     const {
         cart,
         itemCount,
@@ -17,144 +22,160 @@ export default function CartPage() {
     const [placingOrder, setPlacingOrder] = useState(false);
     const [orderError, setOrderError] = useState("");
 
-    if (!cart || cart.items.length === 0) {
-        return (
-            <main>
-                <h1>Your Cart</h1>
-                <p>Your cart is empty.</p>
-                <Link to="/restaurants">Browse Restaurants</Link>
-            </main>
-        );
-    }
+    const isEmpty = !cart || cart.items.length === 0;
+
+    const placeOrder = async () => {
+        if (!cart || !accessToken) return;
+
+        setPlacingOrder(true);
+        setOrderError("");
+
+        try {
+            const response = await fetch("http://localhost:8080/placeOrder", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${accessToken}`,
+                },
+                body: JSON.stringify({
+                    userId: user?.id,
+                    restaurantId: cart.restaurantId,
+                    items: cart.items.map((item) => ({
+                        menuItemId: item.menuItem.id,
+                        quantity: item.quantity,
+                        price: item.menuItem.price,
+                    })),
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error(await response.text() || "Failed to place order.");
+            }
+
+            clearCart();
+            alert("Order placed successfully!");
+        } catch (error) {
+            setOrderError(
+                error instanceof Error ? error.message : "Something went wrong."
+            );
+        } finally {
+            setPlacingOrder(false);
+        }
+    };
 
     return (
-        <main>
-            <h1>Your Cart</h1>
+        <div className="page">
+            <AppHeader>
+                {cart ? (
+                    <Button
+                        variant="secondary"
+                        onClick={() => navigate(`/restaurants/${cart.restaurantId}/menu`)}
+                    >
+                        Back to menu
+                    </Button>
+                ) : (
+                    <Button variant="secondary" onClick={() => navigate("/restaurants")}>
+                        Back to restaurants
+                    </Button>
+                )}
+            </AppHeader>
 
-            <p>Total items: {itemCount}</p>
+            <main className="page__content card">
+                <header className="page__intro">
+                    <Heading>Your ~cart.~</Heading>
+                    <p className="meta">
+                        {isEmpty
+                            ? "Nothing here yet."
+                            : `${itemCount} ${itemCount === 1 ? "item" : "items"} ready to order.`}
+                    </p>
+                </header>
 
-            <table border={1}>
-                <thead>
-                <tr>
-                    <th>Dish</th>
-                    <th>Price</th>
-                    <th>Quantity</th>
-                    <th>Total</th>
-                    <th>Action</th>
-                </tr>
-                </thead>
+                {isEmpty ? (
+                    <div className="cart-empty">
+                        <p className="page__status meta">Your cart is empty.</p>
+                        <Button onClick={() => navigate("/restaurants")}>
+                            Browse restaurants
+                        </Button>
+                    </div>
+                ) : (
+                    <>
+                        <ul className="page__list">
+                            {cart.items.map((item) => (
+                                <li key={item.menuItem.id} className="list-card cart-item">
+                                    <div className="list-card__info">
+                                        <Heading level={3}>{item.menuItem.name}</Heading>
+                                        <span className="meta">
+                                            ${item.menuItem.price.toFixed(2)} each
+                                        </span>
+                                    </div>
 
-                <tbody>
-                {cart.items.map((item) => (
-                    <tr key={item.menuItem.id}>
-                        <td>{item.menuItem.name}</td>
-                        <td>${item.menuItem.price.toFixed(2)}</td>
+                                    <div className="cart-item__controls">
+                                        <div className="cart-qty">
+                                            <button
+                                                type="button"
+                                                className="cart-qty__btn"
+                                                aria-label={`Decrease ${item.menuItem.name}`}
+                                                onClick={() =>
+                                                    updateQuantity(item.menuItem.id, item.quantity - 1)
+                                                }
+                                            >
+                                                −
+                                            </button>
+                                            <span className="cart-qty__value" aria-live="polite">
+                                                {item.quantity}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                className="cart-qty__btn"
+                                                aria-label={`Increase ${item.menuItem.name}`}
+                                                onClick={() =>
+                                                    updateQuantity(item.menuItem.id, item.quantity + 1)
+                                                }
+                                            >
+                                                +
+                                            </button>
+                                        </div>
 
-                        <td>
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    updateQuantity(
-                                        item.menuItem.id,
-                                        item.quantity - 1
-                                    )
-                                }
-                            >
-                                -
-                            </button>
+                                        <div className="list-card__side cart-item__side">
+                                            <span className="list-card__price">
+                                                ${(item.menuItem.price * item.quantity).toFixed(2)}
+                                            </span>
+                                            <Button
+                                                variant="link"
+                                                onClick={() => removeItem(item.menuItem.id)}
+                                            >
+                                                Remove
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
 
-                            {" "}{item.quantity}{" "}
+                        <section className="cart-summary" aria-label="Order summary">
+                            <div className="cart-summary__row">
+                                <span className="caption meta">Subtotal</span>
+                                <span className="cart-summary__amount">${subtotal.toFixed(2)}</span>
+                            </div>
 
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    updateQuantity(
-                                        item.menuItem.id,
-                                        item.quantity + 1
-                                    )
-                                }
-                            >
-                                +
-                            </button>
-                        </td>
+                            {orderError && (
+                                <p className="page__status page__status--error" role="alert">
+                                    Error: {orderError}
+                                </p>
+                            )}
 
-                        <td>
-                            ${(item.menuItem.price * item.quantity).toFixed(2)}
-                        </td>
-
-                        <td>
-                            <button
-                                type="button"
-                                onClick={() => removeItem(item.menuItem.id)}
-                            >
-                                Remove
-                            </button>
-                        </td>
-                    </tr>
-                ))}
-                </tbody>
-            </table>
-
-            <h2>Subtotal: ${subtotal.toFixed(2)}</h2>
-
-            <button type="button" onClick={clearCart}>
-                Clear Cart
-            </button>
-
-            <button
-                type="button"
-                disabled={placingOrder || !cart || cart.items.length === 0}
-                onClick={async () => {
-                    if (!cart || !accessToken) return;
-
-                    setPlacingOrder(true);
-                    setOrderError("");
-
-                    try {
-                        const response = await fetch(
-                            "http://localhost:8080/placeOrder",
-                            {
-                                method: "POST",
-                                headers: {
-                                    "Content-Type": "application/json",
-                                    Authorization: `Bearer ${accessToken}`,
-                                },
-                                body: JSON.stringify({
-                                    userId: user?.id,
-                                    restaurantId: cart.restaurantId,
-                                    items: cart.items.map((item) => ({
-                                        menuItemId: item.menuItem.id,
-                                        quantity: item.quantity,
-                                        price: item.menuItem.price,
-                                    })),
-                                }),
-                            }
-                        );
-
-                        if (!response.ok) {
-                            throw new Error(await response.text() || "Failed to place order.");
-                        }
-
-                        clearCart();
-                        alert("Order placed successfully!");
-                    } catch (error) {
-                        setOrderError(
-                            error instanceof Error ? error.message : "Something went wrong."
-                        );
-                    } finally {
-                        setPlacingOrder(false);
-                    }
-                }}
-
-            >
-                Pay and Place Order
-            </button>
-
-            <p>
-                <Link to={`/restaurants/${cart.restaurantId}/menu`}>
-                    Back to Menu
-                </Link>
-            </p>
-        </main>
+                            <div className="cart-summary__actions">
+                                <Button variant="secondary" onClick={clearCart} disabled={placingOrder}>
+                                    Clear cart
+                                </Button>
+                                <Button onClick={placeOrder} disabled={placingOrder}>
+                                    {placingOrder ? "Placing order…" : "Pay and place order"}
+                                </Button>
+                            </div>
+                        </section>
+                    </>
+                )}
+            </main>
+        </div>
     );
 }
