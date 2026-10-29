@@ -226,7 +226,7 @@ public class ORDFacade {
     }
 
     @Transactional
-    public void pickUp(UUID userId, UUID orderId) {
+    public void pickUpOrder(UUID userId, UUID orderId) {
         User user = regFacade.getCurrentUser(userId);
         Order order = orderService.load(orderId);
         permissionPolicy.checkCanActAsCourier(user, order);
@@ -239,7 +239,7 @@ public class ORDFacade {
     }
 
     @Transactional
-    public void deliver(UUID userId, UUID orderId) {
+    public void deliverOrder(UUID userId, UUID orderId) {
         User user = regFacade.getCurrentUser(userId);
         Order order = orderService.load(orderId);
         permissionPolicy.checkCanActAsCourier(user, order);
@@ -249,6 +249,19 @@ public class ORDFacade {
 
         orderService.save(order);
         orderEventService.save(orderId, before, order.getState().toString(), user.getUserId(), "DELIVER");
+    }
+
+    @Transactional
+    public void refundOrder(UUID userId, UUID orderId) {
+        User user = regFacade.getCurrentUser(userId);
+        Order order = orderService.load(orderId);
+        permissionPolicy.checkCanRefund(user, order);
+        String before = order.getState().toString();
+
+        order.refund();
+
+        orderService.save(order);
+        orderEventService.save(orderId, before, order.getState().toString(), user.getUserId(), "REFUND");
     }
 
 }

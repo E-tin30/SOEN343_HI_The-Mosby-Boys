@@ -79,6 +79,13 @@ public class PermissionPolicy {
         //TODO: Ethan
     }
 
+    // Check if the user is allowed to refund the order
+    // Only operators can do so
+    // cancel
+    public void checkCanRefund(User caller, Order order) {
+        //TODO: Ethan
+    }
+
     // Check who can see the details of an order
     // Customers: Cannot see other customers' orders.
     // Restaurants: Cannot see other restaurants' orders

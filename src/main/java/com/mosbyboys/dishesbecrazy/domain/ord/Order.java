@@ -95,9 +95,17 @@ public class Order {
         this.state = this.state.markReady();
     }
 
-    public void pickUp() { this.state = this.state.pickUp(); }
+    public void pickUp() {
+        this.state = this.state.pickUp();
+    }
 
-    public void deliver() { this.state = this.state.deliver(); }
+    public void deliver() {
+        this.state = this.state.deliver();
+    }
+
+    public void refund() {
+        this.state = this.state.refund();
+    }
 
     public BigDecimal getTotal(){
         BigDecimal total = BigDecimal.ZERO;

@@ -30,6 +30,8 @@ public abstract class OrderState {
     // Illegal by default. A state overrides this if deliver is allowed from it.
     public OrderState deliver() { throw new IllegalTransitionException(this, "deliver"); }
 
+    public OrderState refund() { throw new IllegalTransitionException(this, "refund"); }
+
     // Illegal by default. A state overrides this if cancel is allowed from it.
     // Who is allowed to cancel (customer vs operator) is PermissionPolicy's job, not this class.
     public OrderState cancel() {
