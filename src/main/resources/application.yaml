@@ -30,3 +30,11 @@ spring:
           audiences:
             - authenticated
           jws-algorithms: ES256
+
+pricing:
+  delivery-fee: 4.99
+  service-fee-rate: 0.12
+  small-order-threshold: 15.00
+  small-order-surcharge: 2.50
+  gst: 0.05
+  qst: 0.09975
