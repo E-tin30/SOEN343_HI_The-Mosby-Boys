@@ -41,6 +41,7 @@ public class OrderService {
         orderEntity.setState(order.getState().toString());
         orderEntity.setCreatedAt(order.getPlacedAt());
         orderEntity.setRejectionReason(order.getRejectionReason());
+        orderEntity.setTotal(order.getTotal());
 
         orderRepo.saveAndFlush(orderEntity);
 
@@ -100,13 +101,14 @@ public class OrderService {
 
     private static Order toDomain(OrderEntity entity, List<OrderLine> lines) {
         return Order.reconstitute(
-            entity.getId(),
-            OrderStates.fromName(entity.getState()),
-            entity.getUserId(),
-            entity.getRestaurantId(),
-            lines,
-            entity.getCreatedAt(),
-            entity.getRejectionReason()
+                entity.getId(),
+                OrderStates.fromName(entity.getState()),
+                entity.getUserId(),
+                entity.getRestaurantId(),
+                lines,
+                entity.getCreatedAt(),
+                entity.getRejectionReason(),
+                entity.getTotal()
         );
     }
 }

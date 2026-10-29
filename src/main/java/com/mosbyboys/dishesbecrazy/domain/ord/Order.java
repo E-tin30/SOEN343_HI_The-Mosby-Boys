@@ -23,8 +23,9 @@ public class Order {
     private final List<OrderLine> orderLineItems;
     private final Instant placedAt;
     private String rejectionReason;
+    private final BigDecimal total;
 
-    public Order(UUID customerId, UUID restaurantId, List<OrderLine> orderLineItems){
+    public Order(UUID customerId, UUID restaurantId, List<OrderLine> orderLineItems, BigDecimal total){
         if(orderLineItems == null || orderLineItems.isEmpty()){
             throw new IllegalArgumentException("orderLineItems must not be null or empty");
         }
@@ -43,11 +44,12 @@ public class Order {
         this.restaurantId = restaurantId;
         this.orderLineItems = List.copyOf(orderLineItems);
         this.placedAt = Instant.now();
+        this.total = total;
     }
 
     //The private Order constructor is for the reconstitute method so it can bypass the final attributes
     private Order(UUID id, OrderState state, UUID customerId, UUID restaurantId,
-                  List<OrderLine> lines, Instant placedAt, String rejectionReason) {
+                  List<OrderLine> lines, Instant placedAt, String rejectionReason, BigDecimal total) {
         this.id = id;
         this.state = state;
         this.customerId = customerId;
@@ -55,19 +57,20 @@ public class Order {
         this.orderLineItems = List.copyOf(lines);
         this.placedAt = placedAt;
         this.rejectionReason = rejectionReason;
+        this.total = total;
     }
 
     //This method is for loading the objects back from the db
     // For the repo only
     public static Order reconstitute(UUID id, OrderState state, UUID customerId, UUID restaurantId,
-                                     List<OrderLine> lines, Instant placedAt, String rejectionReason) {
+                                     List<OrderLine> lines, Instant placedAt, String rejectionReason, BigDecimal total) {
         if(state == null){
             throw new IllegalArgumentException("State cannot be null");
         }
         if(lines == null){
             throw new IllegalArgumentException("Order Lines cannot be null");
         }
-        return new Order(id, state, customerId, restaurantId, lines, placedAt, rejectionReason);
+        return new Order(id, state, customerId, restaurantId, lines, placedAt, rejectionReason, total);
     }
 
     // State changes
@@ -95,7 +98,7 @@ public class Order {
         this.state = this.state.markReady();
     }
 
-    public BigDecimal getTotal(){
+    public BigDecimal getSubtotal(){
         BigDecimal total = BigDecimal.ZERO;
         for (OrderLine orderLine : orderLineItems) {
             total = total.add(orderLine.getLineTotal());

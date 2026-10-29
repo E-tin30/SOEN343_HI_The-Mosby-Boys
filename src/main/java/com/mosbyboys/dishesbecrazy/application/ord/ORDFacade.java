@@ -1,10 +1,12 @@
 package com.mosbyboys.dishesbecrazy.application.ord;
 
+import com.mosbyboys.dishesbecrazy.application.prc.PricingService;
 import com.mosbyboys.dishesbecrazy.domain.ord.Order;
 import com.mosbyboys.dishesbecrazy.domain.ord.OrderLine;
 import com.mosbyboys.dishesbecrazy.domain.ord.PlacedQueue;
 import com.mosbyboys.dishesbecrazy.domain.ord.PreparationQueue;
 import com.mosbyboys.dishesbecrazy.domain.ord.Restaurant;
+import com.mosbyboys.dishesbecrazy.domain.prc.PricingBreakdown;
 import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
 import com.mosbyboys.dishesbecrazy.domain.reg.User;
 import com.mosbyboys.dishesbecrazy.domain.ord.MenuItem;
@@ -14,6 +16,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -33,6 +36,7 @@ public class ORDFacade {
     private final OrderQueues queues;
     private final MenuService menuService;
     private final RestaurantService restaurantService;
+    private final PricingService  pricingService;
     private final REGFacade regFacade;
 
     @Transactional
@@ -106,8 +110,13 @@ public class ORDFacade {
             throw new IllegalArgumentException("Restaurant is not accepting orders");
         }
 
-        Order order = new Order(customer.getUserId(), restaurantId, orderLineItems);
-        order.getOrderLineItems().forEach(this::checkAgainstMenu);
+        orderLineItems.forEach(this::checkAgainstMenu);
+
+        BigDecimal subtotal = BigDecimal.ZERO;
+        orderLineItems.forEach(orderLineItem -> subtotal.add(orderLineItem.getLineTotal()));
+        PricingBreakdown pricingBreakdown = pricingService.calculateTotal(subtotal);
+
+        Order order = new Order(customer.getUserId(), restaurantId, orderLineItems, pricingBreakdown.total());
 
         orderService.save(order);
         // record transition change event
