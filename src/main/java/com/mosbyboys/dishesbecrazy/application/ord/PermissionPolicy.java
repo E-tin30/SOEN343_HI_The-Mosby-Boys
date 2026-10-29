@@ -72,6 +72,13 @@ public class PermissionPolicy {
         throw new PermissionDeniedException("Cannot change another restaurant's orders.");
     }
 
+    // Check if the courier can make changes to an order
+    // Only the courier is assigned to the order can he make changes to it
+    // pickUp, deliver
+    public void checkCanActAsCourier(User caller, Order order) {
+        //TODO: Ethan
+    }
+
     // Check who can see the details of an order
     // Customers: Cannot see other customers' orders.
     // Restaurants: Cannot see other restaurants' orders

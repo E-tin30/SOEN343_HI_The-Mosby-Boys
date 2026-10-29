@@ -24,6 +24,12 @@ public abstract class OrderState {
         throw new IllegalTransitionException(this, "markReady");
     }
 
+    // Illegal by default. A state overrides this if pickUp is allowed from it.
+    public OrderState pickUp() { throw new IllegalTransitionException(this, "pickUp"); }
+
+    // Illegal by default. A state overrides this if deliver is allowed from it.
+    public OrderState deliver() { throw new IllegalTransitionException(this, "deliver"); }
+
     // Illegal by default. A state overrides this if cancel is allowed from it.
     // Who is allowed to cancel (customer vs operator) is PermissionPolicy's job, not this class.
     public OrderState cancel() {

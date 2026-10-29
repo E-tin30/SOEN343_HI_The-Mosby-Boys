@@ -225,5 +225,30 @@ public class ORDFacade {
         queues.ready(order.getRestaurantId()).enqueue(orderId);
     }
 
-    /* other state transitions are out of scope for phase 2 */
+    @Transactional
+    public void pickUp(UUID userId, UUID orderId) {
+        User user = regFacade.getCurrentUser(userId);
+        Order order = orderService.load(orderId);
+        permissionPolicy.checkCanActAsCourier(user, order);
+        String before = order.getState().toString();
+
+        order.pickUp();
+
+        orderService.save(order);
+        orderEventService.save(orderId, before, order.getState().toString(), user.getUserId(), "PICKUP");
+    }
+
+    @Transactional
+    public void deliver(UUID userId, UUID orderId) {
+        User user = regFacade.getCurrentUser(userId);
+        Order order = orderService.load(orderId);
+        permissionPolicy.checkCanActAsCourier(user, order);
+        String before = order.getState().toString();
+
+        order.deliver();
+
+        orderService.save(order);
+        orderEventService.save(orderId, before, order.getState().toString(), user.getUserId(), "DELIVER");
+    }
+
 }
