@@ -1,12 +1,19 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useCart } from "../CartContext";
-import { useAuth } from "../AuthContext";
-import { log } from "../outputLog";
+import {type FormEvent, useRef, useState} from "react";
+import {useNavigate} from "react-router-dom";
+import {useCart} from "../CartContext";
+import {useAuth} from "../AuthContext";
+import {log} from "../outputLog";
 import AppHeader from "../components/AppHeader";
 import Button from "../components/Button";
 import Heading from "../components/Heading";
 import "../styles/CartPage.css";
+import {Elements} from "@stripe/react-stripe-js";
+import {loadStripe} from "@stripe/stripe-js";
+import StripePaymentForm, {StripePaymentFormHandle} from "../components/StripePaymentForm";
+
+const stripePromise = loadStripe(
+    import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
+);
 
 export default function CartPage() {
     const navigate = useNavigate();
@@ -18,14 +25,50 @@ export default function CartPage() {
         removeItem,
         clearCart,
     } = useCart();
-    const { accessToken, user } = useAuth();
+    const {accessToken, user} = useAuth();
+    const paymentFormRef = useRef<StripePaymentFormHandle>(null);
 
     const [placingOrder, setPlacingOrder] = useState(false);
     const [orderError, setOrderError] = useState("");
+    const [checkout, setCheckout] = useState(false);
+    const [clientSecret, setClientSecret] = useState();
 
     const isEmpty = !cart || cart.items.length === 0;
 
+    const proceedToCheckout = async () => {
+        if (!cart || !accessToken) return;
+
+        const response = await fetch(
+            "http://localhost:8080/payments/create-payment-intent",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${accessToken}`,
+                },
+                body: JSON.stringify({
+                    userId: user?.id,
+                    restaurantId: cart.restaurantId,
+                    items: cart.items.map((item) => ({
+                        menuItemId: item.menuItem.id,
+                        quantity: item.quantity,
+                        price: item.menuItem.price,
+                    })),
+                }),
+            }
+        );
+
+        const data = await response.json();
+
+        setClientSecret(data.clientSecret);
+        setCheckout(true);
+    }
+
     const placeOrder = async () => {
+        //call the stripe payment form to submit
+        paymentFormRef.current?.submitPayment();
+
+        //rest of placing order
         if (!cart || !accessToken) return;
 
         setPlacingOrder(true);
@@ -120,6 +163,7 @@ export default function CartPage() {
                                                 onClick={() =>
                                                     updateQuantity(item.menuItem.id, item.quantity - 1)
                                                 }
+                                                disabled={!checkout}
                                             >
                                                 −
                                             </button>
@@ -133,6 +177,7 @@ export default function CartPage() {
                                                 onClick={() =>
                                                     updateQuantity(item.menuItem.id, item.quantity + 1)
                                                 }
+                                                disabled={!checkout}
                                             >
                                                 +
                                             </button>
@@ -145,6 +190,7 @@ export default function CartPage() {
                                             <Button
                                                 variant="link"
                                                 onClick={() => removeItem(item.menuItem.id)}
+                                                disabled={!checkout}
                                             >
                                                 Remove
                                             </Button>
@@ -167,14 +213,37 @@ export default function CartPage() {
                             )}
 
                             <div className="cart-summary__actions">
-                                <Button variant="secondary" onClick={clearCart} disabled={placingOrder}>
+                                <Button variant="secondary" onClick={clearCart} disabled={placingOrder && !checkout}>
                                     Clear cart
                                 </Button>
-                                <Button onClick={placeOrder} disabled={placingOrder}>
-                                    {placingOrder ? "Placing order…" : "Pay and place order"}
+                                <Button onClick={proceedToCheckout} disabled={placingOrder && !checkout}>
+                                    Continue to Checkout
                                 </Button>
                             </div>
                         </section>
+
+                        {checkout && (
+                            <section className="cart-summary" aria-label="Checkout">
+                                <Elements
+                                    stripe={stripePromise}
+                                    options={{ clientSecret: clientSecret }}
+                                >
+                                    <StripePaymentForm ref={paymentFormRef} />
+                                </Elements>
+
+                                <div className="cart-summary__actions">
+                                    <Button variant="secondary" onClick={() => {
+                                        setCheckout(false);
+                                        setClientSecret(undefined);
+                                    }} disabled={placingOrder}>
+                                        Back to Cart
+                                    </Button>
+                                    <Button onClick={placeOrder} disabled={placingOrder}>
+                                        {placingOrder ? "Placing Order…" : "Pay and Place Order"}
+                                    </Button>
+                                </div>
+                            </section>
+                        )}
                     </>
                 )}
             </main>
