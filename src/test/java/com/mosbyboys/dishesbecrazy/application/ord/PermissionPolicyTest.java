@@ -43,7 +43,7 @@ public class PermissionPolicyTest {
 
     private Order orderFor(UUID customerId, UUID restaurantId) {
         OrderLine line = new OrderLine(UUID.randomUUID(), 1, new BigDecimal("10.00"));
-        return new Order(customerId, restaurantId, List.of(line));
+        return new Order(customerId, restaurantId, List.of(line), new BigDecimal("10.00"));
     }
 
     // check that any customer can place an order

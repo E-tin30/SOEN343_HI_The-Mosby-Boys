@@ -41,6 +41,6 @@ public class OrderEntity {
     @Column(name = "rejection_reason")
     private String rejectionReason;
 
-    @Column(name = "total")
-    private BigDecimal total;
+    @Column(name = "subtotal")
+    private BigDecimal subtotal;
 }

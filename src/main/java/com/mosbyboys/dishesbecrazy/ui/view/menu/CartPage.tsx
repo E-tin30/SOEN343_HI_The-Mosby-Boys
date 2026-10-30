@@ -1,4 +1,4 @@
-import {type FormEvent, useRef, useState} from "react";
+import {type FormEvent, useEffect, useRef, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {useCart} from "../CartContext";
 import {useAuth} from "../AuthContext";
@@ -10,6 +10,7 @@ import "../styles/CartPage.css";
 import {Elements} from "@stripe/react-stripe-js";
 import {loadStripe} from "@stripe/stripe-js";
 import StripePaymentForm, {StripePaymentFormHandle} from "../components/StripePaymentForm";
+import {PricingBreakdown} from "../orders/types/PricingBreakdown";
 
 const stripePromise = loadStripe(
     import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
@@ -20,7 +21,6 @@ export default function CartPage() {
     const {
         cart,
         itemCount,
-        subtotal,
         updateQuantity,
         removeItem,
         clearCart,
@@ -32,8 +32,60 @@ export default function CartPage() {
     const [orderError, setOrderError] = useState("");
     const [checkout, setCheckout] = useState(false);
     const [clientSecret, setClientSecret] = useState();
+    const [pricing, setPricing] = useState<PricingBreakdown | null>(null);
+    const [pricingError, setPricingError] = useState("");
 
     const isEmpty = !cart || cart.items.length === 0;
+
+    useEffect(() => {
+        if (!cart || cart.items.length === 0 || !accessToken) {
+            setPricing(null);
+            return;
+        }
+
+        const controller = new AbortController();
+
+        const fetchPricing = async () => {
+            try {
+                const response = await fetch(
+                    "http://localhost:8080/pricing/breakdown",
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${accessToken}`,
+                        },
+                        body: JSON.stringify({
+                            items: cart.items.map((item) => ({
+                                menuItemId: item.menuItem.id,
+                                quantity: item.quantity,
+                                price: item.menuItem.price,
+                            })),
+                        }),
+                        signal: controller.signal,
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error("Failed to retrieve pricing breakdown.");
+                }
+
+                const data: PricingBreakdown = await response.json();
+
+                setPricing(data);
+                setPricingError("");
+            } catch (error) {
+                if (error instanceof Error && error.name !== "AbortError") {
+                    setPricingError(error.message);
+                }
+            }
+        };
+
+        fetchPricing();
+
+        return () => controller.abort();
+
+    }, [cart, accessToken]);
 
     const proceedToCheckout = async () => {
         if (!cart || !accessToken) return;
@@ -65,15 +117,15 @@ export default function CartPage() {
     }
 
     const placeOrder = async () => {
-        //call the stripe payment form to submit
-        paymentFormRef.current?.submitPayment();
-
-        //rest of placing order
         if (!cart || !accessToken) return;
 
         setPlacingOrder(true);
         setOrderError("");
 
+        //call the stripe payment form to submit
+        paymentFormRef.current?.submitPayment();
+
+        //rest of placing order
         try {
             log("command", "POST /placeOrder");
             const response = await fetch("http://localhost:8080/placeOrder", {
@@ -156,44 +208,44 @@ export default function CartPage() {
 
                                     <div className="cart-item__controls">
                                         <div className="cart-qty">
-                                            <button
+                                            {!checkout && <button
                                                 type="button"
                                                 className="cart-qty__btn"
                                                 aria-label={`Decrease ${item.menuItem.name}`}
                                                 onClick={() =>
                                                     updateQuantity(item.menuItem.id, item.quantity - 1)
                                                 }
-                                                disabled={!checkout}
+                                                disabled={checkout}
                                             >
                                                 −
-                                            </button>
+                                            </button>}
                                             <span className="cart-qty__value" aria-live="polite">
                                                 {item.quantity}
                                             </span>
-                                            <button
+                                            {!checkout && <button
                                                 type="button"
                                                 className="cart-qty__btn"
                                                 aria-label={`Increase ${item.menuItem.name}`}
                                                 onClick={() =>
                                                     updateQuantity(item.menuItem.id, item.quantity + 1)
                                                 }
-                                                disabled={!checkout}
+                                                disabled={checkout}
                                             >
                                                 +
-                                            </button>
+                                            </button>}
                                         </div>
 
                                         <div className="list-card__side cart-item__side">
                                             <span className="list-card__price">
                                                 ${(item.menuItem.price * item.quantity).toFixed(2)}
                                             </span>
-                                            <Button
+                                            {!checkout && <Button
                                                 variant="link"
                                                 onClick={() => removeItem(item.menuItem.id)}
-                                                disabled={!checkout}
+                                                disabled={checkout}
                                             >
                                                 Remove
-                                            </Button>
+                                            </Button>}
                                         </div>
                                     </div>
                                 </li>
@@ -201,10 +253,63 @@ export default function CartPage() {
                         </ul>
 
                         <section className="cart-summary" aria-label="Order summary">
-                            <div className="cart-summary__row">
-                                <span className="caption meta">Subtotal</span>
-                                <span className="cart-summary__amount">${subtotal.toFixed(2)}</span>
-                            </div>
+                            <Heading level={3}>Order Summary</Heading>
+
+                            {pricing ? (
+                                <>
+                                    <div className="cart-summary__row">
+                                        <span className="caption meta">Subtotal</span>
+                                        <span>${pricing.subtotal.toFixed(2)}</span>
+                                    </div>
+
+                                    <div className="cart-summary__row">
+                                        <span className="caption meta">Delivery Fee</span>
+                                        <span>${pricing.deliveryFee.toFixed(2)}</span>
+                                    </div>
+
+                                    <div className="cart-summary__row">
+                                        <span className="caption meta">Service Fee</span>
+                                        <span>${pricing.serviceFee.toFixed(2)}</span>
+                                    </div>
+
+                                    {pricing.smallOrderSurcharge > 0 && (
+                                        <div className="cart-summary__row">
+                                            <span className="caption meta">
+                                                Small Order Surcharge
+                                            </span>
+                                            <span>
+                                                ${pricing.smallOrderSurcharge.toFixed(2)}
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    <div className="cart-summary__row">
+                                        <span className="caption meta">Taxable Subtotal</span>
+                                        <span>${pricing.taxableSubtotal.toFixed(2)}</span>
+                                    </div>
+
+                                    <div className="cart-summary__row">
+                                        <span className="caption meta">GST</span>
+                                        <span>${pricing.gst.toFixed(2)}</span>
+                                    </div>
+
+                                    <div className="cart-summary__row">
+                                        <span className="caption meta">QST</span>
+                                        <span>${pricing.qst.toFixed(2)}</span>
+                                    </div>
+
+                                    <div className="cart-summary__row">
+                                        <strong>Total</strong>
+                                        <strong className="cart-summary__amount">
+                                            ${pricing.total.toFixed(2)}
+                                        </strong>
+                                    </div>
+                                </>
+                            ) : (
+                                <p className="meta">
+                                    {pricingError || "Calculating order total..."}
+                                </p>
+                            )}
 
                             {orderError && (
                                 <p className="page__status page__status--error" role="alert">
@@ -212,23 +317,45 @@ export default function CartPage() {
                                 </p>
                             )}
 
-                            <div className="cart-summary__actions">
-                                <Button variant="secondary" onClick={clearCart} disabled={placingOrder && !checkout}>
+                            {!checkout && <div className="cart-summary__actions">
+                                <Button variant="secondary" onClick={clearCart} disabled={placingOrder && checkout}>
                                     Clear cart
                                 </Button>
-                                <Button onClick={proceedToCheckout} disabled={placingOrder && !checkout}>
+                                <Button onClick={proceedToCheckout} disabled={placingOrder && checkout}>
                                     Continue to Checkout
                                 </Button>
-                            </div>
+                            </div>}
                         </section>
 
                         {checkout && (
                             <section className="cart-summary" aria-label="Checkout">
                                 <Elements
                                     stripe={stripePromise}
-                                    options={{ clientSecret: clientSecret }}
+                                    options={{
+                                        clientSecret: clientSecret,
+                                        appearance: {
+                                            theme: "stripe",
+                                            variables: {
+                                                colorBackground: "#F6EEDF",
+                                                colorText: "#333333",
+                                                colorPrimary: "#333333",
+                                                borderRadius: "8px",
+                                            },
+                                            rules: {
+                                                ".Input": {
+                                                    backgroundColor: "#FBF5EA",
+                                                    border: "1px solid #D8D2C2",
+                                                },
+                                                ".Input:focus": {
+                                                    border: "1px solid #333333",
+                                                    boxShadow: "none",
+                                                },
+                                            }
+                                        },
+                                    }}
+
                                 >
-                                    <StripePaymentForm ref={paymentFormRef} />
+                                    <StripePaymentForm ref={paymentFormRef}/>
                                 </Elements>
 
                                 <div className="cart-summary__actions">

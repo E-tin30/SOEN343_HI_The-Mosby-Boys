@@ -15,7 +15,6 @@ const StripePaymentForm = forwardRef<StripePaymentFormHandle>((params, ref) => {
     const elements = useElements();
     const formRef = useRef<HTMLFormElement>(null);
 
-    const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
     useImperativeHandle(ref, () => ({
@@ -29,22 +28,17 @@ const StripePaymentForm = forwardRef<StripePaymentFormHandle>((params, ref) => {
             return;
         }
 
-        setLoading(true);
         setError("");
 
         const { error } = await stripe.confirmPayment({
             elements,
-            confirmParams: {
-                return_url:
-                    `${window.location.origin}/payment-success`
-            }
+            redirect: "if_required",
         });
 
         if (error) {
             setError(error.message ?? "Payment failed.");
         }
 
-        setLoading(false);
     }
 
     return (

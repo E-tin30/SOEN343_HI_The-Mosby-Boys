@@ -10,6 +10,7 @@ import com.stripe.param.PaymentIntentCreateParams;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.Console;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
@@ -34,9 +35,14 @@ public class PaymentController {
 
         //calculate the amount
         PricingBreakdown pricingBreakdown = prcFacade.getTotal(orderLines);
-        long total = pricingBreakdown.total().setScale(2, RoundingMode.HALF_UP).longValue();
+        System.out.println(pricingBreakdown);
+        long total = pricingBreakdown.total().multiply(BigDecimal.valueOf(100)).setScale(0, RoundingMode.HALF_UP).longValue();
 
-        PaymentIntentCreateParams params = PaymentIntentCreateParams.builder().setAmount(total).setCurrency("cad").build();
+        if (total < 50) {
+            throw new IllegalArgumentException("Payment must be at least $0.50 CAD");
+        }
+
+        PaymentIntentCreateParams params = PaymentIntentCreateParams.builder().setAmount(total).setCurrency("cad").addPaymentMethodType("card").build();
 
         PaymentIntent intent = stripeClient.v1().paymentIntents().create(params);
 

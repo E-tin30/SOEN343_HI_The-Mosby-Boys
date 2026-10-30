@@ -113,10 +113,11 @@ public class ORDFacade {
         orderLineItems.forEach(this::checkAgainstMenu);
 
         BigDecimal subtotal = BigDecimal.ZERO;
-        orderLineItems.forEach(orderLineItem -> subtotal.add(orderLineItem.getLineTotal()));
-        PricingBreakdown pricingBreakdown = pricingService.calculateTotal(subtotal);
+        for (OrderLine item : orderLineItems) {
+            subtotal = subtotal.add(item.getLineTotal());
+        }
 
-        Order order = new Order(customer.getUserId(), restaurantId, orderLineItems, pricingBreakdown.total());
+        Order order = new Order(customer.getUserId(), restaurantId, orderLineItems, subtotal);
 
         orderService.save(order);
         // record transition change event

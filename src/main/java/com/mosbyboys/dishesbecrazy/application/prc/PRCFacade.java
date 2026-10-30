@@ -16,7 +16,9 @@ public class PRCFacade {
 
     public PricingBreakdown getTotal(List<OrderLine> lineItems) {
         BigDecimal subtotal = BigDecimal.ZERO;
-        lineItems.forEach(item -> subtotal.add(item.getLineTotal()));
+        for (OrderLine item : lineItems) {
+            subtotal = subtotal.add(item.getLineTotal());
+        }
 
         return pricingService.calculateTotal(subtotal);
     }

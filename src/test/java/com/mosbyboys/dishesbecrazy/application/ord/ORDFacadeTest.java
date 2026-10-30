@@ -96,7 +96,7 @@ class ORDFacadeTest {
 
     // a stored order the facade will "load"
     private Order storedOrder() {
-        Order order = new Order(customerId, restaurantId, List.of(line()));
+        Order order = new Order(customerId, restaurantId, List.of(line()), new BigDecimal("10.00"));
         when(orderService.load(order.getId())).thenReturn(order);
         return order;
     }

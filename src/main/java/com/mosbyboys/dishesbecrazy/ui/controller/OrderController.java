@@ -35,7 +35,7 @@ public class OrderController {
 
     public record OrderResponse(UUID id, UUID restaurantId, String state, BigDecimal total) {
         static OrderResponse from(Order o) {
-            return new OrderResponse(o.getId(), o.getRestaurantId(), o.getState().toString(), o.getTotal());
+            return new OrderResponse(o.getId(), o.getRestaurantId(), o.getState().toString(), o.getSubtotal());
         }
     }
 
@@ -52,7 +52,7 @@ public class OrderController {
                             l.getQuantity(), l.getUnitPrice()))
                     .toList();
             String status = o.getState().toString().replace("State", "").toUpperCase();
-            return new RestaurantOrderResponse(o.getId(), status, o.getPlacedAt(), lines, o.getTotal(),
+            return new RestaurantOrderResponse(o.getId(), status, o.getPlacedAt(), lines, o.getSubtotal(),
                     view.nextToAccept(), view.nextToPrepare());
         }
     }

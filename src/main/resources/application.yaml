@@ -38,3 +38,6 @@ pricing:
   small-order-surcharge: 2.50
   gst: 0.05
   qst: 0.09975
+
+stripe:
+  secret-key: ${STRIPE_SECRET_KEY}

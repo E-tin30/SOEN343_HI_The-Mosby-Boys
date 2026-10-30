@@ -33,8 +33,8 @@ public class PricingService {
         BigDecimal taxableSubtotal = subtotal.add(deliveryFee).add(serviceFee).add(smallOrderSurcharge);
 
         //add tax
-        BigDecimal gst = subtotal.multiply(pricingConfiguration.getGst());
-        BigDecimal qst  = subtotal.multiply(pricingConfiguration.getQst());
+        BigDecimal gst = taxableSubtotal.multiply(pricingConfiguration.getGst());
+        BigDecimal qst  = taxableSubtotal.multiply(pricingConfiguration.getQst());
 
         //final total
         BigDecimal total = taxableSubtotal.add(gst).add(qst);

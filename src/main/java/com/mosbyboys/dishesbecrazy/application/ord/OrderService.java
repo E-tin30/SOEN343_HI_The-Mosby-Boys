@@ -41,7 +41,7 @@ public class OrderService {
         orderEntity.setState(order.getState().toString());
         orderEntity.setCreatedAt(order.getPlacedAt());
         orderEntity.setRejectionReason(order.getRejectionReason());
-        orderEntity.setTotal(order.getTotal());
+        orderEntity.setSubtotal(order.getSubtotal());
 
         orderRepo.saveAndFlush(orderEntity);
 
@@ -108,7 +108,7 @@ public class OrderService {
                 lines,
                 entity.getCreatedAt(),
                 entity.getRejectionReason(),
-                entity.getTotal()
+                entity.getSubtotal()
         );
     }
 }
