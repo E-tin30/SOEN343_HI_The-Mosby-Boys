@@ -33,9 +33,9 @@ public class OrderController {
     private final ORDFacade ordFacade;
     private final REGFacade regFacade;
 
-    public record OrderResponse(UUID id, UUID restaurantId, String state, BigDecimal total) {
+    public record OrderResponse(UUID id, UUID restaurantId, String state, BigDecimal subtotal, List<OrderLine> orderLines) {
         static OrderResponse from(Order o) {
-            return new OrderResponse(o.getId(), o.getRestaurantId(), o.getState().toString(), o.getSubtotal());
+            return new OrderResponse(o.getId(), o.getRestaurantId(), o.getState().toString(), o.getSubtotal(), o.getOrderLineItems());
         }
     }
 
@@ -73,7 +73,7 @@ public class OrderController {
         User user = regFacade.getCurrentUser(UUID.fromString(jwt.getSubject()));
 
         List<OrderLine> orderLines = request.items().stream()
-                .map(item -> new OrderLine(item.menuItemId(), item.quantity(), item.price()))
+                .map(item -> new OrderLine(item.menuItemId(), item.quantity(), item.price(), item.menuItemName()))
                 .toList();
 
         Order order = ordFacade.placeOrder(user, request.restaurantId(), orderLines);
@@ -106,5 +106,14 @@ public class OrderController {
     public ResponseEntity<Void> markOrderReady(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID orderId) {
         ordFacade.markOrderReady(UUID.fromString(jwt.getSubject()), orderId);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/api/orders/{orderId}")
+    public ResponseEntity<OrderResponse> getOrder(
+            @PathVariable UUID orderId) {
+
+        Order order = ordFacade.getOrder(orderId);
+
+        return ResponseEntity.ok(OrderResponse.from(order));
     }
 }

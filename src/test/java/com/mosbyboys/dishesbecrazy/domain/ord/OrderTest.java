@@ -21,8 +21,8 @@ public class OrderTest {
 
     // Helper to create valid orders
     private Order newOrder() {
-        OrderLine line1 = new OrderLine(UUID.randomUUID(), 3, new BigDecimal("12.50"));
-        OrderLine line2 = new OrderLine(UUID.randomUUID(), 2, new BigDecimal("4.25"));
+        OrderLine line1 = new OrderLine(UUID.randomUUID(), 3, new BigDecimal("12.50"), null);
+        OrderLine line2 = new OrderLine(UUID.randomUUID(), 2, new BigDecimal("4.25"), null);
         return new Order(UUID.randomUUID(), UUID.randomUUID(), List.of(line1, line2), new BigDecimal("46.00"));
     }
     

@@ -12,8 +12,9 @@ public class OrderLine {
     private final UUID menuItemId;
     private final int quantity;
     private final BigDecimal unitPrice;
+    private final String menuItemName;
 
-    public OrderLine(UUID menuItemId, int quantity, BigDecimal unitPrice){
+    public OrderLine(UUID menuItemId, int quantity, BigDecimal unitPrice, String menuItemName) {
         
         // unit price not null
         if(unitPrice == null){
@@ -38,6 +39,7 @@ public class OrderLine {
         this.menuItemId = menuItemId;
         this.quantity = quantity;
         this.unitPrice = unitPrice;
+        this.menuItemName = menuItemName;
     }
 
     // get the total price of the line item (unitPrice x quantity)

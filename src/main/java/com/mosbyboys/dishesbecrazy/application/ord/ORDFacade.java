@@ -12,6 +12,7 @@ import com.mosbyboys.dishesbecrazy.domain.reg.User;
 import com.mosbyboys.dishesbecrazy.domain.ord.MenuItem;
 
 import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
+import com.mosbyboys.dishesbecrazy.ui.controller.OrderController;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -137,6 +138,11 @@ public class ORDFacade {
         if (line.getUnitPrice().compareTo(item.getPrice()) != 0) {
             throw new IllegalArgumentException("Price of " + item.getName() + " has changed, please refresh the menu");
         }
+    }
+
+    @Transactional
+    public Order getOrder(UUID orderId) {
+        return orderService.load(orderId);
     }
 
     @Transactional

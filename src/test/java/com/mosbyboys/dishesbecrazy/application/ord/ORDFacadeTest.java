@@ -77,7 +77,7 @@ class ORDFacadeTest {
     }
 
     private OrderLine line() {
-        return new OrderLine(menuItemId, 1, new BigDecimal("10.00"));
+        return new OrderLine(menuItemId, 1, new BigDecimal("10.00"), null);
     }
 
     private void restaurantIsOpen(boolean open) {

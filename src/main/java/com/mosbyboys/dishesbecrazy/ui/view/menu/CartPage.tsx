@@ -1,4 +1,4 @@
-import {type FormEvent, useEffect, useRef, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {useCart} from "../CartContext";
 import {useAuth} from "../AuthContext";
@@ -48,7 +48,7 @@ export default function CartPage() {
         const fetchPricing = async () => {
             try {
                 const response = await fetch(
-                    "http://localhost:8080/pricing/breakdown",
+                    "http://localhost:8080/payments/breakdown",
                     {
                         method: "POST",
                         headers: {
@@ -139,6 +139,7 @@ export default function CartPage() {
                     restaurantId: cart.restaurantId,
                     items: cart.items.map((item) => ({
                         menuItemId: item.menuItem.id,
+                        menuItemName: item.menuItem.name,
                         quantity: item.quantity,
                         price: item.menuItem.price,
                     })),
@@ -151,6 +152,10 @@ export default function CartPage() {
 
             clearCart();
             alert("Order placed successfully!");
+
+            //wait for backend before redirecting
+            const order = await response.json();
+            navigate(`/order-summary/${order.id}`);
         } catch (error) {
             const message = error instanceof Error ? error.message : "Something went wrong.";
             log("error", `POST /placeOrder: ${message}`);
