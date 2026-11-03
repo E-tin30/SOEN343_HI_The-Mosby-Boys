@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import com.mosbyboys.dishesbecrazy.application.prc.PricingService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -34,6 +35,7 @@ class ORDFacadeTest {
     private OrderEventService orderEventService;
     private MenuService menuService;
     private RestaurantService restaurantService;
+    private PricingService pricingService;
     private REGFacade regFacade;
     private OrderQueues queues;
     private ORDFacade facade;
@@ -52,7 +54,7 @@ class ORDFacadeTest {
         queues = new OrderQueues();
         // same order as the fields in ORDFacade
         facade = new ORDFacade(orderService, orderEventService, new PermissionPolicy(),
-                queues, menuService, restaurantService, regFacade);
+                queues, menuService, restaurantService, pricingService, regFacade);
         // The facade looks the caller up through REGFacade, so tell the mock who each id is.
         when(regFacade.getCurrentUser(customerId)).thenReturn(customer());
         when(regFacade.getCurrentUser(restaurantId)).thenReturn(owner(restaurantId));
@@ -75,7 +77,7 @@ class ORDFacadeTest {
     }
 
     private OrderLine line() {
-        return new OrderLine(menuItemId, 1, new BigDecimal("10.00"));
+        return new OrderLine(menuItemId, 1, new BigDecimal("10.00"), null);
     }
 
     private void restaurantIsOpen(boolean open) {
@@ -94,7 +96,7 @@ class ORDFacadeTest {
 
     // a stored order the facade will "load"
     private Order storedOrder() {
-        Order order = new Order(customerId, restaurantId, List.of(line()));
+        Order order = new Order(customerId, restaurantId, List.of(line()), new BigDecimal("10.00"));
         when(orderService.load(order.getId())).thenReturn(order);
         return order;
     }

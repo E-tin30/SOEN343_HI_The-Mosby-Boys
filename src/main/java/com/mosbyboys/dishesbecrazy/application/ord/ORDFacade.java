@@ -1,19 +1,23 @@
 package com.mosbyboys.dishesbecrazy.application.ord;
 
+import com.mosbyboys.dishesbecrazy.application.prc.PricingService;
 import com.mosbyboys.dishesbecrazy.domain.ord.Order;
 import com.mosbyboys.dishesbecrazy.domain.ord.OrderLine;
 import com.mosbyboys.dishesbecrazy.domain.ord.PlacedQueue;
 import com.mosbyboys.dishesbecrazy.domain.ord.PreparationQueue;
 import com.mosbyboys.dishesbecrazy.domain.ord.Restaurant;
+import com.mosbyboys.dishesbecrazy.domain.prc.PricingBreakdown;
 import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
 import com.mosbyboys.dishesbecrazy.domain.reg.User;
 import com.mosbyboys.dishesbecrazy.domain.ord.MenuItem;
 
 import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
+import com.mosbyboys.dishesbecrazy.ui.controller.OrderController;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -33,6 +37,7 @@ public class ORDFacade {
     private final OrderQueues queues;
     private final MenuService menuService;
     private final RestaurantService restaurantService;
+    private final PricingService  pricingService;
     private final REGFacade regFacade;
 
     @Transactional
@@ -106,8 +111,14 @@ public class ORDFacade {
             throw new IllegalArgumentException("Restaurant is not accepting orders");
         }
 
-        Order order = new Order(customer.getUserId(), restaurantId, orderLineItems);
-        order.getOrderLineItems().forEach(this::checkAgainstMenu);
+        orderLineItems.forEach(this::checkAgainstMenu);
+
+        BigDecimal subtotal = BigDecimal.ZERO;
+        for (OrderLine item : orderLineItems) {
+            subtotal = subtotal.add(item.getLineTotal());
+        }
+
+        Order order = new Order(customer.getUserId(), restaurantId, orderLineItems, subtotal);
 
         orderService.save(order);
         // record transition change event
@@ -127,6 +138,11 @@ public class ORDFacade {
         if (line.getUnitPrice().compareTo(item.getPrice()) != 0) {
             throw new IllegalArgumentException("Price of " + item.getName() + " has changed, please refresh the menu");
         }
+    }
+
+    @Transactional
+    public Order getOrder(UUID orderId) {
+        return orderService.load(orderId);
     }
 
     @Transactional
