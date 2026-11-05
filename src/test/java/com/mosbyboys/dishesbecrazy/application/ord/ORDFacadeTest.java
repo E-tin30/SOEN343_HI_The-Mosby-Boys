@@ -26,6 +26,7 @@ import com.mosbyboys.dishesbecrazy.domain.ord.RestaurantStatus;
 import com.mosbyboys.dishesbecrazy.domain.ord.state.AcceptedState;
 import com.mosbyboys.dishesbecrazy.domain.ord.state.IllegalTransitionException;
 import com.mosbyboys.dishesbecrazy.domain.ord.state.PlacedState;
+import com.mosbyboys.dishesbecrazy.domain.reg.Courier;
 import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
 import com.mosbyboys.dishesbecrazy.domain.reg.Operator;
 
@@ -317,5 +318,29 @@ class ORDFacadeTest {
         facade.cancelOrder(operator.getUserId(), order.getId());
 
         assertFalse(queues.preparation(restaurantId).contains(order.getId()));
+    }
+
+    @Test
+    void customerHistoryOnlyAsksForTheirOwnOrders() {
+        when(orderService.findHistoryForCustomer(customerId)).thenReturn(List.of());
+
+        facade.getOrderHistory(customer());
+
+        verify(orderService).findHistoryForCustomer(customerId);
+        verify(orderService, never()).findHistoryForAll();
+        verify(orderService, never()).findHistoryForRestaurant(any());
+    }
+
+    @Test
+    void courierHistoryOnlyAsksForTheirOwnCarriedOrders() {
+        UUID courierId = UUID.randomUUID();
+        Courier courier = new Courier(courierId, OffsetDateTime.now(), "A", "B", "a@b.c", "ab", "hash",
+                "OFF_DUTY", new Location(45.5, -73.6));
+        when(orderService.findHistoryForCourier(courierId)).thenReturn(List.of());
+
+        facade.getOrderHistory(courier);
+
+        verify(orderService).findHistoryForCourier(courierId);
+        verify(orderService, never()).findHistoryForAll();
     }
 }

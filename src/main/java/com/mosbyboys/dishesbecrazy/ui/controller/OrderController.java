@@ -21,6 +21,7 @@ import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
 import com.mosbyboys.dishesbecrazy.domain.ord.Order;
 import com.mosbyboys.dishesbecrazy.domain.ord.OrderLine;
 import com.mosbyboys.dishesbecrazy.domain.reg.User;
+import com.mosbyboys.dishesbecrazy.application.ord.OrderHistoryView;
 
 import lombok.RequiredArgsConstructor;
 
@@ -115,5 +116,45 @@ public class OrderController {
         Order order = ordFacade.getOrder(orderId);
 
         return ResponseEntity.ok(OrderResponse.from(order));
+    }
+
+    // One row of the history page. status is the state without "State" ("DeliveredState" -> "DELIVERED").
+    // rejectionReason is null unless the order was rejected.
+    public record OrderHistoryResponse(UUID id, UUID restaurantId, String status, Instant placedAt, List<OrderLineResponse> lines, BigDecimal total, String rejectionReason) {
+        static OrderHistoryResponse from(OrderHistoryView view) {
+            Order o = view.order();
+            List<OrderLineResponse> lines = o.getOrderLineItems().stream()
+                    .map(l -> new OrderLineResponse(l.getMenuItemId(),
+                            view.itemNames().getOrDefault(l.getMenuItemId(), "Unknown item"),
+                            l.getQuantity(), l.getUnitPrice()))
+                    .toList();
+            String status = o.getState().toString().replace("State", "").toUpperCase();
+            return new OrderHistoryResponse(o.getId(), o.getRestaurantId(), status, o.getPlacedAt(),
+                    lines, o.getTotal(), o.getRejectionReason());
+        }
+    }
+
+    // The logged-in user's order history. What they see depends on their role (R-PRC-04).
+    @GetMapping("/api/orders/history")
+    public ResponseEntity<List<OrderHistoryResponse>> getOrderHistory(@AuthenticationPrincipal Jwt jwt) {
+        User user = regFacade.getCurrentUser(UUID.fromString(jwt.getSubject()));
+        List<OrderHistoryResponse> body = ordFacade.getOrderHistory(user).stream()
+                .map(OrderHistoryResponse::from)
+                .toList();
+        return ResponseEntity.ok(body);
+    }
+
+    // Customer cancels a placed order, or an operator cancels one (checked by PermissionPolicy).
+    @PostMapping("/api/orders/{orderId}/cancel")
+    public ResponseEntity<Void> cancelOrder(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID orderId) {
+        ordFacade.cancelOrder(UUID.fromString(jwt.getSubject()), orderId);
+        return ResponseEntity.noContent().build();
+    }
+
+    // Operator refunds a delivered order.
+    @PostMapping("/api/orders/{orderId}/refund")
+    public ResponseEntity<Void> refundOrder(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID orderId) {
+        ordFacade.refundOrder(UUID.fromString(jwt.getSubject()), orderId);
+        return ResponseEntity.noContent().build();
     }
 }

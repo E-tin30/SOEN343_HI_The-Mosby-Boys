@@ -6,13 +6,11 @@ import com.mosbyboys.dishesbecrazy.domain.ord.OrderLine;
 import com.mosbyboys.dishesbecrazy.domain.ord.PlacedQueue;
 import com.mosbyboys.dishesbecrazy.domain.ord.PreparationQueue;
 import com.mosbyboys.dishesbecrazy.domain.ord.Restaurant;
-import com.mosbyboys.dishesbecrazy.domain.prc.PricingBreakdown;
 import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
 import com.mosbyboys.dishesbecrazy.domain.reg.User;
 import com.mosbyboys.dishesbecrazy.domain.ord.MenuItem;
 
 import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
-import com.mosbyboys.dishesbecrazy.ui.controller.OrderController;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -280,4 +278,24 @@ public class ORDFacade {
         orderEventService.save(orderId, before, order.getState().toString(), user.getUserId(), "REFUND");
     }
 
+    // Order history, scoped by the caller's role (R-PRC-04), newest first.
+    @Transactional
+    public List<OrderHistoryView> getOrderHistory(User user) {
+        UUID id = user.getUserId();
+
+        List<Order> orders = switch (user.getRole()) {
+            case CUSTOMER   -> orderService.findHistoryForCustomer(id);
+            case RESTAURANT -> orderService.findHistoryForRestaurant(id);
+            case COURIER    -> orderService.findHistoryForCourier(id);
+            case OPERATOR   -> orderService.findHistoryForAll();
+        };
+
+        // One query for every item name on the page, same as getRestaurantOrders.
+        Map<UUID, String> itemNames = menuService.getNames(orders.stream()
+                .flatMap(o -> o.getOrderLineItems().stream())
+                .map(OrderLine::getMenuItemId)
+                .collect(Collectors.toSet()));
+
+        return orders.stream().map(o -> new OrderHistoryView(o, itemNames)).toList();
+    }
 }

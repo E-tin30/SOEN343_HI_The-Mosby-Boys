@@ -114,4 +114,32 @@ public class OrderService {
             entity.getSubtotal()
         );
     }
+
+    // States in which a courier has actually carried the order (an offered-only order doesn't count).
+    private static final List<String> CARRIED_STATES =
+            List.of("PickedUpState", "DeliveredState", "RefundedState");
+
+    // A customer's own orders, newest first.
+    @Transactional(readOnly = true)
+    public List<Order> findHistoryForCustomer(UUID customerId) {
+        return withLines(orderRepo.findByUserIdOrderByCreatedAtDesc(customerId));
+    }
+
+    // A restaurant's own orders, newest first.
+    @Transactional(readOnly = true)
+    public List<Order> findHistoryForRestaurant(UUID restaurantId) {
+        return withLines(orderRepo.findByRestaurantIdOrderByCreatedAtDesc(restaurantId));
+    }
+
+    // Only the deliveries this courier carried, newest first.
+    @Transactional(readOnly = true)
+    public List<Order> findHistoryForCourier(UUID courierId) {
+        return withLines(orderRepo.findByCourierIdAndStateInOrderByCreatedAtDesc(courierId, CARRIED_STATES));
+    }
+
+    // Every order, newest first (operator).
+    @Transactional(readOnly = true)
+    public List<Order> findHistoryForAll() {
+        return withLines(orderRepo.findAllByOrderByCreatedAtDesc());
+    }
 }
