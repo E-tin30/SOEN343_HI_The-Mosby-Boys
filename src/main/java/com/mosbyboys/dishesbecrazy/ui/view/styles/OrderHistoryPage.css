@@ -69,3 +69,18 @@
   align-items: center;
   gap: var(--space-4);
 }
+
+/* Fees and taxes, between the items and the total. */
+.history-card__pricing {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-top: var(--space-3);
+  border-top: var(--border-width) solid var(--linen);
+}
+
+.history-card__price-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}

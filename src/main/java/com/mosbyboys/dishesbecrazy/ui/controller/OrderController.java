@@ -20,6 +20,7 @@ import com.mosbyboys.dishesbecrazy.application.ord.RestaurantOrderView;
 import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
 import com.mosbyboys.dishesbecrazy.domain.ord.Order;
 import com.mosbyboys.dishesbecrazy.domain.ord.OrderLine;
+import com.mosbyboys.dishesbecrazy.domain.prc.PricingBreakdown;
 import com.mosbyboys.dishesbecrazy.domain.reg.User;
 import com.mosbyboys.dishesbecrazy.application.ord.OrderHistoryView;
 
@@ -119,10 +120,12 @@ public class OrderController {
     }
 
     // One row of the history page. status is the state without "State" ("DeliveredState" -> "DELIVERED").
-    // rejectionReason is null unless the order was rejected; customerName is null unless the caller is an operator or restaurant.
+    // total is the item subtotal. rejectionReason is null unless the order was rejected, customerName is
+    // null unless the caller is an operator or restaurant, and pricing is null unless the caller is a
+    // customer or operator.
     public record OrderHistoryResponse(UUID id, UUID restaurantId, String restaurantName, String customerName,
                                     String status, Instant placedAt, List<OrderLineResponse> lines,
-                                    BigDecimal total, String rejectionReason) {
+                                    BigDecimal total, PricingBreakdown pricing, String rejectionReason) {
         static OrderHistoryResponse from(OrderHistoryView view) {
             Order o = view.order();
             List<OrderLineResponse> lines = o.getOrderLineItems().stream()
@@ -136,7 +139,8 @@ public class OrderController {
                     o.getRestaurantId(),
                     view.restaurantNames().getOrDefault(o.getRestaurantId(), "Unknown restaurant"),
                     view.customerNames().get(o.getCustomerId()),
-                    status, o.getPlacedAt(), lines, o.getTotal(), o.getRejectionReason());
+                    status, o.getPlacedAt(), lines,
+                    o.getSubtotal(), view.pricing(), o.getRejectionReason());
         }
     }
 

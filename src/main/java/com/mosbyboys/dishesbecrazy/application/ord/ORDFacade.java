@@ -6,6 +6,7 @@ import com.mosbyboys.dishesbecrazy.domain.ord.OrderLine;
 import com.mosbyboys.dishesbecrazy.domain.ord.PlacedQueue;
 import com.mosbyboys.dishesbecrazy.domain.ord.PreparationQueue;
 import com.mosbyboys.dishesbecrazy.domain.ord.Restaurant;
+import com.mosbyboys.dishesbecrazy.domain.prc.PricingBreakdown;
 import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
 import com.mosbyboys.dishesbecrazy.domain.reg.Role;
 import com.mosbyboys.dishesbecrazy.domain.reg.User;
@@ -310,8 +311,18 @@ public class ORDFacade {
                     .collect(Collectors.toSet()))
             : Map.of();
 
+        boolean seesPricing = user.getRole() == Role.CUSTOMER || user.getRole() == Role.OPERATOR;
+
         return orders.stream()
-                .map(o -> new OrderHistoryView(o, itemNames, restaurantNames, customerNames))
+                .map(o -> new OrderHistoryView(o, itemNames, restaurantNames, customerNames, seesPricing ? priceOf(o) : null))
                 .toList();
+    }
+
+    // The breakdown for one stored order, from its item subtotal and today's pricing rates.
+    private PricingBreakdown priceOf(Order order) {
+        if (order.getSubtotal() == null) {
+            return null;
+        }
+        return pricingService.calculateTotal(order.getSubtotal());
     }
 }

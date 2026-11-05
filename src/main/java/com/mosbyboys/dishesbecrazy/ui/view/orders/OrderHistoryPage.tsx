@@ -44,6 +44,20 @@ const formatDate = (iso: string) =>
     minute: "2-digit",
   });
 
+const money = (amount: number) => `$${amount.toFixed(2)}`;
+
+const showTotal = (o: HistoryOrder) => {
+  const total = o.pricing?.total ?? o.total;
+  return total === null ? "—" : money(total);
+};
+
+const PriceRow = ({ label, amount }: { label: string; amount: number }) => (
+  <div className="history-card__price-row">
+    <span className="caption meta">{label}</span>
+    <span>{money(amount)}</span>
+  </div>
+);
+
 export default function OrderHistoryPage() {
   const navigate = useNavigate();
   const { user, accessToken } = useAuth();
@@ -127,10 +141,21 @@ export default function OrderHistoryPage() {
             ))}
         </ul>
 
+        {order.pricing && (
+                            <div className="history-card__pricing">
+                                <PriceRow label="Subtotal" amount={order.pricing.subtotal} />
+                                <PriceRow label="Delivery fee" amount={order.pricing.deliveryFee} />
+                                <PriceRow label="Service fee" amount={order.pricing.serviceFee} />
+                                {order.pricing.smallOrderSurcharge > 0 && (
+                                    <PriceRow label="Small order surcharge" amount={order.pricing.smallOrderSurcharge} />
+                                )}
+                                <PriceRow label="GST" amount={order.pricing.gst} />
+                                <PriceRow label="QST" amount={order.pricing.qst} />
+                            </div>
+                        )}
+
         <div className="history-card__bottom">
-            <span className="list-card__price">
-                {order.total !== null ? `$${order.total.toFixed(2)}` : "—"}
-            </span>
+            <span className="list-card__price">{showTotal(order)}</span>
             <div className="history-card__actions">
             {canCancel(order) && (
                 <Button variant="link" disabled={pendingId !== null} onClick={() => handleCancel(order)}>

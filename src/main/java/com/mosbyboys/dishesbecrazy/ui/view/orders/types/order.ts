@@ -1,5 +1,6 @@
 // Statuses a restaurant sees in its queues, named after the backend order states.
 export type QueueStatus = "PLACED" | "ACCEPTED" | "PREPARING" | "READY";
+import type { PricingBreakdown } from "./PricingBreakdown";
 
 export type OrderLine = {
   menuItemId: string;
@@ -26,18 +27,16 @@ export type HistoryStatus =
   | "PICKEDUP" | "DELIVERED"
   | "CANCELLED" | "REJECTED" | "REFUNDED";
 
-// One row of GET /api/orders/history.
 export type HistoryOrder = {
   id: string;
   restaurantId: string;
   restaurantName: string;
-  // Only set for operators, null for every other role.
   customerName: string | null;
   status: HistoryStatus;
   placedAt: string;
   lines: OrderLine[];
   total: number | null;
-  // Only set when the order was rejected.
+  pricing: PricingBreakdown | null;
   rejectionReason: string | null;
 };
 
