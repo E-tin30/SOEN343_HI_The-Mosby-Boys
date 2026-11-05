@@ -42,6 +42,7 @@ public class OrderService {
         orderEntity.setState(order.getState().toString());
         orderEntity.setCreatedAt(order.getPlacedAt());
         orderEntity.setRejectionReason(order.getRejectionReason());
+        orderEntity.setSubtotal(order.getSubtotal());
 
         orderRepo.saveAndFlush(orderEntity);
 
@@ -50,6 +51,7 @@ public class OrderService {
                 OrderLineItemEntity e = new OrderLineItemEntity();
                 e.setOrderId(order.getId());
                 e.setMenuItemId(line.getMenuItemId());
+                e.setMenuItemName(line.getMenuItemName());
                 e.setQuantity(line.getQuantity());
                 e.setUnitPrice(line.getUnitPrice());
                 return e;
@@ -96,7 +98,7 @@ public class OrderService {
     }
 
     private static OrderLine toLine(OrderLineItemEntity e) {
-        return new OrderLine(e.getMenuItemId(), e.getQuantity(), e.getUnitPrice());
+        return new OrderLine(e.getMenuItemId(), e.getQuantity(), e.getUnitPrice(), e.getMenuItemName());
     }
 
     private static Order toDomain(OrderEntity entity, List<OrderLine> lines) {
@@ -108,7 +110,8 @@ public class OrderService {
             entity.getCourierId(),
             lines,
             entity.getCreatedAt(),
-            entity.getRejectionReason()
+            entity.getRejectionReason(),
+            entity.getSubtotal()
         );
     }
 }

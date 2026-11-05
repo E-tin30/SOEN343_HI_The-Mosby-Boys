@@ -11,6 +11,7 @@ public record PlaceOrderRequest(
     public record OrderLineRequest(
             UUID menuItemId,
             int quantity,
-            BigDecimal price
+            BigDecimal price,
+            String menuItemName
     ) {}
 }

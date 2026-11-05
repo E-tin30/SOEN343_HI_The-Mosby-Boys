@@ -35,4 +35,7 @@ public class OrderLineItemEntity {
 
     @Column(name = "unit_price", nullable = false)
     private BigDecimal unitPrice;
+
+    @Column(name = "menu_item_name", nullable = false)
+    private String menuItemName;
 }

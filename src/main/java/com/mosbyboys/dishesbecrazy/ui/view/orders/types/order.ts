@@ -3,7 +3,7 @@ export type QueueStatus = "PLACED" | "ACCEPTED" | "PREPARING" | "READY";
 
 export type OrderLine = {
   menuItemId: string;
-  name: string;
+  menuItemName: string;
   quantity: number;
   unitPrice: number;
 };
@@ -19,3 +19,11 @@ export type RestaurantOrder = {
   // True only for the accepted order at the front of the preparation line.
   nextToPrepare: boolean;
 };
+
+export type OrderResponse = {
+  id: string;
+  restaurantId: string;
+  state: string;
+  subtotal: number;
+  orderLines: OrderLine[];
+}
