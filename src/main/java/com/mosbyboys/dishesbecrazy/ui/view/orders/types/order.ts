@@ -20,6 +20,27 @@ export type RestaurantOrder = {
   nextToPrepare: boolean;
 };
 
+// Every status an order can show in history: the backend state name without "State", upper-cased.
+export type HistoryStatus =
+  | "PLACED" | "ACCEPTED" | "PREPARING" | "READY"
+  | "PICKEDUP" | "DELIVERED"
+  | "CANCELLED" | "REJECTED" | "REFUNDED";
+
+// One row of GET /api/orders/history.
+export type HistoryOrder = {
+  id: string;
+  restaurantId: string;
+  restaurantName: string;
+  // Only set for operators, null for every other role.
+  customerName: string | null;
+  status: HistoryStatus;
+  placedAt: string;
+  lines: OrderLine[];
+  total: number | null;
+  // Only set when the order was rejected.
+  rejectionReason: string | null;
+};
+
 export type OrderResponse = {
   id: string;
   restaurantId: string;

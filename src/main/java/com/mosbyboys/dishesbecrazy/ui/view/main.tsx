@@ -15,6 +15,7 @@ import RegistrationPage from "./RegistrationPage";
 import HomePage from "./HomePage";
 import RestaurantHomePage from "./RestaurantHomePage";
 import RestaurantOrdersPage from "./orders/RestaurantOrdersPage";
+import OrderHistoryPage from "./orders/OrderHistoryPage";
 import RestaurantsPage from "./menu/RestaurantsPage";
 import MenuPage from "./menu/MenuPage";
 import {CartProvider} from "./CartContext";
@@ -51,6 +52,14 @@ createRoot(document.getElementById("root")!).render(
                         element={
                             <ProtectedRoute allowedRoles={["RESTAURANT"]}>
                                 <RestaurantOrdersPage/>
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/orders/history"
+                        element={
+                            <ProtectedRoute allowedRoles={["CUSTOMER", "RESTAURANT", "COURIER", "OPERATOR"]}>
+                                <OrderHistoryPage/>
                             </ProtectedRoute>
                         }
                     />

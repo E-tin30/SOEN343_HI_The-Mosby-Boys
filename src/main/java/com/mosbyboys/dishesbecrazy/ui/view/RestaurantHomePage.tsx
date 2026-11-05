@@ -17,6 +17,9 @@ export default function RestaurantHomePage() {
   return (
     <div className="page">
       <AppHeader>
+        <Button variant="secondary" onClick={() => navigate("/orders/history")}>
+          Order history
+        </Button>
         <Button variant="secondary" onClick={handleLogout}>
           Log out
         </Button>
