@@ -38,6 +38,7 @@ public class OrderService {
         orderEntity.setId(order.getId());
         orderEntity.setUserId(order.getCustomerId());
         orderEntity.setRestaurantId(order.getRestaurantId());
+        orderEntity.setCourierId(order.getCourierId());
         orderEntity.setState(order.getState().toString());
         orderEntity.setCreatedAt(order.getPlacedAt());
         orderEntity.setRejectionReason(order.getRejectionReason());
@@ -102,14 +103,43 @@ public class OrderService {
 
     private static Order toDomain(OrderEntity entity, List<OrderLine> lines) {
         return Order.reconstitute(
-                entity.getId(),
-                OrderStates.fromName(entity.getState()),
-                entity.getUserId(),
-                entity.getRestaurantId(),
-                lines,
-                entity.getCreatedAt(),
-                entity.getRejectionReason(),
-                entity.getSubtotal()
+            entity.getId(),
+            OrderStates.fromName(entity.getState()),
+            entity.getUserId(),
+            entity.getRestaurantId(),
+            entity.getCourierId(),
+            lines,
+            entity.getCreatedAt(),
+            entity.getRejectionReason(),
+            entity.getSubtotal()
         );
+    }
+
+    // States in which a courier has actually carried the order (an offered-only order doesn't count).
+    private static final List<String> CARRIED_STATES =
+            List.of("PickedUpState", "DeliveredState", "RefundedState");
+
+    // A customer's own orders, newest first.
+    @Transactional(readOnly = true)
+    public List<Order> findHistoryForCustomer(UUID customerId) {
+        return withLines(orderRepo.findByUserIdOrderByCreatedAtDesc(customerId));
+    }
+
+    // A restaurant's own orders, newest first.
+    @Transactional(readOnly = true)
+    public List<Order> findHistoryForRestaurant(UUID restaurantId) {
+        return withLines(orderRepo.findByRestaurantIdOrderByCreatedAtDesc(restaurantId));
+    }
+
+    // Only the deliveries this courier carried, newest first.
+    @Transactional(readOnly = true)
+    public List<Order> findHistoryForCourier(UUID courierId) {
+        return withLines(orderRepo.findByCourierIdAndStateInOrderByCreatedAtDesc(courierId, CARRIED_STATES));
+    }
+
+    // Every order, newest first (operator).
+    @Transactional(readOnly = true)
+    public List<Order> findHistoryForAll() {
+        return withLines(orderRepo.findAllByOrderByCreatedAtDesc());
     }
 }

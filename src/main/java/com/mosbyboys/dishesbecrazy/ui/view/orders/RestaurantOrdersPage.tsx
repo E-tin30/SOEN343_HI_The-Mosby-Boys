@@ -160,7 +160,7 @@ export default function RestaurantOrdersPage() {
                           <ul className="order-card__lines">
                             {order.lines.map((line) => (
                               <li key={line.menuItemId}>
-                                <span className="order-card__qty">{line.quantity}×</span> {line.name}
+                                <span className="order-card__qty">{line.quantity}×</span> {line.menuItemName}
                               </li>
                             ))}
                           </ul>

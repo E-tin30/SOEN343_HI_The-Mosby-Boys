@@ -26,6 +26,7 @@ import com.mosbyboys.dishesbecrazy.domain.ord.RestaurantStatus;
 import com.mosbyboys.dishesbecrazy.domain.ord.state.AcceptedState;
 import com.mosbyboys.dishesbecrazy.domain.ord.state.IllegalTransitionException;
 import com.mosbyboys.dishesbecrazy.domain.ord.state.PlacedState;
+import com.mosbyboys.dishesbecrazy.domain.reg.Courier;
 import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
 import com.mosbyboys.dishesbecrazy.domain.reg.Operator;
 
@@ -317,5 +318,64 @@ class ORDFacadeTest {
         facade.cancelOrder(operator.getUserId(), order.getId());
 
         assertFalse(queues.preparation(restaurantId).contains(order.getId()));
+    }
+
+    @Test
+    void customerHistoryOnlyAsksForTheirOwnOrders() {
+        when(orderService.findHistoryForCustomer(customerId)).thenReturn(List.of());
+
+        facade.getOrderHistory(customer());
+
+        verify(orderService).findHistoryForCustomer(customerId);
+        verify(orderService, never()).findHistoryForAll();
+        verify(orderService, never()).findHistoryForRestaurant(any());
+    }
+
+    @Test
+    void courierHistoryOnlyAsksForTheirOwnCarriedOrders() {
+        UUID courierId = UUID.randomUUID();
+        Courier courier = new Courier(courierId, OffsetDateTime.now(), "A", "B", "a@b.c", "ab", "hash",
+                "OFF_DUTY", new Location(45.5, -73.6));
+        when(orderService.findHistoryForCourier(courierId)).thenReturn(List.of());
+
+        facade.getOrderHistory(courier);
+
+        verify(orderService).findHistoryForCourier(courierId);
+        verify(orderService, never()).findHistoryForAll();
+    }
+
+    @Test
+    void customerHistoryNeverLoadsCustomerNames() {
+        Order order = new Order(customerId, restaurantId, List.of(line()), new BigDecimal("10.00"));
+        when(orderService.findHistoryForCustomer(customerId)).thenReturn(List.of(order));
+        when(restaurantService.getNames(any())).thenReturn(Map.of(restaurantId, "Resto"));
+
+        List<OrderHistoryView> views = facade.getOrderHistory(customer());
+
+        assertEquals("Resto", views.get(0).restaurantNames().get(restaurantId));
+        assertTrue(views.get(0).customerNames().isEmpty());
+        verify(regFacade, never()).getDisplayNames(any());
+    }
+
+    @Test
+    void operatorHistoryIncludesCustomerNames() {
+        Order order = new Order(customerId, restaurantId, List.of(line()), new BigDecimal("10.00"));
+        when(orderService.findHistoryForAll()).thenReturn(List.of(order));
+        when(regFacade.getDisplayNames(any())).thenReturn(Map.of(customerId, "A B"));
+
+        List<OrderHistoryView> views = facade.getOrderHistory(operator());
+
+        assertEquals("A B", views.get(0).customerNames().get(customerId));
+    }
+
+    @Test
+    void restaurantHistoryIncludesCustomerNames() {
+        Order order = new Order(customerId, restaurantId, List.of(line()), new BigDecimal("10.00"));
+        when(orderService.findHistoryForRestaurant(restaurantId)).thenReturn(List.of(order));
+        when(regFacade.getDisplayNames(any())).thenReturn(Map.of(customerId, "A B"));
+
+        List<OrderHistoryView> views = facade.getOrderHistory(owner(restaurantId));
+
+        assertEquals("A B", views.get(0).customerNames().get(customerId));
     }
 }

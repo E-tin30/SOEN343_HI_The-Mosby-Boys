@@ -38,6 +38,9 @@ public class OrderEntity {
     @Column(name = "restaurant_id", nullable = false)
     private UUID restaurantId;
 
+    @Column(name = "courier_id") 
+    private UUID courierId;
+
     @Column(name = "rejection_reason")
     private String rejectionReason;
 

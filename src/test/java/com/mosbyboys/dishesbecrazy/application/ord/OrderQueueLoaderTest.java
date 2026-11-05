@@ -21,7 +21,7 @@ class OrderQueueLoaderTest {
 
     private Order stored(String state) {
         OrderState s = OrderStates.fromName(state);
-        return Order.reconstitute(UUID.randomUUID(), s, UUID.randomUUID(), restaurantId,
+        return Order.reconstitute(UUID.randomUUID(), s, UUID.randomUUID(), restaurantId, UUID.randomUUID(),
                 List.of(), Instant.now(), null, BigDecimal.ZERO);
     }
 

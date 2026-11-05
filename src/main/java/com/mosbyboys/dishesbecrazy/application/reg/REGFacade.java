@@ -1,5 +1,7 @@
 package com.mosbyboys.dishesbecrazy.application.reg;
 
+import java.util.Collection;
+import java.util.Map;
 import java.util.UUID;
 
 import com.mosbyboys.dishesbecrazy.domain.ord.RestaurantStatus;
@@ -34,6 +36,10 @@ public class REGFacade {
 
     public UserProfile getUserById(UUID id) {
         return authService.getUserById(id);
+    }
+
+    public Map<UUID, String> getDisplayNames(Collection<UUID> userIds) {
+        return authService.getDisplayNames(userIds);
     }
 
     public User getCurrentUser(UUID userId) {
