@@ -7,6 +7,7 @@ import com.mosbyboys.dishesbecrazy.domain.ord.PlacedQueue;
 import com.mosbyboys.dishesbecrazy.domain.ord.PreparationQueue;
 import com.mosbyboys.dishesbecrazy.domain.ord.Restaurant;
 import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
+import com.mosbyboys.dishesbecrazy.domain.reg.Role;
 import com.mosbyboys.dishesbecrazy.domain.reg.User;
 import com.mosbyboys.dishesbecrazy.domain.ord.MenuItem;
 
@@ -278,7 +279,7 @@ public class ORDFacade {
         orderEventService.save(orderId, before, order.getState().toString(), user.getUserId(), "REFUND");
     }
 
-    // Order history, scoped by the caller's role (R-PRC-04), newest first.
+    // Order history, scoped by the caller's role, newest first.
     @Transactional
     public List<OrderHistoryView> getOrderHistory(User user) {
         UUID id = user.getUserId();
@@ -296,6 +297,21 @@ public class ORDFacade {
                 .map(OrderLine::getMenuItemId)
                 .collect(Collectors.toSet()));
 
-        return orders.stream().map(o -> new OrderHistoryView(o, itemNames)).toList();
+        // Restaurant names, for every role, in one query.
+        Map<UUID, String> restaurantNames = restaurantService.getNames(orders.stream()
+                .map(Order::getRestaurantId)
+                .collect(Collectors.toSet()));
+
+        // An operator sees every customer's name; a restaurant sees the names of its own customers.
+        boolean seesCustomers = user.getRole() == Role.OPERATOR || user.getRole() == Role.RESTAURANT;
+        Map<UUID, String> customerNames = seesCustomers
+            ? regFacade.getDisplayNames(orders.stream()
+                    .map(Order::getCustomerId)
+                    .collect(Collectors.toSet()))
+            : Map.of();
+
+        return orders.stream()
+                .map(o -> new OrderHistoryView(o, itemNames, restaurantNames, customerNames))
+                .toList();
     }
 }

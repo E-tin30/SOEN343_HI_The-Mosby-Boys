@@ -40,7 +40,7 @@ public class OrderController {
         }
     }
 
-    public record OrderLineResponse(UUID menuItemId, String name, int quantity, BigDecimal unitPrice) {}
+    public record OrderLineResponse(UUID menuItemId, String menuItemName, int quantity, BigDecimal unitPrice) {}
 
     // status is the state without the "State" suffix ("PreparingState" -> "PREPARING"), which is what the frontend uses.
     public record RestaurantOrderResponse(UUID id, String status, Instant placedAt, List<OrderLineResponse> lines,
@@ -119,8 +119,10 @@ public class OrderController {
     }
 
     // One row of the history page. status is the state without "State" ("DeliveredState" -> "DELIVERED").
-    // rejectionReason is null unless the order was rejected.
-    public record OrderHistoryResponse(UUID id, UUID restaurantId, String status, Instant placedAt, List<OrderLineResponse> lines, BigDecimal total, String rejectionReason) {
+    // rejectionReason is null unless the order was rejected; customerName is null unless the caller is an operator or restaurant.
+    public record OrderHistoryResponse(UUID id, UUID restaurantId, String restaurantName, String customerName,
+                                    String status, Instant placedAt, List<OrderLineResponse> lines,
+                                    BigDecimal total, String rejectionReason) {
         static OrderHistoryResponse from(OrderHistoryView view) {
             Order o = view.order();
             List<OrderLineResponse> lines = o.getOrderLineItems().stream()
@@ -129,8 +131,12 @@ public class OrderController {
                             l.getQuantity(), l.getUnitPrice()))
                     .toList();
             String status = o.getState().toString().replace("State", "").toUpperCase();
-            return new OrderHistoryResponse(o.getId(), o.getRestaurantId(), status, o.getPlacedAt(),
-                    lines, o.getTotal(), o.getRejectionReason());
+            return new OrderHistoryResponse(
+                    o.getId(),
+                    o.getRestaurantId(),
+                    view.restaurantNames().getOrDefault(o.getRestaurantId(), "Unknown restaurant"),
+                    view.customerNames().get(o.getCustomerId()),
+                    status, o.getPlacedAt(), lines, o.getTotal(), o.getRejectionReason());
         }
     }
 

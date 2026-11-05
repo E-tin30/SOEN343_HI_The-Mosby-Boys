@@ -343,4 +343,39 @@ class ORDFacadeTest {
         verify(orderService).findHistoryForCourier(courierId);
         verify(orderService, never()).findHistoryForAll();
     }
+
+    @Test
+    void customerHistoryNeverLoadsCustomerNames() {
+        Order order = new Order(customerId, restaurantId, List.of(line()), new BigDecimal("10.00"));
+        when(orderService.findHistoryForCustomer(customerId)).thenReturn(List.of(order));
+        when(restaurantService.getNames(any())).thenReturn(Map.of(restaurantId, "Resto"));
+
+        List<OrderHistoryView> views = facade.getOrderHistory(customer());
+
+        assertEquals("Resto", views.get(0).restaurantNames().get(restaurantId));
+        assertTrue(views.get(0).customerNames().isEmpty());
+        verify(regFacade, never()).getDisplayNames(any());
+    }
+
+    @Test
+    void operatorHistoryIncludesCustomerNames() {
+        Order order = new Order(customerId, restaurantId, List.of(line()), new BigDecimal("10.00"));
+        when(orderService.findHistoryForAll()).thenReturn(List.of(order));
+        when(regFacade.getDisplayNames(any())).thenReturn(Map.of(customerId, "A B"));
+
+        List<OrderHistoryView> views = facade.getOrderHistory(operator());
+
+        assertEquals("A B", views.get(0).customerNames().get(customerId));
+    }
+
+    @Test
+    void restaurantHistoryIncludesCustomerNames() {
+        Order order = new Order(customerId, restaurantId, List.of(line()), new BigDecimal("10.00"));
+        when(orderService.findHistoryForRestaurant(restaurantId)).thenReturn(List.of(order));
+        when(regFacade.getDisplayNames(any())).thenReturn(Map.of(customerId, "A B"));
+
+        List<OrderHistoryView> views = facade.getOrderHistory(owner(restaurantId));
+
+        assertEquals("A B", views.get(0).customerNames().get(customerId));
+    }
 }
