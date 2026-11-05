@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -20,8 +21,8 @@ class OrderQueueLoaderTest {
 
     private Order stored(String state) {
         OrderState s = OrderStates.fromName(state);
-        return Order.reconstitute(UUID.randomUUID(), s, UUID.randomUUID(), restaurantId,
-                List.of(), Instant.now(), null);
+        return Order.reconstitute(UUID.randomUUID(), s, UUID.randomUUID(), restaurantId, UUID.randomUUID(),
+                List.of(), Instant.now(), null, BigDecimal.ZERO);
     }
 
     @Test

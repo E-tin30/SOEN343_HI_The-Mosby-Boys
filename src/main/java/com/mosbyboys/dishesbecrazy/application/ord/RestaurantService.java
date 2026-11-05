@@ -13,10 +13,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -40,6 +42,12 @@ public class RestaurantService {
     @Transactional(readOnly = true)
     public List<Restaurant> findOpen() {
         return toDomain(restaurantRepo.findByStatus(RestaurantStatus.OPEN));
+    }
+
+    @Transactional(readOnly = true)
+    public Map<UUID, String> getNames(Collection<UUID> restaurantIds) {
+        return restaurantRepo.findAllById(restaurantIds).stream()
+                .collect(Collectors.toMap(RestaurantEntity::getId, RestaurantEntity::getName));
     }
 
     @Transactional

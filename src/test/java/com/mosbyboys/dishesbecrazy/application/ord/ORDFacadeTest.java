@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import com.mosbyboys.dishesbecrazy.application.prc.PricingService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -25,6 +26,7 @@ import com.mosbyboys.dishesbecrazy.domain.ord.RestaurantStatus;
 import com.mosbyboys.dishesbecrazy.domain.ord.state.AcceptedState;
 import com.mosbyboys.dishesbecrazy.domain.ord.state.IllegalTransitionException;
 import com.mosbyboys.dishesbecrazy.domain.ord.state.PlacedState;
+import com.mosbyboys.dishesbecrazy.domain.reg.Courier;
 import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
 import com.mosbyboys.dishesbecrazy.domain.reg.Operator;
 
@@ -34,6 +36,7 @@ class ORDFacadeTest {
     private OrderEventService orderEventService;
     private MenuService menuService;
     private RestaurantService restaurantService;
+    private PricingService pricingService;
     private REGFacade regFacade;
     private OrderQueues queues;
     private ORDFacade facade;
@@ -52,7 +55,7 @@ class ORDFacadeTest {
         queues = new OrderQueues();
         // same order as the fields in ORDFacade
         facade = new ORDFacade(orderService, orderEventService, new PermissionPolicy(),
-                queues, menuService, restaurantService, regFacade);
+                queues, menuService, restaurantService, pricingService, regFacade);
         // The facade looks the caller up through REGFacade, so tell the mock who each id is.
         when(regFacade.getCurrentUser(customerId)).thenReturn(customer());
         when(regFacade.getCurrentUser(restaurantId)).thenReturn(owner(restaurantId));
@@ -75,7 +78,7 @@ class ORDFacadeTest {
     }
 
     private OrderLine line() {
-        return new OrderLine(menuItemId, 1, new BigDecimal("10.00"));
+        return new OrderLine(menuItemId, 1, new BigDecimal("10.00"), null);
     }
 
     private void restaurantIsOpen(boolean open) {
@@ -94,7 +97,7 @@ class ORDFacadeTest {
 
     // a stored order the facade will "load"
     private Order storedOrder() {
-        Order order = new Order(customerId, restaurantId, List.of(line()));
+        Order order = new Order(customerId, restaurantId, List.of(line()), new BigDecimal("10.00"));
         when(orderService.load(order.getId())).thenReturn(order);
         return order;
     }
@@ -315,5 +318,64 @@ class ORDFacadeTest {
         facade.cancelOrder(operator.getUserId(), order.getId());
 
         assertFalse(queues.preparation(restaurantId).contains(order.getId()));
+    }
+
+    @Test
+    void customerHistoryOnlyAsksForTheirOwnOrders() {
+        when(orderService.findHistoryForCustomer(customerId)).thenReturn(List.of());
+
+        facade.getOrderHistory(customer());
+
+        verify(orderService).findHistoryForCustomer(customerId);
+        verify(orderService, never()).findHistoryForAll();
+        verify(orderService, never()).findHistoryForRestaurant(any());
+    }
+
+    @Test
+    void courierHistoryOnlyAsksForTheirOwnCarriedOrders() {
+        UUID courierId = UUID.randomUUID();
+        Courier courier = new Courier(courierId, OffsetDateTime.now(), "A", "B", "a@b.c", "ab", "hash",
+                "OFF_DUTY", new Location(45.5, -73.6));
+        when(orderService.findHistoryForCourier(courierId)).thenReturn(List.of());
+
+        facade.getOrderHistory(courier);
+
+        verify(orderService).findHistoryForCourier(courierId);
+        verify(orderService, never()).findHistoryForAll();
+    }
+
+    @Test
+    void customerHistoryNeverLoadsCustomerNames() {
+        Order order = new Order(customerId, restaurantId, List.of(line()), new BigDecimal("10.00"));
+        when(orderService.findHistoryForCustomer(customerId)).thenReturn(List.of(order));
+        when(restaurantService.getNames(any())).thenReturn(Map.of(restaurantId, "Resto"));
+
+        List<OrderHistoryView> views = facade.getOrderHistory(customer());
+
+        assertEquals("Resto", views.get(0).restaurantNames().get(restaurantId));
+        assertTrue(views.get(0).customerNames().isEmpty());
+        verify(regFacade, never()).getDisplayNames(any());
+    }
+
+    @Test
+    void operatorHistoryIncludesCustomerNames() {
+        Order order = new Order(customerId, restaurantId, List.of(line()), new BigDecimal("10.00"));
+        when(orderService.findHistoryForAll()).thenReturn(List.of(order));
+        when(regFacade.getDisplayNames(any())).thenReturn(Map.of(customerId, "A B"));
+
+        List<OrderHistoryView> views = facade.getOrderHistory(operator());
+
+        assertEquals("A B", views.get(0).customerNames().get(customerId));
+    }
+
+    @Test
+    void restaurantHistoryIncludesCustomerNames() {
+        Order order = new Order(customerId, restaurantId, List.of(line()), new BigDecimal("10.00"));
+        when(orderService.findHistoryForRestaurant(restaurantId)).thenReturn(List.of(order));
+        when(regFacade.getDisplayNames(any())).thenReturn(Map.of(customerId, "A B"));
+
+        List<OrderHistoryView> views = facade.getOrderHistory(owner(restaurantId));
+
+        assertEquals("A B", views.get(0).customerNames().get(customerId));
     }
 }

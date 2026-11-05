@@ -11,4 +11,8 @@ import java.util.UUID;
 public interface OrderRepo extends JpaRepository<OrderEntity, UUID>  {
     List<OrderEntity> findByRestaurantIdAndStateInOrderByCreatedAtAsc(UUID restaurantId, Collection<String> states);
     List<OrderEntity> findByStateInOrderByCreatedAtAsc(Collection<String> states);
+    List<OrderEntity> findByUserIdOrderByCreatedAtDesc(UUID userId);
+    List<OrderEntity> findByRestaurantIdOrderByCreatedAtDesc(UUID restaurantId);
+    List<OrderEntity> findByCourierIdAndStateInOrderByCreatedAtDesc(UUID courierId, Collection<String> states);
+    List<OrderEntity> findAllByOrderByCreatedAtDesc();
 }

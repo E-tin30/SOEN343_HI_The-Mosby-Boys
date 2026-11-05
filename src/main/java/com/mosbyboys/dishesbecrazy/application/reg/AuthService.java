@@ -1,6 +1,9 @@
 package com.mosbyboys.dishesbecrazy.application.reg;
 
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.Collection;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 import org.springframework.stereotype.Service;
@@ -52,6 +55,13 @@ public class AuthService {
 
     public UserProfile getUserById(UUID id){
         return userRepo.findUserById(id).orElseThrow(() -> new NoSuchElementException("User profile not found"));
+    }
+
+    // "First Last" by user id, for showing who an order belongs to. Ids that no longer exist are left out.
+    public Map<UUID, String> getDisplayNames(Collection<UUID> userIds) {
+        return userRepo.findUsersByIds(userIds).entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey,
+                        e -> e.getValue().firstName() + " " + e.getValue().lastName()));
     }
 
 }

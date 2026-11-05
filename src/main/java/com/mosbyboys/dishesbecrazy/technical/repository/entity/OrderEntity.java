@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -37,6 +38,12 @@ public class OrderEntity {
     @Column(name = "restaurant_id", nullable = false)
     private UUID restaurantId;
 
+    @Column(name = "courier_id") 
+    private UUID courierId;
+
     @Column(name = "rejection_reason")
     private String rejectionReason;
+
+    @Column(name = "subtotal")
+    private BigDecimal subtotal;
 }

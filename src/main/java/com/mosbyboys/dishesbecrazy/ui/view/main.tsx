@@ -15,10 +15,12 @@ import RegistrationPage from "./RegistrationPage";
 import HomePage from "./HomePage";
 import RestaurantHomePage from "./RestaurantHomePage";
 import RestaurantOrdersPage from "./orders/RestaurantOrdersPage";
+import OrderHistoryPage from "./orders/OrderHistoryPage";
 import RestaurantsPage from "./menu/RestaurantsPage";
 import MenuPage from "./menu/MenuPage";
 import {CartProvider} from "./CartContext";
 import CartPage from "./menu/CartPage";
+import OrderSummaryPage from "./orders/OrderSummaryPage";
 
 createRoot(document.getElementById("root")!).render(
     <BrowserRouter>
@@ -54,6 +56,14 @@ createRoot(document.getElementById("root")!).render(
                         }
                     />
                     <Route
+                        path="/orders/history"
+                        element={
+                            <ProtectedRoute allowedRoles={["CUSTOMER", "RESTAURANT", "COURIER", "OPERATOR"]}>
+                                <OrderHistoryPage/>
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
                         path="/restaurants"
                         element={
                             <ProtectedRoute allowedRoles={["CUSTOMER"]}>
@@ -75,6 +85,12 @@ createRoot(document.getElementById("root")!).render(
                             <ProtectedRoute allowedRoles={["CUSTOMER"]}>
                                 <CartPage/>
                             </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/order-summary/:orderId"
+                        element={
+                            <OrderSummaryPage />
                         }
                     />
                 </Routes>

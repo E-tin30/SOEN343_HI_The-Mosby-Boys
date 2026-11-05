@@ -1,4 +1,4 @@
-import type { RestaurantOrder } from "../types/order";
+import type { HistoryOrder, RestaurantOrder } from "../types/order";
 import { log } from "../../outputLog";
 
 const API = "http://localhost:8080";
@@ -51,4 +51,28 @@ export function prepareOrder(token: string, orderId: string): Promise<void> {
 
 export function markOrderReady(token: string, orderId: string): Promise<void> {
   return post(`/api/orders/${orderId}/ready`, token);
+}
+
+// The logged-in user's order history. The backend picks which orders to return from the token's role.
+export async function getOrderHistory(token: string): Promise<HistoryOrder[]> {
+  const path = "/api/orders/history";
+  log("command", `GET ${path}`);
+  const response = await fetch(API + path, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!response.ok) {
+    const message = (await response.text()) || `Request failed (${response.status})`;
+    log("error", `GET ${path} → ${response.status}: ${message}`);
+    throw new Error(message);
+  }
+  return response.json();
+}
+
+export function cancelOrder(token: string, orderId: string): Promise<void> {
+  return post(`/api/orders/${orderId}/cancel`, token);
+}
+
+export function refundOrder(token: string, orderId: string): Promise<void> {
+  return post(`/api/orders/${orderId}/refund`, token);
 }

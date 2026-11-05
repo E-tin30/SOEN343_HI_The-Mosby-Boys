@@ -1,16 +1,20 @@
 package com.mosbyboys.dishesbecrazy.domain.ord;
 
+import lombok.Getter;
+
 import java.math.BigDecimal;
 import java.util.UUID;
 
 /* One menu item plus a quantity inside an order. Quantity must be above 0. */
+@Getter
 public class OrderLine {
 
     private final UUID menuItemId;
     private final int quantity;
     private final BigDecimal unitPrice;
+    private final String menuItemName;
 
-    public OrderLine(UUID menuItemId, int quantity, BigDecimal unitPrice){
+    public OrderLine(UUID menuItemId, int quantity, BigDecimal unitPrice, String menuItemName) {
         
         // unit price not null
         if(unitPrice == null){
@@ -35,6 +39,7 @@ public class OrderLine {
         this.menuItemId = menuItemId;
         this.quantity = quantity;
         this.unitPrice = unitPrice;
+        this.menuItemName = menuItemName;
     }
 
     // get the total price of the line item (unitPrice x quantity)
@@ -42,16 +47,4 @@ public class OrderLine {
         return unitPrice.multiply(BigDecimal.valueOf(quantity));
     }
 
-    // Getters
-    public UUID getMenuItemId(){
-        return this.menuItemId;
-    }
-
-    public int getQuantity(){
-        return this.quantity;
-    }
-
-    public BigDecimal getUnitPrice(){
-        return this.unitPrice;
-    }
 }

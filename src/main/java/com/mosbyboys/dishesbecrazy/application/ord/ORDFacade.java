@@ -1,11 +1,14 @@
 package com.mosbyboys.dishesbecrazy.application.ord;
 
+import com.mosbyboys.dishesbecrazy.application.prc.PricingService;
 import com.mosbyboys.dishesbecrazy.domain.ord.Order;
 import com.mosbyboys.dishesbecrazy.domain.ord.OrderLine;
 import com.mosbyboys.dishesbecrazy.domain.ord.PlacedQueue;
 import com.mosbyboys.dishesbecrazy.domain.ord.PreparationQueue;
 import com.mosbyboys.dishesbecrazy.domain.ord.Restaurant;
+import com.mosbyboys.dishesbecrazy.domain.prc.PricingBreakdown;
 import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
+import com.mosbyboys.dishesbecrazy.domain.reg.Role;
 import com.mosbyboys.dishesbecrazy.domain.reg.User;
 import com.mosbyboys.dishesbecrazy.domain.ord.MenuItem;
 
@@ -14,6 +17,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -33,6 +37,7 @@ public class ORDFacade {
     private final OrderQueues queues;
     private final MenuService menuService;
     private final RestaurantService restaurantService;
+    private final PricingService  pricingService;
     private final REGFacade regFacade;
 
     @Transactional
@@ -106,8 +111,14 @@ public class ORDFacade {
             throw new IllegalArgumentException("Restaurant is not accepting orders");
         }
 
-        Order order = new Order(customer.getUserId(), restaurantId, orderLineItems);
-        order.getOrderLineItems().forEach(this::checkAgainstMenu);
+        orderLineItems.forEach(this::checkAgainstMenu);
+
+        BigDecimal subtotal = BigDecimal.ZERO;
+        for (OrderLine item : orderLineItems) {
+            subtotal = subtotal.add(item.getLineTotal());
+        }
+
+        Order order = new Order(customer.getUserId(), restaurantId, orderLineItems, subtotal);
 
         orderService.save(order);
         // record transition change event
@@ -127,6 +138,11 @@ public class ORDFacade {
         if (line.getUnitPrice().compareTo(item.getPrice()) != 0) {
             throw new IllegalArgumentException("Price of " + item.getName() + " has changed, please refresh the menu");
         }
+    }
+
+    @Transactional
+    public Order getOrder(UUID orderId) {
+        return orderService.load(orderId);
     }
 
     @Transactional
@@ -225,5 +241,88 @@ public class ORDFacade {
         queues.ready(order.getRestaurantId()).enqueue(orderId);
     }
 
-    /* other state transitions are out of scope for phase 2 */
+    @Transactional
+    public void pickUpOrder(UUID userId, UUID orderId) {
+        User user = regFacade.getCurrentUser(userId);
+        Order order = orderService.load(orderId);
+        permissionPolicy.checkCanActAsCourier(user, order);
+        String before = order.getState().toString();
+
+        order.pickUp();
+
+        orderService.save(order);
+        orderEventService.save(orderId, before, order.getState().toString(), user.getUserId(), "PICKUP");
+    }
+
+    @Transactional
+    public void deliverOrder(UUID userId, UUID orderId) {
+        User user = regFacade.getCurrentUser(userId);
+        Order order = orderService.load(orderId);
+        permissionPolicy.checkCanActAsCourier(user, order);
+        String before = order.getState().toString();
+
+        order.deliver();
+
+        orderService.save(order);
+        orderEventService.save(orderId, before, order.getState().toString(), user.getUserId(), "DELIVER");
+    }
+
+    @Transactional
+    public void refundOrder(UUID userId, UUID orderId) {
+        User user = regFacade.getCurrentUser(userId);
+        Order order = orderService.load(orderId);
+        permissionPolicy.checkCanRefund(user, order);
+        String before = order.getState().toString();
+
+        order.refund();
+
+        orderService.save(order);
+        orderEventService.save(orderId, before, order.getState().toString(), user.getUserId(), "REFUND");
+    }
+
+    // Order history, scoped by the caller's role, newest first.
+    @Transactional
+    public List<OrderHistoryView> getOrderHistory(User user) {
+        UUID id = user.getUserId();
+
+        List<Order> orders = switch (user.getRole()) {
+            case CUSTOMER   -> orderService.findHistoryForCustomer(id);
+            case RESTAURANT -> orderService.findHistoryForRestaurant(id);
+            case COURIER    -> orderService.findHistoryForCourier(id);
+            case OPERATOR   -> orderService.findHistoryForAll();
+        };
+
+        // One query for every item name on the page, same as getRestaurantOrders.
+        Map<UUID, String> itemNames = menuService.getNames(orders.stream()
+                .flatMap(o -> o.getOrderLineItems().stream())
+                .map(OrderLine::getMenuItemId)
+                .collect(Collectors.toSet()));
+
+        // Restaurant names, for every role, in one query.
+        Map<UUID, String> restaurantNames = restaurantService.getNames(orders.stream()
+                .map(Order::getRestaurantId)
+                .collect(Collectors.toSet()));
+
+        // An operator sees every customer's name; a restaurant sees the names of its own customers.
+        boolean seesCustomers = user.getRole() == Role.OPERATOR || user.getRole() == Role.RESTAURANT;
+        Map<UUID, String> customerNames = seesCustomers
+            ? regFacade.getDisplayNames(orders.stream()
+                    .map(Order::getCustomerId)
+                    .collect(Collectors.toSet()))
+            : Map.of();
+
+        boolean seesPricing = user.getRole() == Role.CUSTOMER || user.getRole() == Role.OPERATOR;
+
+        return orders.stream()
+                .map(o -> new OrderHistoryView(o, itemNames, restaurantNames, customerNames, seesPricing ? priceOf(o) : null))
+                .toList();
+    }
+
+    // The breakdown for one stored order, from its item subtotal and today's pricing rates.
+    private PricingBreakdown priceOf(Order order) {
+        if (order.getSubtotal() == null) {
+            return null;
+        }
+        return pricingService.calculateTotal(order.getSubtotal());
+    }
 }
