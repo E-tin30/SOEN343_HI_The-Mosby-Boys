@@ -7,6 +7,7 @@ import java.util.List;
 
 import com.mosbyboys.dishesbecrazy.domain.ord.state.OrderState;
 import com.mosbyboys.dishesbecrazy.domain.ord.state.PlacedState;
+import com.mosbyboys.dishesbecrazy.domain.ord.state.ReadyState;
 
 import lombok.Getter;
 
@@ -20,6 +21,7 @@ public class Order {
     // Both are User ids: the customer's, and the restaurant owner's (which is the restaurant's id).
     private final UUID customerId;
     private final UUID restaurantId;
+    private UUID courierId;
     private final List<OrderLine> orderLineItems;
     private final Instant placedAt;
     private String rejectionReason;
@@ -41,17 +43,19 @@ public class Order {
         this.state = new PlacedState();
         this.customerId = customerId;
         this.restaurantId = restaurantId;
+        this.courierId = null;
         this.orderLineItems = List.copyOf(orderLineItems);
         this.placedAt = Instant.now();
     }
 
     //The private Order constructor is for the reconstitute method so it can bypass the final attributes
-    private Order(UUID id, OrderState state, UUID customerId, UUID restaurantId,
+    private Order(UUID id, OrderState state, UUID customerId, UUID restaurantId, UUID courierId,
                   List<OrderLine> lines, Instant placedAt, String rejectionReason) {
         this.id = id;
         this.state = state;
         this.customerId = customerId;
         this.restaurantId = restaurantId;
+        this.courierId = courierId;
         this.orderLineItems = List.copyOf(lines);
         this.placedAt = placedAt;
         this.rejectionReason = rejectionReason;
@@ -59,7 +63,7 @@ public class Order {
 
     //This method is for loading the objects back from the db
     // For the repo only
-    public static Order reconstitute(UUID id, OrderState state, UUID customerId, UUID restaurantId,
+    public static Order reconstitute(UUID id, OrderState state, UUID customerId, UUID restaurantId, UUID courierId,
                                      List<OrderLine> lines, Instant placedAt, String rejectionReason) {
         if(state == null){
             throw new IllegalArgumentException("State cannot be null");
@@ -67,7 +71,7 @@ public class Order {
         if(lines == null){
             throw new IllegalArgumentException("Order Lines cannot be null");
         }
-        return new Order(id, state, customerId, restaurantId, lines, placedAt, rejectionReason);
+        return new Order(id, state, customerId, restaurantId, courierId, lines, placedAt, rejectionReason);
     }
 
     // State changes
@@ -105,6 +109,16 @@ public class Order {
 
     public void refund() {
         this.state = this.state.refund();
+    }
+
+    public void assignCourier(UUID courierId) {
+        if (courierId == null) {
+            throw new IllegalArgumentException("courierId must not be null");
+        }
+        if (!(state instanceof ReadyState)) {
+            throw new IllegalStateException("Only a ready order can be assigned a courier.");
+        }
+        this.courierId = courierId;
     }
 
     public BigDecimal getTotal(){

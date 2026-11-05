@@ -4,8 +4,10 @@ import org.springframework.stereotype.Component;
 
 import com.mosbyboys.dishesbecrazy.domain.ord.Order;
 import com.mosbyboys.dishesbecrazy.domain.ord.Restaurant;
+import com.mosbyboys.dishesbecrazy.domain.ord.state.DeliveredState;
 import com.mosbyboys.dishesbecrazy.domain.ord.state.PlacedState;
 import com.mosbyboys.dishesbecrazy.domain.reg.User;
+import com.mosbyboys.dishesbecrazy.domain.reg.Courier;
 import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
 import com.mosbyboys.dishesbecrazy.domain.reg.Role;
 
@@ -72,18 +74,59 @@ public class PermissionPolicy {
         throw new PermissionDeniedException("Cannot change another restaurant's orders.");
     }
 
-    // Check if the courier can make changes to an order
-    // Only the courier is assigned to the order can he make changes to it
-    // pickUp, deliver
+    // Accept or decline delivery offer: the order must be offered to this courier, and they must not have accepted yet.
+    public void checkCanRespondToOffer(User caller, Order order) {
+        if (caller == null) {
+            throw new PermissionDeniedException("No caller.");
+        }
+        if (order == null) {
+            throw new PermissionDeniedException("No order.");
+        }
+        if (caller.getRole() != Role.COURIER || !(caller instanceof Courier courier)) {
+            throw new PermissionDeniedException("Only a courier can accept or decline a delivery offer.");
+        }
+        if (!courier.getUserId().equals(order.getCourierId())) {
+            throw new PermissionDeniedException("This order was not offered to you.");
+        }
+        if (!"idle".equalsIgnoreCase(courier.getState())) {
+            throw new PermissionDeniedException("There is no pending offer for you on this order.");
+        }
+    }
+
+    // Pick up or deliver: the order must be this courier's AND they must already have accepted it.
     public void checkCanActAsCourier(User caller, Order order) {
-        //TODO: Ethan
+        if (caller == null) {
+            throw new PermissionDeniedException("No caller.");
+        }
+        if (order == null) {
+            throw new PermissionDeniedException("No order.");
+        }
+        if (caller.getRole() != Role.COURIER || !(caller instanceof Courier courier)) {
+            throw new PermissionDeniedException("Only a courier can pick up or deliver an order.");
+        }
+        if (!courier.getUserId().equals(order.getCourierId())) {
+            throw new PermissionDeniedException("Only the courier assigned to this order can change it.");
+        }
+        if (!"assigned".equalsIgnoreCase(courier.getState()) && !"carrying".equalsIgnoreCase(courier.getState())) {
+            throw new PermissionDeniedException("You have not accepted this order, or you are not on duty.");
+        }
     }
 
     // Check if the user is allowed to refund the order
     // Only operators can do so
-    // cancel
     public void checkCanRefund(User caller, Order order) {
-        //TODO: Ethan
+        if (caller == null) {
+            throw new PermissionDeniedException("No caller.");
+        }
+        if (order == null) {
+            throw new PermissionDeniedException("No order.");
+        }
+        if (caller.getRole() != Role.OPERATOR){ 
+            throw new PermissionDeniedException("Only an operator can refund an order.");
+        }
+        if (!(order.getState() instanceof DeliveredState)){
+            throw new PermissionDeniedException("Only a delivered order can be refunded.");
+        }
     }
 
     // Check who can see the details of an order
@@ -110,9 +153,10 @@ public class PermissionPolicy {
             }
         }
         if (caller.getRole() == Role.COURIER) {
-            // TODO(DLV): allow only the courier assigned to this order.
-            // Needs a courierId on Order, which doesn't exist until DLV is implemented.
-            throw new PermissionDeniedException("Couriers cannot view orders yet (DLV not implemented).");
+            if (caller.getUserId().equals(order.getCourierId())) {
+                return;
+            }
+            throw new PermissionDeniedException("A courier can only view the order assigned to them.");
         }
         throw new PermissionDeniedException("Cannot view this order.");
     }
@@ -137,6 +181,19 @@ public class PermissionPolicy {
             throw new PermissionDeniedException("This restaurant is paused and not taking orders.");
         }
         case COURIER -> throw new PermissionDeniedException("Couriers cannot view restaurant menus yet (DLV not implemented).");
+        }
+    }
+
+    // Only an operator can replace the courier of an order (R-DLV-02).
+    public void checkCanReassign(User caller, Order order) {
+        if (caller == null) {
+            throw new PermissionDeniedException("No caller.");
+        }
+        if (order == null) {
+            throw new PermissionDeniedException("No order.");
+        }
+        if (caller.getRole() != Role.OPERATOR) {
+            throw new PermissionDeniedException("Only an operator can reassign an order.");
         }
     }
 }

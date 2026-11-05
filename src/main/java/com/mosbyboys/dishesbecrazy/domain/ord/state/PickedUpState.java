@@ -4,7 +4,7 @@ package com.mosbyboys.dishesbecrazy.domain.ord.state;
 public class PickedUpState extends OrderState {
     @Override
     // pickedUp --> delivered
-    public OrderState pickUp() { return new DeliveredState(); }
+    public OrderState deliver() { return new DeliveredState(); }
 
     @Override
     // pickedUp --> cancelled

@@ -38,6 +38,7 @@ public class OrderService {
         orderEntity.setId(order.getId());
         orderEntity.setUserId(order.getCustomerId());
         orderEntity.setRestaurantId(order.getRestaurantId());
+        orderEntity.setCourierId(order.getCourierId());
         orderEntity.setState(order.getState().toString());
         orderEntity.setCreatedAt(order.getPlacedAt());
         orderEntity.setRejectionReason(order.getRejectionReason());
@@ -104,6 +105,7 @@ public class OrderService {
             OrderStates.fromName(entity.getState()),
             entity.getUserId(),
             entity.getRestaurantId(),
+            entity.getCourierId(),
             lines,
             entity.getCreatedAt(),
             entity.getRejectionReason()
