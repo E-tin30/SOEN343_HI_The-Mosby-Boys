@@ -21,6 +21,7 @@ import MenuPage from "./menu/MenuPage";
 import {CartProvider} from "./CartContext";
 import CartPage from "./menu/CartPage";
 import OrderSummaryPage from "./orders/OrderSummaryPage";
+import DashboardPage from "./dashboard/DashboardPage";
 
 createRoot(document.getElementById("root")!).render(
     <BrowserRouter>
@@ -91,6 +92,21 @@ createRoot(document.getElementById("root")!).render(
                         path="/order-summary/:orderId"
                         element={
                             <OrderSummaryPage />
+                        }
+                    />
+                    <Route
+                        path="/dashboard"
+                        element={
+                            <ProtectedRoute
+                                allowedRoles={[
+                                    "CUSTOMER",
+                                    "RESTAURANT",
+                                    "COURIER",
+                                    "OPERATOR"
+                                ]}
+                            >
+                                <DashboardPage />
+                            </ProtectedRoute>
                         }
                     />
                 </Routes>

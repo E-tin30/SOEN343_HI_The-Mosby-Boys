@@ -35,6 +35,9 @@ export default function HomePage() {
           <Button onClick={() => navigate("/restaurants")}>
             Browse restaurants
           </Button>
+          <Button onClick={() => navigate("/dashboard")}>
+            View Dashboard Map
+          </Button>
         </section>
 
         <section className="home-card card">
