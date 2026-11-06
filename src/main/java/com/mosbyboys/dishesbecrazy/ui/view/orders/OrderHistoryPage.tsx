@@ -64,6 +64,7 @@ export default function OrderHistoryPage() {
   const [orders, setOrders] = useState<HistoryOrder[] | null>(null);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [tab, setTab] = useState<"active" | "refunded">("active");
 
   const loadOrders = useCallback(async () => {
     if (!accessToken) return;
@@ -174,6 +175,7 @@ export default function OrderHistoryPage() {
 
   const current = orders?.filter((o) => o.status !== "REFUNDED") ?? [];
   const refunded = orders?.filter((o) => o.status === "REFUNDED") ?? [];
+  const shown = tab === "active" ? current : refunded;
 
   return (
     <div className="page">
@@ -196,27 +198,37 @@ export default function OrderHistoryPage() {
 
         {orders && (
           <>
-            <section className="card history-section" aria-label="Orders">
-              <header className="history-section__header">
-                <Heading level={3}>Orders</Heading>
-                <Tag>{String(current.length)}</Tag>
-              </header>
-              {current.length === 0 ? (
-                <p className="page__status meta">No orders yet.</p>
+            <div className="history-tabs" role="tablist">
+              <button
+                role="tab"
+                aria-selected={tab === "active"}
+                className={`history-tab${tab === "active" ? " history-tab--active" : ""}`}
+                onClick={() => setTab("active")}
+              >
+                Orders ({current.length})
+              </button>
+              <button
+                role="tab"
+                aria-selected={tab === "refunded"}
+                className={`history-tab${tab === "refunded" ? " history-tab--active" : ""}`}
+                onClick={() => setTab("refunded")}
+              >
+                Refunded ({refunded.length})
+              </button>
+            </div>
+
+            <section
+              className="card history-section"
+              aria-label={tab === "active" ? "Orders" : "Refunded orders"}
+            >
+              {shown.length === 0 ? (
+                <p className="page__status meta">
+                  {tab === "active" ? "No orders yet." : "No refunded orders."}
+                </p>
               ) : (
-                <ul className="page__list">{current.map(renderOrder)}</ul>
+                <ul className="page__list">{shown.map(renderOrder)}</ul>
               )}
             </section>
-
-            {refunded.length > 0 && (
-              <section className="card history-section" aria-label="Refunded orders">
-                <header className="history-section__header">
-                  <Heading level={3}>Refunded</Heading>
-                  <Tag tone="navy">{String(refunded.length)}</Tag>
-                </header>
-                <ul className="page__list">{refunded.map(renderOrder)}</ul>
-              </section>
-            )}
           </>
         )}
       </main>
