@@ -12,6 +12,13 @@ type RestaurantDashboardData = {
     queueLength: number;
 };
 
+type CourierData = {
+    id: string;
+    state: "IDLE" | "ASSIGNED" | "CARRYING";
+    latitude: number;
+    longitude: number;
+};
+
 const MONTREAL_BOUNDS = {
     north: 45.75,
     south: 45.35,
@@ -22,6 +29,7 @@ const MONTREAL_BOUNDS = {
 export default function DashboardMap() {
     const { accessToken } = useAuth();
     const [restaurants, setRestaurants] = useState<RestaurantDashboardData[]>([]);
+    const [couriers, setCouriers] = useState<CourierData[]>([]);
     const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
     
@@ -57,7 +65,34 @@ export default function DashboardMap() {
             }
         }
 
+        async function loadCouriers() {
+            try {
+                const response = await fetch(
+                    "http://localhost:8080/api/dashboard/couriers",
+                    {
+                        headers: {
+                            Authorization: `Bearer ${accessToken}`,
+                        },
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error(
+                        `Failed to load couriers: ${response.status}`
+                    );
+                }
+
+                const data: CourierData[] = await response.json();
+                setCouriers(data);
+
+            } catch (error) {
+                console.error("Error loading couriers:", error);
+            }
+        }
+
+
         loadRestaurants();
+        loadCouriers()
     }, [accessToken]);
 
 
@@ -90,6 +125,17 @@ export default function DashboardMap() {
                             "#16a34a"
                         }
                         borderColor="#333333"
+                        />
+                    </AdvancedMarker>
+                ))}
+
+                {/* Courier markers */}
+                {couriers.map((courier) => (
+                    <AdvancedMarker key={courier.id} position={{lat: courier.latitude, lng: courier.longitude,}} title={`Courier - ${courier.state}`}>
+                        <Pin
+                            background="#2563eb"
+                            borderColor="#1e40af"
+                            glyph="🚴"
                         />
                     </AdvancedMarker>
                 ))}
