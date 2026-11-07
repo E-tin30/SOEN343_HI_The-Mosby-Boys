@@ -21,7 +21,10 @@ public class CourierEntity {
     @Column(name = "state")
     private String state;
 
+    @Column(name = "latitude")
     private Double latitude;
+
+    @Column(name = "longitude")
     private Double longitude;
 }
 

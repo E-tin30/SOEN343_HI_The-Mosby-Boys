@@ -4,6 +4,8 @@ import com.mosbyboys.dishesbecrazy.application.dash.RestaurantDashboardData;
 import com.mosbyboys.dishesbecrazy.application.ord.RestaurantService;
 import com.mosbyboys.dishesbecrazy.application.ord.OrderQueues;
 import com.mosbyboys.dishesbecrazy.domain.ord.Restaurant;
+import com.mosbyboys.dishesbecrazy.application.dlv.DLVFacade;
+import com.mosbyboys.dishesbecrazy.application.dlv.CourierData;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -31,8 +33,8 @@ public class DashboardService {
             .toList();
     }
 
-    public List<Courier> getCouriers(){
-        return dlvFacade.getOnDutyCouriers();
+    public List<CourierData> getOnlineCouriers(){
+        return dlvFacade.getOnlineCouriers();
     }
 }
 

@@ -1,10 +1,17 @@
 package com.mosbyboys.dishesbecrazy.application.dlv;
 
-import com.mosbyboys.dishesbecrazy.domain.reg.Courier;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
 public class DLVFacade {
-    
-    public List<Courier> getOnDutyCouriers() {
-        return courierService.getOnDutyCouriers();
+    private final CourierService courierService;
+
+    public List<CourierData> getOnlineCouriers() {
+        return courierService.getOnlineCouriers();
     }
 }
+

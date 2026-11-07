@@ -2,6 +2,7 @@ package com.mosbyboys.dishesbecrazy.ui.controller;
 
 import com.mosbyboys.dishesbecrazy.application.dash.DashboardService;
 import com.mosbyboys.dishesbecrazy.application.dash.RestaurantDashboardData;
+import com.mosbyboys.dishesbecrazy.application.dlv.CourierData;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,5 +21,10 @@ public class DashboardController {
     @GetMapping("/restaurants")
     public List<RestaurantDashboardData> getRestaurants() {
         return dashboardService.getRestaurants();
+    }
+
+    @GetMapping("/couriers")
+    public List<CourierData> getOnlineCouriers() {
+        return dashboardService.getOnlineCouriers();
     }
 }
