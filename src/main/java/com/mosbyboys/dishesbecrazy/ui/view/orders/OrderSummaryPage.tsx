@@ -116,7 +116,7 @@ export default function OrderSummaryPage() {
     return (
         <div className="page">
             <AppHeader>
-                <Button variant="secondary" onClick={() => navigate("/order-history")}>
+                <Button variant="secondary" onClick={() => navigate("/orders/history")}>
                     See Order History
                 </Button>
             </AppHeader>

@@ -84,3 +84,26 @@
   align-items: baseline;
   justify-content: space-between;
 }
+
+.history-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.history-tab {
+  padding: 8px 14px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  font: inherit;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.history-tab--active {
+  border-bottom-color: var(--tomato, #d9482b);
+  opacity: 1;
+  font-weight: 600;
+}
