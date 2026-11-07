@@ -118,6 +118,18 @@ export default function Register(){
                         </div>
                     )}
 
+                    {role === "COURIER" && (
+                        <div className="registration-card__full">
+                            <Input
+                                label="Courier address"
+                                name="address"
+                                placeholder="1455 De Maisonneuve Blvd. W., Montreal"
+                                autoComplete="street-address"
+                                required
+                            />
+                        </div>
+                    )}
+
                     {role === "RESTAURANT" && (
                         <>
                             <Input

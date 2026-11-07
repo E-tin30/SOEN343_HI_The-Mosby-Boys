@@ -17,6 +17,7 @@ public class DashboardService {
 
     private final RestaurantService restaurantService;
     private final OrderQueues orderQueues;
+    private final DLVFacade dlvFacade;
 
     public List<RestaurantDashboardData> getRestaurants() {
         //Note: The list being returned is unmodfiable since we are returning it with .toList() 
@@ -28,6 +29,10 @@ public class DashboardService {
                 return new RestaurantDashboardData(restaurantId, r.getName(), r.getStatus(), r.getLocation().latitude(), r.getLocation().longitude(), queueLength);
             })
             .toList();
+    }
+
+    public List<Courier> getCouriers(){
+        return dlvFacade.getOnDutyCouriers();
     }
 }
 

@@ -84,9 +84,9 @@ public class UserRepo{
             + "VALUES (?, CURRENT_TIMESTAMP, ?, 'OPEN', ?, ?)",
                 id, restaurantName, lat, lon);
             case "COURIER" -> jdbcTemplate.update(
-                "INSERT INTO public.\"Courier\" (user_id, created_at, state) "
-            + "VALUES (?, CURRENT_TIMESTAMP, 'OFF_DUTY')",
-                id);
+                "INSERT INTO public.\"Courier\" (user_id, created_at, state, latitude, longitude) "
+            + "VALUES (?, CURRENT_TIMESTAMP, 'OFFLINE', ?, ?)",
+                id, lat, lon);
             default -> { }
         }
     }

@@ -33,8 +33,8 @@ public class AuthService {
             throw new IllegalArgumentException("Operator accounts cannot self-register");
         }
 
-        // only customer and restaurant need an address
-        boolean needsAddress = userRole == Role.CUSTOMER || userRole == Role.RESTAURANT;
+        // Customers, restaurants and couriers need an address
+        boolean needsAddress = userRole == Role.CUSTOMER || userRole == Role.RESTAURANT || userRole == Role.COURIER;
         
         if (needsAddress && (address == null || address.isBlank())) {
             throw new IllegalArgumentException("address is required for " + userRole);
