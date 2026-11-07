@@ -74,7 +74,7 @@ export default function DashboardMap() {
                 defaultZoom={10}
                 minZoom={8}
                 maxZoom={19}
-                mapId="DEMO_MAP_ID"
+                mapId="648afd4657ed3697e408dbcb"
                 restriction={{
                     latLngBounds: MONTREAL_BOUNDS,
                     strictBounds: false,
