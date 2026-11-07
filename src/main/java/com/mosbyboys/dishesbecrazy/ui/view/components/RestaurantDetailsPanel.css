@@ -1,0 +1,31 @@
+.restaurant-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+}
+
+.restaurant-panel__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.restaurant-panel__status {
+  align-self: flex-start;
+}
+
+.restaurant-panel__queue {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-top: var(--border-width) solid var(--linen);
+  border-bottom: var(--border-width) solid var(--linen);
+}
+
+.restaurant-panel__queue-count {
+  font-weight: 600;
+}

@@ -10,6 +10,15 @@
   margin: 0;
 }
 
-.home-card .btn {
+.home-card > .btn {
+  margin-top: var(--space-2);
+}
+
+/* A row of buttons plus a status tag, e.g. the courier's Start Driving / Go Offline. */
+.home-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
   margin-top: var(--space-2);
 }
