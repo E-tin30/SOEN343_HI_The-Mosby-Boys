@@ -1,0 +1,76 @@
+/* Home dashboard grid. Map takes 2/3 of the width and the full height. The right-hand
+   third holds an action card (just tall enough for its button) with the active order
+   card filling the rest. */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  grid-template-rows: 1fr auto;
+  grid-template-areas:
+    "map active"
+    "map action";
+  gap: var(--space-5);
+  height: var(--dashboard-height);
+}
+
+.dashboard-card--map {
+  grid-area: map;
+}
+
+.dashboard-card--active {
+  grid-area: active;
+}
+
+.dashboard-card--action {
+  grid-area: action;
+}
+
+.dashboard-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-height: 0;
+  overflow: auto;
+  padding: var(--space-5);
+}
+
+.dashboard-card .heading {
+  text-align: center;
+}
+
+.dashboard-card__map {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  background: var(--linen);
+  border-radius: var(--radius-md);
+}
+
+/* Pinned to the bottom of the card, centred. */
+.dashboard-card__footer {
+  align-self: center;
+  margin-top: auto;
+}
+
+/* Fills the card and centres the message in it. */
+.dashboard-card__empty {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  text-align: center;
+}
+
+/* Phones: stack the cards, map first. */
+@media (max-width: 700px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: var(--dashboard-height) auto auto;
+    grid-template-areas:
+      "map"
+      "active"
+      "action";
+    height: auto;
+  }
+}

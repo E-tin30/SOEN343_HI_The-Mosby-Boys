@@ -7,34 +7,9 @@ import Button from "../components/Button";
 import Heading from "../components/Heading";
 import Tag from "../components/Tag";
 import { cancelOrder, getOrderHistory, refundOrder } from "./api/ordersApi";
-import type { HistoryOrder, HistoryStatus } from "./types/order";
+import type { HistoryOrder } from "./types/order";
+import { STATUS_LABEL, STATUS_TONE } from "./orderStatus";
 import "../styles/OrderHistoryPage.css";
-
-type Tone = "sage" | "mustard" | "tomato" | "navy" | "neutral";
-
-const STATUS_LABEL: Record<HistoryStatus, string> = {
-  PLACED: "Placed",
-  ACCEPTED: "Accepted",
-  PREPARING: "Preparing",
-  READY: "Ready",
-  PICKEDUP: "Picked up",
-  DELIVERED: "Delivered",
-  CANCELLED: "Cancelled",
-  REJECTED: "Rejected",
-  REFUNDED: "Refunded",
-};
-
-const STATUS_TONE: Record<HistoryStatus, Tone> = {
-  PLACED: "mustard",
-  ACCEPTED: "mustard",
-  PREPARING: "mustard",
-  READY: "mustard",
-  PICKEDUP: "navy",
-  DELIVERED: "sage",
-  CANCELLED: "tomato",
-  REJECTED: "tomato",
-  REFUNDED: "navy",
-};
 
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleString([], {

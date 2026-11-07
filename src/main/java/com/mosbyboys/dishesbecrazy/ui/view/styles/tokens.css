@@ -49,6 +49,7 @@
   --focus-width: 2px;
   --card-width-1: 400px;
   --card-width-2: 800px;
+  --dashboard-height: 480px;
 
   /* Warm, espresso-tinted shadows */
   --shadow-card: 0 2px 4px rgba(42, 29, 23, 0.06), 0 12px 32px rgba(42, 29, 23, 0.1);
