@@ -8,7 +8,6 @@ import Tag from "../components/Tag";
 import { getRestaurants } from "./api/menuApi";
 import type { Restaurant } from "./types/menu";
 import { RESTAURANT_STATUS_TAG } from "./restaurantStatus";
-import "../styles/RestaurantsPage.css";
 
 export default function RestaurantsPage() {
   const navigate = useNavigate();

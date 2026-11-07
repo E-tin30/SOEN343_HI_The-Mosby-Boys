@@ -7,7 +7,6 @@ import Heading from "./components/Heading";
 import ActiveOrderDetails from "./components/ActiveOrderDetails";
 import Tag from "./components/Tag";
 import type { ActiveDelivery } from "./orders/types/order";
-import "./styles/HomePage.css";
 import "./styles/Dashboard.css";
 
 export default function CourierHomePage() {
@@ -43,14 +42,14 @@ export default function CourierHomePage() {
       </AppHeader>
 
       <main className="page__content">
-        <section className="home-card card">
+        <section className="intro-card card">
           <p className="caption meta">Welcome back</p>
           <Heading>{`Hey ${user?.firstName ?? "there"}, ~ready to roll?~`}</Heading>
-          <p className="home-card__text meta">
+          <p className="intro-card__text meta">
             Start driving to receive delivery offers.
           </p>
           {/* Send the courier's availability to the backend */}
-          <div className="home-card__actions">
+          <div className="intro-card__actions">
             <Button onClick={() => setActive(true)} disabled={active}>
               Start Driving
             </Button>
@@ -60,7 +59,7 @@ export default function CourierHomePage() {
             <Tag tone={active ? "sage" : "neutral"}>{active ? "Online: Let's get this party started" : "Offline: The dishes are too crazy"}</Tag>
           </div>
           {active && activeDelivery && (
-            <p className="home-card__text meta">
+            <p className="intro-card__text meta">
               Finish your active delivery before you end driving.
             </p>
           )}

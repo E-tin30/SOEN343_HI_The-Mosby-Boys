@@ -8,7 +8,6 @@ import Button from "./components/Button";
 import Heading from "./components/Heading";
 import { getOrderHistory } from "./orders/api/ordersApi";
 import type { ActiveOrderSummary, HistoryStatus } from "./orders/types/order";
-import "./styles/HomePage.css";
 import "./styles/Dashboard.css";
 
 // Statuses for an order that hasn't reached the customer yet.
@@ -61,10 +60,10 @@ export default function HomePage() {
       </AppHeader>
 
       <main className="page__content">
-        <section className="home-card card">
+        <section className="intro-card card">
           <p className="caption meta">Welcome back</p>
           <Heading>{`Hey ${user?.firstName ?? "there"}, ~hungry?~`}</Heading>
-          <p className="home-card__text meta">
+          <p className="intro-card__text meta">
             Find home cooks and restaurants near you.
           </p>
           <Button onClick={() => navigate("/restaurants")}>

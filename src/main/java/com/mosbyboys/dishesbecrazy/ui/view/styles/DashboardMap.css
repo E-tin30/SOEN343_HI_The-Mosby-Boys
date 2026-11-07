@@ -1,0 +1,252 @@
+/* Map card on the left, restaurant details card on the right. */
+.dashboard-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  align-items: start;
+  gap: var(--space-5);
+}
+
+/* Restaurant list stacked over the details card; sticks beside the map while the page scrolls. */
+.dashboard-layout__side {
+  position: sticky;
+  top: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+/* A narrower take on the restaurants page list, scrolling once it outgrows the card. */
+.dashboard-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+}
+
+.dashboard-list .page__status {
+  margin: 0;
+}
+
+.dashboard-list__items {
+  gap: var(--space-2);
+  max-height: 280px;
+  overflow-y: auto;
+  /* Room for the hover shadow and focus ring so they aren't clipped by the scroll area. */
+  padding: var(--space-1);
+  margin: calc(-1 * var(--space-1));
+}
+
+/* list-card is laid out for a link; reset the button defaults and tighten it for the narrow column. */
+.dashboard-list__item {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dashboard-list__name {
+  font-weight: 600;
+}
+
+.dashboard-list__item--selected,
+.dashboard-list__item--selected:hover {
+  border-color: var(--navy);
+  background: color-mix(in srgb, var(--navy) 8%, var(--cream));
+}
+
+.dashboard-layout__placeholder {
+  padding: var(--space-5);
+  text-align: center;
+}
+
+.dashboard-layout__placeholder p {
+  margin: 0;
+}
+
+/* Live dashboard map: toolbar on top, the map itself, then a legend. */
+.dashboard-map {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5);
+}
+
+.dashboard-map .caption,
+.dashboard-map .page__status {
+  margin: 0;
+}
+
+.dashboard-map__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.dashboard-map__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--cream);
+  border: var(--border-width) solid var(--linen);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.dashboard-map__toggle input {
+  accent-color: var(--tomato);
+}
+
+.dashboard-map__canvas {
+  position: relative;
+  height: var(--dashboard-height);
+  overflow: hidden;
+  background: var(--linen);
+  border: var(--border-width) solid var(--linen);
+  border-radius: var(--radius-md);
+}
+
+.dashboard-map__empty {
+  margin: 0;
+  padding: var(--space-6);
+  text-align: center;
+}
+
+/* Legend */
+.dashboard-map__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-6);
+  padding-top: var(--space-4);
+  border-top: var(--border-width) solid var(--linen);
+}
+
+.dashboard-map__legend-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+}
+
+.dashboard-map__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 14px;
+}
+
+.legend-swatch {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+}
+
+/* Restaurant marker: optional label stacked over a teardrop pin whose tip sits on the location. */
+.restaurant-marker {
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.restaurant-marker__label {
+  padding: var(--space-1) var(--space-2);
+  background: var(--porcelain);
+  border: var(--border-width) solid var(--linen);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-card);
+  color: var(--espresso);
+  font-family: var(--font-body);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.restaurant-marker__pin {
+  width: 26px;
+  height: 26px;
+  /* Rotating the square pushes its tip ~5px past the box, so lift it back onto the point. */
+  margin-bottom: 5px;
+  border: var(--border-width-2) solid var(--porcelain);
+  border-radius: 50% 50% 50% 0;
+  box-shadow: 0 2px 6px rgba(42, 29, 23, 0.35);
+  transform: rotate(-45deg);
+}
+
+.restaurant-marker__pin--quiet,
+.legend-swatch--quiet {
+  background: var(--sage-dark);
+}
+
+.restaurant-marker__pin--steady,
+.legend-swatch--steady {
+  background: var(--mustard);
+}
+
+.restaurant-marker__pin--busy,
+.legend-swatch--busy {
+  background: var(--tomato);
+}
+
+/* Courier marker: circle when idle, rounded square when assigned, diamond while carrying. */
+.courier-marker {
+  display: block;
+  width: 20px;
+  height: 20px;
+  border: var(--border-width-2) solid var(--porcelain);
+  box-shadow: 0 2px 6px rgba(42, 29, 23, 0.35);
+}
+
+.courier-marker--small {
+  width: 14px;
+  height: 14px;
+  box-shadow: none;
+}
+
+.courier-marker--idle {
+  background: var(--sage-dark);
+  border-radius: 50%;
+}
+
+.courier-marker--assigned {
+  background: var(--mustard);
+  border-radius: 4px;
+}
+
+.courier-marker--carrying {
+  background: var(--navy);
+  border-radius: 4px;
+  transform: rotate(45deg);
+}
+
+/* Unknown state (e.g. an old OFF_DUTY row): plain neutral dot rather than an unstyled box. */
+.courier-marker:not(.courier-marker--idle):not(.courier-marker--assigned):not(.courier-marker--carrying) {
+  background: var(--cocoa);
+  border-radius: 50%;
+}
+
+@media (max-width: 700px) {
+  .dashboard-map {
+    padding: var(--space-4);
+  }
+}
+
+/* Tablets and phones: stack the details card under the map. */
+@media (max-width: 900px) {
+  .dashboard-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-layout__side {
+    position: static;
+  }
+}

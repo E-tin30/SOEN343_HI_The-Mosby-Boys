@@ -50,6 +50,11 @@ a:hover {
   margin: 0 auto;
 }
 
+/* For pages that need room for side-by-side cards, e.g. the dashboard map and its details panel. */
+.page__content--wide {
+  max-width: var(--card-width-3);
+}
+
 .page__intro {
   display: flex;
   flex-direction: column;
@@ -125,4 +130,52 @@ a:hover {
 
 .meta {
   color: var(--cocoa);
+}
+
+/* Intro card at the top of a page: caption, heading, a line of text and optional actions. */
+.intro-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.intro-card .caption,
+.intro-card__text {
+  margin: 0;
+}
+
+.intro-card > .btn {
+  margin-top: var(--space-2);
+}
+
+/* A row of buttons plus a status tag, e.g. the courier's Start Driving / Go Offline. */
+.intro-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+/* A restaurant row that is itself the link or button, e.g. on the restaurants page and the dashboard list. */
+.restaurant-card {
+  text-decoration: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.restaurant-card:hover {
+  color: var(--espresso);
+  border-color: var(--cocoa);
+  box-shadow: var(--shadow-card);
+}
+
+.restaurant-card__cta {
+  color: var(--navy);
+  font-weight: 500;
+}
+
+.restaurant-card:hover .restaurant-card__cta {
+  color: var(--navy-dark);
+  text-decoration: underline;
 }
