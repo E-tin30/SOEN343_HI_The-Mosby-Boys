@@ -129,16 +129,45 @@ export default function DashboardMap() {
                     </AdvancedMarker>
                 ))}
 
-                {/* Courier markers */}
-                {couriers.map((courier) => (
-                    <AdvancedMarker key={courier.id} position={{lat: courier.latitude, lng: courier.longitude,}} title={`Courier - ${courier.state}`}>
-                        <Pin
-                            background="#2563eb"
-                            borderColor="#1e40af"
-                            glyph="🚴"
-                        />
-                    </AdvancedMarker>
-                ))}
+                {/* Setting the courier marker styles */}
+                {couriers.map((courier) => {
+                    const styles: Record<string, React.CSSProperties> = {
+                        IDLE: { //Green circle
+                            backgroundColor: "#16a34a",
+                            borderRadius: "50%",
+                        },
+                        ASSIGNED: { //Yellow diamond
+                            backgroundColor: "#f59e0b",
+                            borderRadius: "4px",
+                        },
+                        CARRYING: { //Blue diamond
+                            backgroundColor: "#2563eb",
+                            borderRadius: "4px",
+                            transform: "rotate(45deg)",
+                        },
+                    };
+
+                    return (
+                        //Placing the courier markers
+                        <AdvancedMarker key={courier.id}
+                            position={{
+                                lat: courier.latitude,
+                                lng: courier.longitude,
+                            }}
+                            title={`Courier - ${courier.state}`}
+                        >
+                            <div
+                                style={{
+                                    width: "30px",
+                                    height: "30px",
+                                    border: "2px solid white",
+                                    boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
+                                    ...styles[courier.state],
+                                }}
+                            />
+                        </AdvancedMarker>
+                    );
+                })}
 
                 </Map>
             </div>
