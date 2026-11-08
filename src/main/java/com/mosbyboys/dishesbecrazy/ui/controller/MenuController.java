@@ -29,8 +29,8 @@ public class MenuController {
 
     public record MenuItemResponse(UUID id, String name, BigDecimal price, String status, String description) {
     static MenuItemResponse from(MenuItem m) {
-        // Expose the same availability ORD checks at placement, including exhausted stock.
         String availability = (m.isAvailable() ? MenuItemStatus.AVAILABLE : MenuItemStatus.SOLD_OUT).name();
+        // Exposes ORD's existing availability rule, including zero stock, in the menu status field.
         return new MenuItemResponse(m.getId(), m.getName(), m.getPrice(), availability, m.getDescription());
     }
 }

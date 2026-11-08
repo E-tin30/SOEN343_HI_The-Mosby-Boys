@@ -24,6 +24,7 @@ export default function OrderSummaryPage() {
         if (!orderId || !accessToken) {
             setLoading(false);
             log("error", "Unable to retrieve your order: missing order or session.");
+            // Records this local validation failure even though no request can be sent.
             setError("Unable to retrieve your order.");
             return;
         }
@@ -46,8 +47,10 @@ export default function OrderSummaryPage() {
                 );
 
                 const data: OrderResponse = await readJson<OrderResponse>(response);
+                // Logs the order lookup and unreadable responses through the shared request helpers.
 
                 if (controller.signal.aborted) return null;
+                // Discards a response that belongs to a canceled order-summary load.
                 setOrder(data);
 
                 return data;
@@ -55,8 +58,10 @@ export default function OrderSummaryPage() {
                 if (controller.signal.aborted) {
                     return null;
                 }
+                // Ignores deliberate cancellation instead of showing it as an order-loading error.
 
                 logError(error, "Unable to load your order.");
+                // Covers local load failures without repeating errors already logged by the transport.
                 setError("Unable to load your order.");
                 return null;
             } finally {
@@ -88,13 +93,16 @@ export default function OrderSummaryPage() {
                 );
 
                 const data: PricingBreakdown = await readJson<PricingBreakdown>(response);
+                // Gives the summary pricing request the same command/error coverage as other API calls.
 
                 if (!controller.signal.aborted) setPricing(data);
+                // Updates pricing only while this summary load is still relevant.
             } catch (error) {
                 if (!controller.signal.aborted) {
                     logError(error, "Unable to load the order pricing.");
                     setError("Unable to load the order pricing.");
                 }
+                // Replaces the former silent catch with visible feedback and application-console logging.
             }
         };
 

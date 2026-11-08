@@ -8,4 +8,5 @@ export default defineConfig({
     unstubGlobals: true,
     setupFiles: ["src/test/frontend/setup.ts"],
   },
+  // Runs frontend tests in a simulated browser and restores mocks/globals between scenarios.
 });

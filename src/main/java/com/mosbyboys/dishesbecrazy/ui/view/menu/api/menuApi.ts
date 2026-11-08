@@ -8,7 +8,9 @@ async function get<T>(path: string, token: string, signal?: AbortSignal): Promis
     headers: { Authorization: `Bearer ${token}` },
     signal,
   });
+  // Logs menu/restaurant reads through the shared helper and allows obsolete checks to be canceled.
   return readJson(response);
+  // Reports JSON parsing failures through the same output console as request failures.
 }
 
 export function getRestaurants(token: string, signal?: AbortSignal): Promise<Restaurant[]> {

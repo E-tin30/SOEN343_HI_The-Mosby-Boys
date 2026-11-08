@@ -66,11 +66,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
 
         const profile: CurrentUser = await readJson<CurrentUser>(response);
+        // Records restoration requests and unreadable responses without logging the saved token.
 
         setAccessToken(savedAccessToken);
         setUser(profile);
       } catch (error) {
         logError(error, "Could not restore session. Please sign in again.");
+        // Sends restoration failures to the application console instead of only developer tools.
 
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
@@ -93,6 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     const profile: CurrentUser = await readJson<CurrentUser>(response);
+    // Uses shared request/JSON logging when retrieving the profile after a successful login.
 
     // Persist tokens across page reloads.
     localStorage.setItem("accessToken", tokens.accessToken);
@@ -106,6 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   function logout() {
     log("command", "Log out");
+    // Records logout even though it is handled locally rather than by an HTTP request.
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
 

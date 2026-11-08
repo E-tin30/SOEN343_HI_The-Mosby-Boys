@@ -5,6 +5,7 @@ import { getEntries, log, logError } from "../../main/java/com/mosbyboys/dishesb
 import OutputConsole from "../../main/java/com/mosbyboys/dishesbecrazy/ui/view/components/OutputConsole";
 
 const url = "http://localhost:8080/login?secret=private-query";
+// Uses a fake secret in the URL to prove query parameters are excluded from output entries.
 
 describe("application output logging", () => {
   it("shows commands and one HTTP error in the visible console without secrets", async () => {
@@ -23,6 +24,7 @@ describe("application output logging", () => {
     expect(JSON.stringify(entries)).not.toMatch(/private-|failed again/);
     expect(screen.getByText(/POST \/login failed \(401\)/)).toBeTruthy();
   });
+  // Verifies an HTTP failure appears once in the visible console without leaking request or response secrets.
 
   it("logs network and JSON failures once, and ignores deliberate cancellation", async () => {
     const before = getEntries().length;
@@ -37,6 +39,7 @@ describe("application output logging", () => {
     await expect(loggedFetch(url)).rejects.toThrow();
     expect(getEntries().slice(before).filter((e) => e.kind === "error")).toHaveLength(2);
   });
+  // Covers network/JSON failures and confirms intentional cancellation does not add an error entry.
 
   it("keeps previous commands after remounting the console", () => {
     const view = render(<OutputConsole />);
@@ -45,5 +48,6 @@ describe("application output logging", () => {
     render(<OutputConsole />);
     expect(screen.getByText(/Navigate to cart test/)).toBeTruthy();
   });
+  // Checks that console entries survive route-like unmount/remount cycles.
 
 });

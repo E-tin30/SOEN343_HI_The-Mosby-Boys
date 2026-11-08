@@ -34,12 +34,14 @@ export default function CartPage() {
     const [orderError, setOrderError] = useState("");
     const [checkout, setCheckout] = useState(false);
     const [clientSecret, setClientSecret] = useState<string>();
+    // Types the checkout value returned by the shared JSON reader without changing its use.
     const [pricing, setPricing] = useState<PricingBreakdown | null>(null);
     const [pricingError, setPricingError] = useState("");
 
     const isEmpty = !cart || cart.items.length === 0;
     const availability = useOrderAvailability(cart, accessToken);
     const orderDisabled = !availability.allowed || placingOrder || isEmpty;
+    // Applies current availability to Place Order while retaining the existing empty/pending guards.
 
     useEffect(() => {
         if (!cart || cart.items.length === 0 || !accessToken) {
@@ -49,6 +51,7 @@ export default function CartPage() {
 
         setPricing(null);
         setPricingError("");
+        // Clears the previous pricing display before loading the current selection.
         const controller = new AbortController();
 
         const fetchPricing = async () => {
@@ -73,7 +76,9 @@ export default function CartPage() {
                 );
 
                 const data = await readJson<PricingBreakdown>(response);
+                // Routes pricing request and JSON errors through the existing application console.
                 if (controller.signal.aborted) return;
+                // Prevents an obsolete pricing response from updating the current cart display.
                 setPricing(data);
                 setPricingError("");
             } catch (error) {
@@ -81,6 +86,7 @@ export default function CartPage() {
                     logError(error, "Could not load the pricing breakdown.");
                     setPricingError("Could not load the pricing breakdown.");
                 }
+                // Shows/logs genuine pricing failures while ignoring deliberate request cancellation.
             }
         };
 
@@ -94,6 +100,7 @@ export default function CartPage() {
         if (!cart || !accessToken) return;
         setOrderError("");
         log("command", "Continue to checkout");
+        // Records the local checkout action; availability does not add a restriction to this step.
         try {
             const response = await loggedFetch("http://localhost:8080/payments/create-payment-intent", {
                 method: "POST",
@@ -107,21 +114,26 @@ export default function CartPage() {
             const data = await readJson<{ clientSecret: string }>(response);
             setClientSecret(data.clientSecret);
             setCheckout(true);
+            // Keeps the existing checkout flow while logging payment-intent request and parsing failures.
         } catch (error) {
             logError(error, "Could not start checkout.");
             setOrderError("Could not start checkout. Please try again.");
+            // Exposes checkout errors in the page and console without printing the client secret.
         }
     };
 
     const placeOrder = async () => {
         if (!cart || !accessToken || orderDisabled) return;
+        // Stops placement when the current selection/session is missing or R-DASH-04 blocks the order.
 
         setPlacingOrder(true);
         setOrderError("");
 
         log("command", "Pay and place order");
+        // Records the user action separately from its subsequent backend request.
         try {
             if (!await availability.refresh()) return;
+            // Rechecks immediately before placement in case availability changed after rendering.
             paymentFormRef.current?.submitPayment();
 
             const response = await loggedFetch("http://localhost:8080/placeOrder", {
@@ -143,6 +155,7 @@ export default function CartPage() {
             });
 
             const order = await readJson<{ id: string }>(response);
+            // Uses the shared parser so an unreadable order confirmation is also logged.
             clearCart();
             alert("Order placed successfully!");
             navigate(`/order-summary/${order.id}`);
@@ -150,6 +163,7 @@ export default function CartPage() {
             logError(error, "Could not place the order.");
             setOrderError("Could not place the order. Please refresh availability and try again.");
             void availability.refresh();
+            // Reports placement failure and refreshes the disabled state after a possible backend rejection.
         } finally {
             setPlacingOrder(false);
         }
@@ -311,12 +325,14 @@ export default function CartPage() {
                                     {availability.reason}
                                 </p>
                             )}
+                            {/* Explains the current Place Order restriction and announces updates accessibly. */}
                             {!availability.allowed && !availability.checking && (
                                 <Button variant="secondary" onClick={() => {
                                     log("command", "Refresh order availability");
                                     void availability.refresh();
                                 }} disabled={placingOrder}>Retry availability</Button>
                             )}
+                            {/* Lets the customer rerun a completed blocked/failed check and logs that command. */}
 
                             {orderError && (
                                 <p className="page__status page__status--error" role="alert">
@@ -368,6 +384,7 @@ export default function CartPage() {
                                 <div className="cart-summary__actions">
                                     <Button variant="secondary" onClick={() => {
                                         log("command", "Back to cart");
+                                        // Records this local action while preserving the existing return-to-cart flow.
                                         setCheckout(false);
                                         setClientSecret(undefined);
                                     }} disabled={placingOrder}>
@@ -376,6 +393,7 @@ export default function CartPage() {
                                     <Button onClick={placeOrder} disabled={orderDisabled} aria-describedby={availability.reason ? "order-availability" : undefined}>
                                         {placingOrder ? "Placing Order…" : "Pay and Place Order"}
                                     </Button>
+                                    {/* Only Place Order receives the availability restriction and its explanatory text. */}
                                 </div>
                             </section>
                         )}

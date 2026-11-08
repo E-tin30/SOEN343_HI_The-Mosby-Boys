@@ -24,12 +24,14 @@ export default function Register(){
                 },
                 body: JSON.stringify(data),
             });
+            // Records the registration command/status without logging the submitted personal data or password.
 
             const result = await response.text();
             alert(result);
             navigate("/login");
         } catch (error) {
             logError(error, "Registration failed.");
+            // Covers local failures while the shared helper deduplicates already-reported request errors.
             alert("Registration failed!");
         }
     }

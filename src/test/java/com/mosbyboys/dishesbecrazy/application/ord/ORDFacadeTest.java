@@ -54,6 +54,7 @@ class ORDFacadeTest {
         menuService = mock(MenuService.class);
         restaurantService = mock(RestaurantService.class);
         pricingService = mock(PricingService.class);
+        // Supplies the existing pricing dependency so history tests can run alongside placement guards.
         regFacade = mock(REGFacade.class);
         queues = new OrderQueues();
         // same order as the fields in ORDFacade
@@ -141,6 +142,7 @@ class ORDFacadeTest {
         verifyNoInteractions(orderService, orderEventService);
         assertEquals(0, queues.placed(restaurantId).size());
     }
+    // Covers PAUSED and CLOSED restaurants and verifies rejection creates no order, event, or queue entry.
 
     @Test
     void soldOutItemRejectsTheOrderWithoutSavingOrRecordingAnEvent() {
@@ -156,6 +158,7 @@ class ORDFacadeTest {
         verifyNoInteractions(orderService, orderEventService);
         assertEquals(0, queues.placed(restaurantId).size());
     }
+    // Confirms the existing sold-out guard rejects placement without persistence or queue side effects.
 
     @Test
     void aRestaurantCannotPlaceAnOrder() {

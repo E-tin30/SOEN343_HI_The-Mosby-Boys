@@ -11,14 +11,18 @@ const mocks = vi.hoisted(() => ({
     { menuItem: { id: "item-1", name: "Soup", status: "AVAILABLE", price: 10, description: null }, quantity: 1 },
   ] },
 }));
+// Holds the test cart and spies for existing cart/payment actions without contacting live services.
 vi.mock("../../main/java/com/mosbyboys/dishesbecrazy/ui/view/AuthContext", () => ({
   useAuth: () => ({ accessToken: "private-token", user: { id: "customer-1" } }),
 }));
+// Supplies a fake authenticated customer so these tests exercise Place Order rather than login.
 vi.mock("../../main/java/com/mosbyboys/dishesbecrazy/ui/view/CartContext", () => ({
   useCart: () => ({ cart: mocks.cart, itemCount: 1, clearCart: mocks.clearCart, updateQuantity: vi.fn(), removeItem: vi.fn() }),
 }));
+// Exposes a controlled selection and cart commands for each availability scenario.
 vi.mock("@stripe/stripe-js", () => ({ loadStripe: () => Promise.resolve(null) }));
 vi.mock("@stripe/react-stripe-js", () => ({ Elements: ({ children }: { children: unknown }) => children }));
+// Renders checkout without loading Stripe or making a real payment-intent request.
 vi.mock("../../main/java/com/mosbyboys/dishesbecrazy/ui/view/components/StripePaymentForm", async () => {
   const { forwardRef, useImperativeHandle } = await import("react");
   return { default: forwardRef((_props, ref) => {
@@ -26,6 +30,7 @@ vi.mock("../../main/java/com/mosbyboys/dishesbecrazy/ui/view/components/StripePa
     return <div>Mock payment form</div>;
   }) };
 });
+// Provides the original imperative payment handle so blocked placement can be checked without invoking Stripe.
 
 let status: string;
 let menu: { id: string; status: string }[];
@@ -50,15 +55,18 @@ beforeEach(() => {
   });
   vi.stubGlobal("fetch", fetchMock);
 });
+// Resets fixtures and stubs backend responses so each disabled-button test starts independently.
 
 function mount() { return render(<MemoryRouter><CartPage /><OutputConsole /></MemoryRouter>); }
 const checkout = () => screen.getByRole("button", { name: "Continue to Checkout" }) as HTMLButtonElement;
 const requestsTo = (path: string) => fetchMock.mock.calls.filter(([url]) => url.endsWith(path));
+// Renders the actual cart/console and lets assertions inspect visible controls and attempted requests.
 async function enterCheckout() {
   await waitFor(() => expect(checkout().disabled).toBe(false));
   fireEvent.click(checkout());
   await screen.findByRole("button", { name: "Pay and Place Order" });
 }
+// Opens the existing checkout screen so tests can inspect Place Order without submitting it.
 
 describe("Place Order availability (R-DASH-04)", () => {
   it("leaves Continue to Checkout enabled while availability is being checked", async () => {
@@ -71,6 +79,7 @@ describe("Place Order availability (R-DASH-04)", () => {
     await act(async () => finish(json([{ id: "restaurant-1", status: "OPEN" }])));
     await waitFor(() => expect((screen.getByRole("button", { name: "Pay and Place Order" }) as HTMLButtonElement).disabled).toBe(false));
   });
+  // Checks only Place Order waits for availability; Continue to Checkout keeps its existing behavior.
 
   it.each(["PAUSED", "CLOSED", "MISSING"])("disables Place Order for a %s restaurant without blocking checkout", async (state) => {
     status = state;
@@ -81,6 +90,7 @@ describe("Place Order availability (R-DASH-04)", () => {
     expect((screen.getByRole("button", { name: "Pay and Place Order" }) as HTMLButtonElement).disabled).toBe(true);
     expect(requestsTo("/placeOrder")).toHaveLength(0);
   });
+  // Covers paused, closed, and absent restaurants without adding an early checkout restriction.
 
   it("disables Place Order when every selected item is sold out", async () => {
     menu = [{ id: "item-1", status: "SOLD_OUT" }];
@@ -90,6 +100,7 @@ describe("Place Order availability (R-DASH-04)", () => {
     await enterCheckout();
     expect((screen.getByRole("button", { name: "Pay and Place Order" }) as HTMLButtonElement).disabled).toBe(true);
   });
+  // Verifies every selected item being sold out disables Place Order and shows the explanation.
 
   it("does not impose an additional disabled rule on a mixed cart", async () => {
     mocks.cart.items.push({ ...mocks.cart.items[0], menuItem: { ...mocks.cart.items[0].menuItem, id: "item-2", name: "Bread" } });
@@ -99,6 +110,7 @@ describe("Place Order availability (R-DASH-04)", () => {
     await waitFor(() => expect((screen.getByRole("button", { name: "Pay and Place Order" }) as HTMLButtonElement).disabled).toBe(false));
     expect(screen.queryByText("Remove the unavailable items before placing your order.")).toBeNull();
   });
+  // Guards against introducing an extra mixed-cart restriction beyond the ticket's all-sold-out rule.
 
   it("keeps Place Order disabled after a failed check and supports retry", async () => {
     fetchMock.mockRejectedValueOnce(new TypeError("offline"));
@@ -110,6 +122,7 @@ describe("Place Order availability (R-DASH-04)", () => {
     await waitFor(() => expect((screen.getByRole("button", { name: "Pay and Place Order" }) as HTMLButtonElement).disabled).toBe(false));
     expect(screen.getByText(/GET \/api\/restaurants failed/)).toBeTruthy();
   });
+  // Checks a failed lookup disables placement, logs the failure, and can recover through Retry availability.
 
   it("refreshes on focus and disables a previously enabled Place Order", async () => {
     mount();
@@ -120,6 +133,7 @@ describe("Place Order availability (R-DASH-04)", () => {
     await screen.findByText("This restaurant is not accepting orders.");
     expect((screen.getByRole("button", { name: "Pay and Place Order" }) as HTMLButtonElement).disabled).toBe(true);
   });
+  // Verifies returning to the window updates a previously enabled button when the restaurant becomes unavailable.
 
   it("rechecks before placement and stops if every selected item just sold out", async () => {
     mount();
@@ -132,4 +146,5 @@ describe("Place Order availability (R-DASH-04)", () => {
     expect(mocks.payment).not.toHaveBeenCalled();
     expect(requestsTo("/placeOrder")).toHaveLength(0);
   });
+  // Confirms the final recheck stops both placement and the existing payment call when all items just sold out.
 });

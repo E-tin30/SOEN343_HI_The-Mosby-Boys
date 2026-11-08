@@ -26,8 +26,10 @@ const StripePaymentForm = forwardRef<StripePaymentFormHandle>((params, ref) => {
         e.preventDefault();
 
         log("command", "Confirm payment");
+        // Records the existing SDK action without changing the payment submission contract.
         if (!stripe || !elements) {
             log("error", "Payment form is not ready.");
+            // Makes the existing early return visible in the application console.
             return;
         }
 
@@ -40,12 +42,14 @@ const StripePaymentForm = forwardRef<StripePaymentFormHandle>((params, ref) => {
             });
             if (error) {
                 log("error", "Payment confirmation failed.");
+                // Logs a safe description instead of exposing payment details from the SDK error.
                 setError(error.message ?? "Payment failed.");
             }
         } catch (error) {
             logError(error, "Payment confirmation failed.");
             setError("Payment failed.");
         }
+        // Reports thrown SDK/network failures through the same console as application requests.
 
     }
 

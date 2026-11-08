@@ -11,6 +11,7 @@ export async function getRestaurantOrders(token: string): Promise<RestaurantOrde
   });
   return readJson(response);
 }
+// Queue reads now share command, HTTP, network, and JSON error logging.
 
 // The action endpoints reply 204 with no body, so there is nothing to parse on success.
 async function post(path: string, token: string, body?: unknown): Promise<void> {
@@ -23,6 +24,7 @@ async function post(path: string, token: string, body?: unknown): Promise<void> 
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
 }
+// Logs every order action while preserving the existing empty-success-response contract.
 
 export function acceptOrder(token: string, orderId: string): Promise<void> {
   return post(`/api/orders/${orderId}/accept`, token);
@@ -49,6 +51,7 @@ export async function getOrderHistory(token: string): Promise<HistoryOrder[]> {
   });
   return readJson(response);
 }
+// History requests use the same logging path, including errors that occur before an HTTP response.
 
 export function cancelOrder(token: string, orderId: string): Promise<void> {
   return post(`/api/orders/${orderId}/cancel`, token);

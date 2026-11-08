@@ -5,6 +5,7 @@ import type { Cart } from "../../main/java/com/mosbyboys/dishesbecrazy/ui/view/m
 
 const cart: Cart = { restaurantId: "restaurant-1", items: [{ menuItem: { id: "item-1", name: "Soup", price: 10, status: "AVAILABLE", description: null }, quantity: 1 }] };
 const json = (data: unknown) => new Response(JSON.stringify(data));
+// Supplies a controlled cart and JSON responses without changing the shared database.
 
 it("ignores an old cart's late response after selection changes", async () => {
   let finishOld!: (r: Response) => void;
@@ -24,6 +25,7 @@ it("ignores an old cart's late response after selection changes", async () => {
   expect(view.result.current.allowed).toBe(false);
   expect(view.result.current.reason).toContain("All selected items");
 });
+// Ensures a delayed response for an old selection cannot re-enable Place Order for the current selection.
 
 it("polls availability and cleans up the timer on unmount", async () => {
   vi.useFakeTimers();
@@ -44,6 +46,7 @@ it("polls availability and cleans up the timer on unmount", async () => {
   await vi.advanceTimersByTimeAsync(30_000);
   expect(fetchMock.mock.calls).toHaveLength(count);
 });
+// Uses a fake clock to verify polling refreshes availability and stops after unmount.
 
 it.each([null, { ...cart, items: [] }])("keeps an empty cart disabled without requests", async (selection) => {
   const fetchMock = vi.fn();
@@ -53,6 +56,7 @@ it.each([null, { ...cart, items: [] }])("keeps an empty cart disabled without re
   expect(view.result.current.allowed).toBe(false);
   expect(fetchMock).not.toHaveBeenCalled();
 });
+// Checks both missing and empty carts stay disabled without unnecessary requests.
 
 it("allows a mixed selection when at least one selected item is available", async () => {
   vi.stubGlobal("fetch", vi.fn(async (url: string) => url.endsWith("/api/restaurants")
@@ -64,3 +68,4 @@ it("allows a mixed selection when at least one selected item is available", asyn
   expect(view.result.current.allowed).toBe(true);
   expect(view.result.current.reason).toBe("");
 });
+// Protects the ticket's EVERY-item rule: one available item prevents the all-sold-out UI restriction.

@@ -38,6 +38,7 @@ export default function LoginPage() {
             });
 
             const loginTokens: LoginTokens = await readJson<LoginTokens>(response);
+            // Logs the login request and parsing failures without exposing the password or returned tokens.
 
             // Retrieve the authenticated user's profile and save it in the shared AuthContext.
             const profile = await completeLogin(loginTokens);
@@ -52,6 +53,7 @@ export default function LoginPage() {
                     ? "Invalid email or password"
                     : "Could not complete login or load your profile. Please try again."
             );
+            // Preserves the invalid-credentials message while avoiding duplicate console error entries.
         } finally {
             setLoading(false);
         }

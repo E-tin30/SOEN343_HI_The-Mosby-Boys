@@ -8,7 +8,9 @@ function Session() {
   const { user, loading, logout } = useAuth();
   return <><p>{loading ? "Restoring" : user ? "Signed in" : "Signed out"}</p><button onClick={logout}>Sign out test</button></>;
 }
+// Displays session transitions and exposes logout so tests can verify the user-visible logging flow.
 afterEach(() => localStorage.clear());
+// Prevents the fake saved session from leaking into a later test.
 
 it("logs restored-session requests and local logout without exposing tokens", async () => {
   localStorage.setItem("accessToken", "private-token");
@@ -23,6 +25,7 @@ it("logs restored-session requests and local logout without exposing tokens", as
   expect(localStorage.getItem("accessToken")).toBeNull();
   expect(JSON.stringify(getEntries().slice(before))).not.toContain("private-token");
 });
+// Checks session restoration and local logout are visible in the console while tokens remain private.
 
 it("reports a failed restoration exactly once and clears the invalid session", async () => {
   localStorage.setItem("accessToken", "expired-token");
@@ -33,3 +36,4 @@ it("reports a failed restoration exactly once and clears the invalid session", a
   expect(getEntries().slice(before).filter((e) => e.kind === "error")).toHaveLength(1);
   expect(localStorage.getItem("accessToken")).toBeNull();
 });
+// Verifies an invalid session is cleared and its failed request produces only one error entry.

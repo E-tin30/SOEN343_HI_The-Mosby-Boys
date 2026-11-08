@@ -20,4 +20,5 @@ class MenuControllerTest {
 
         assertEquals(expected, MenuController.MenuItemResponse.from(item).status());
     }
+    // Checks the API reports zero-stock and explicitly sold-out items consistently with ORD availability.
 }

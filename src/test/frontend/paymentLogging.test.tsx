@@ -9,7 +9,9 @@ vi.mock("@stripe/react-stripe-js", () => ({
   useElements: () => payment.ready ? {} : null,
   useStripe: () => payment.ready ? { confirmPayment: payment.confirm } : null,
 }));
+// Replaces Stripe with controlled responses so logging tests cannot perform real payment operations.
 beforeEach(() => { payment.ready = true; payment.confirm.mockReset(); });
+// Resets readiness and the SDK mock before each logging scenario.
 
 it.each(["declined", "network"])("logs payment commands and %s errors without payment details", async (failure) => {
   if (failure === "declined") payment.confirm.mockResolvedValue({ error: { message: "private payment details" } });
@@ -23,6 +25,7 @@ it.each(["declined", "network"])("logs payment commands and %s errors without pa
   expect(entries[0].text).toBe("Confirm payment");
   expect(JSON.stringify(entries)).not.toContain("private payment details");
 });
+// Checks both SDK-declined and thrown failures are logged once without exposing payment details.
 
 it("logs the existing early return when the payment form is not ready", () => {
   payment.ready = false;
@@ -32,3 +35,4 @@ it("logs the existing early return when the payment form is not ready", () => {
   expect(payment.confirm).not.toHaveBeenCalled();
   expect(getEntries().slice(before).map((e) => e.text)).toEqual(["Confirm payment", "Payment form is not ready."]);
 });
+// Verifies the existing not-ready return now records its command and error in the application console.
