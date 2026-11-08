@@ -39,7 +39,7 @@ public class Restaurant extends User {
         this.status = RestaurantStatus.PAUSED;
     }
 
-    public void reopen() {
+    public void open() {
         this.status = RestaurantStatus.OPEN;
     }
 
