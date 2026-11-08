@@ -52,6 +52,7 @@ class ORDFacadeTest {
         menuService = mock(MenuService.class);
         restaurantService = mock(RestaurantService.class);
         regFacade = mock(REGFacade.class);
+        pricingService = mock(PricingService.class);
         queues = new OrderQueues();
         // same order as the fields in ORDFacade
         facade = new ORDFacade(orderService, orderEventService, new PermissionPolicy(),
