@@ -85,7 +85,7 @@ class RestaurantTest {
         assertFalse(r.acceptsOrders());
     } 
 
-    //: PAUSED → OPEN
+    // PAUSED → OPEN
     @Test
     void openFromPausedOpens() {
         Restaurant r = restaurant(UUID.randomUUID(), RestaurantStatus.PAUSED);
@@ -94,7 +94,7 @@ class RestaurantTest {
         assertTrue(r.acceptsOrders());
     }
 
-    //: PAUSED → CLOSED
+    // PAUSED → CLOSED
     @Test
     void closeFromPausedCloses() {
         Restaurant r = restaurant(UUID.randomUUID(), RestaurantStatus.PAUSED);
@@ -103,6 +103,7 @@ class RestaurantTest {
         assertFalse(r.acceptsOrders());
     }
 
+    // CLOSED → OPEN
     @Test    
     void openFromClosedOpens() {
         Restaurant r = restaurant(UUID.randomUUID(), RestaurantStatus.CLOSED);
@@ -112,7 +113,7 @@ class RestaurantTest {
 
     }
 
-    //: stays PAUSED
+    // stays PAUSED
     @Test
     void pauseWhenPausedDoesNothing() {
         Restaurant r = restaurant(UUID.randomUUID(), RestaurantStatus.PAUSED);
@@ -122,13 +123,13 @@ class RestaurantTest {
 
     // stays OPEN
     @Test     
-    void openWhenOpenDoesNothing() { //TODO: is there a better way to assert it "does nothing"?
+    void openWhenOpenDoesNothing() { 
         Restaurant r = restaurant(UUID.randomUUID(), RestaurantStatus.OPEN);
         r.open();
         assertEquals(RestaurantStatus.OPEN, r.getStatus());
     } 
 
-
+    // stays CLOSED
     @Test    
     void closeWhenClosedDoesNothing() {
         Restaurant r = restaurant(UUID.randomUUID(), RestaurantStatus.CLOSED);
@@ -136,11 +137,11 @@ class RestaurantTest {
         assertEquals(RestaurantStatus.CLOSED, r.getStatus());
     }
 
-    // @Test 
-    // void pauseFromClosedIsRefused() {
-    //     Restaurant r = restaurant(UUID.randomUUID(), RestaurantStatus.CLOSED);
-    //     r.pause();
-    //     assertThrows(IllegalStateException);
-    //     assertEquals(RestaurantStatus.CLOSED, r.getStatus());
-    // }
+    // refuses CLOSED → PAUSED
+    @Test 
+    void pauseFromClosedIsRefused() {
+        Restaurant r = restaurant(UUID.randomUUID(), RestaurantStatus.CLOSED);
+        assertThrows(IllegalStateException.class, () -> r.pause());
+        assertEquals(RestaurantStatus.CLOSED, r.getStatus());
+    }
 }
