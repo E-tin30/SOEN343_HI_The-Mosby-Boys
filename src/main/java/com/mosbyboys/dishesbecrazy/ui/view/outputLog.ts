@@ -18,3 +18,27 @@ export function subscribe(listener: () => void) {
 }
 
 export const getEntries = () => entries;
+
+const reportedErrors = new WeakSet<object>();
+
+// Callers supply a safe description, never a raw server/SDK exception or payload.
+export function logError(error: unknown, description: string) {
+  if (typeof error === "object" && error !== null && "name" in error && error.name === "AbortError") return;
+  if (typeof error === "object" && error !== null) {
+    if (reportedErrors.has(error)) return;
+    reportedErrors.add(error);
+  }
+  log("error", description);
+}
+
+export function installRuntimeLogging() {
+  const onError = (event: ErrorEvent) => logError(event.error, "Unexpected application error.");
+  const onRejection = (event: PromiseRejectionEvent) =>
+    logError(event.reason, "An application action could not finish.");
+  window.addEventListener("error", onError);
+  window.addEventListener("unhandledrejection", onRejection);
+  return () => {
+    window.removeEventListener("error", onError);
+    window.removeEventListener("unhandledrejection", onRejection);
+  };
+}
