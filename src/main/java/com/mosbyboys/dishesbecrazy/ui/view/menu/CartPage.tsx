@@ -1,8 +1,10 @@
+import { useOrderAvailability } from "./useOrderAvailability";
+import { loggedFetch, readJson } from "../api/loggedFetch";
 import {useEffect, useRef, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {useCart} from "../CartContext";
 import {useAuth} from "../AuthContext";
-import {log} from "../outputLog";
+import {log, logError} from "../outputLog";
 import AppHeader from "../components/AppHeader";
 import Button from "../components/Button";
 import Heading from "../components/Heading";
@@ -31,11 +33,15 @@ export default function CartPage() {
     const [placingOrder, setPlacingOrder] = useState(false);
     const [orderError, setOrderError] = useState("");
     const [checkout, setCheckout] = useState(false);
-    const [clientSecret, setClientSecret] = useState();
+    const [clientSecret, setClientSecret] = useState<string>();
     const [pricing, setPricing] = useState<PricingBreakdown | null>(null);
     const [pricingError, setPricingError] = useState("");
 
     const isEmpty = !cart || cart.items.length === 0;
+    const availability = useOrderAvailability(cart, accessToken);
+    const submitting = useRef(false);
+    const [startingCheckout, setStartingCheckout] = useState(false);
+    const orderDisabled = !availability.allowed || placingOrder || startingCheckout || isEmpty;
 
     useEffect(() => {
         if (!cart || cart.items.length === 0 || !accessToken) {
@@ -43,11 +49,13 @@ export default function CartPage() {
             return;
         }
 
+        setPricing(null);
+        setPricingError("");
         const controller = new AbortController();
 
         const fetchPricing = async () => {
             try {
-                const response = await fetch(
+                const response = await loggedFetch(
                     "http://localhost:8080/payments/breakdown",
                     {
                         method: "POST",
@@ -66,17 +74,14 @@ export default function CartPage() {
                     }
                 );
 
-                if (!response.ok) {
-                    throw new Error("Failed to retrieve pricing breakdown.");
-                }
-
-                const data: PricingBreakdown = await response.json();
-
+                const data = await readJson<PricingBreakdown>(response);
+                if (controller.signal.aborted) return;
                 setPricing(data);
                 setPricingError("");
             } catch (error) {
-                if (error instanceof Error && error.name !== "AbortError") {
-                    setPricingError(error.message);
+                if (!controller.signal.aborted) {
+                    logError(error, "Could not load the pricing breakdown.");
+                    setPricingError("Could not load the pricing breakdown.");
                 }
             }
         };
@@ -88,47 +93,48 @@ export default function CartPage() {
     }, [cart, accessToken]);
 
     const proceedToCheckout = async () => {
-        if (!cart || !accessToken) return;
-
-        const response = await fetch(
-            "http://localhost:8080/payments/create-payment-intent",
-            {
+        if (!cart || !accessToken || submitting.current || orderDisabled || !pricing) return;
+        submitting.current = true;
+        setStartingCheckout(true);
+        setOrderError("");
+        log("command", "Continue to checkout");
+        try {
+            if (!await availability.refresh()) return;
+            const response = await loggedFetch("http://localhost:8080/payments/create-payment-intent", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${accessToken}`,
-                },
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
                 body: JSON.stringify({
                     userId: user?.id,
                     restaurantId: cart.restaurantId,
-                    items: cart.items.map((item) => ({
-                        menuItemId: item.menuItem.id,
-                        quantity: item.quantity,
-                        price: item.menuItem.price,
-                    })),
+                    items: cart.items.map((item) => ({ menuItemId: item.menuItem.id, quantity: item.quantity, price: item.menuItem.price })),
                 }),
-            }
-        );
-
-        const data = await response.json();
-
-        setClientSecret(data.clientSecret);
-        setCheckout(true);
-    }
+            });
+            const data = await readJson<{ clientSecret: string }>(response);
+            if (!data.clientSecret) throw new Error("Payment setup did not return a client secret.");
+            setClientSecret(data.clientSecret);
+            setCheckout(true);
+        } catch (error) {
+            logError(error, "Could not start checkout.");
+            setOrderError("Could not start checkout. Please try again.");
+        } finally {
+            submitting.current = false;
+            setStartingCheckout(false);
+        }
+    };
 
     const placeOrder = async () => {
-        if (!cart || !accessToken) return;
+        if (!cart || !accessToken || submitting.current || orderDisabled) return;
 
+        submitting.current = true;
         setPlacingOrder(true);
         setOrderError("");
 
-        //call the stripe payment form to submit
-        paymentFormRef.current?.submitPayment();
-
-        //rest of placing order
+        log("command", "Pay and place order");
         try {
-            log("command", "POST /placeOrder");
-            const response = await fetch("http://localhost:8080/placeOrder", {
+            if (!await availability.refresh()) return;
+            if (!paymentFormRef.current || !await paymentFormRef.current.submitPayment()) return;
+
+            const response = await loggedFetch("http://localhost:8080/placeOrder", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -146,21 +152,16 @@ export default function CartPage() {
                 }),
             });
 
-            if (!response.ok) {
-                throw new Error(await response.text() || "Failed to place order.");
-            }
-
+            const order = await readJson<{ id: string }>(response);
             clearCart();
             alert("Order placed successfully!");
-
-            //wait for backend before redirecting
-            const order = await response.json();
             navigate(`/order-summary/${order.id}`);
         } catch (error) {
-            const message = error instanceof Error ? error.message : "Something went wrong.";
-            log("error", `POST /placeOrder: ${message}`);
-            setOrderError(message);
+            logError(error, "Could not place the order.");
+            setOrderError("Could not place the order. Please refresh availability and try again.");
+            void availability.refresh();
         } finally {
+            submitting.current = false;
             setPlacingOrder(false);
         }
     };
@@ -206,6 +207,9 @@ export default function CartPage() {
                                 <li key={item.menuItem.id} className="list-card cart-item">
                                     <div className="list-card__info">
                                         <Heading level={3}>{item.menuItem.name}</Heading>
+                                        {availability.unavailableIds.includes(item.menuItem.id) && (
+                                            <span className="page__status--error">Sold out or unavailable</span>
+                                        )}
                                         <span className="meta">
                                             ${item.menuItem.price.toFixed(2)} each
                                         </span>
@@ -220,7 +224,7 @@ export default function CartPage() {
                                                 onClick={() =>
                                                     updateQuantity(item.menuItem.id, item.quantity - 1)
                                                 }
-                                                disabled={checkout}
+                                                disabled={checkout || startingCheckout || placingOrder}
                                             >
                                                 −
                                             </button>}
@@ -234,7 +238,7 @@ export default function CartPage() {
                                                 onClick={() =>
                                                     updateQuantity(item.menuItem.id, item.quantity + 1)
                                                 }
-                                                disabled={checkout}
+                                                disabled={checkout || startingCheckout || placingOrder}
                                             >
                                                 +
                                             </button>}
@@ -247,7 +251,7 @@ export default function CartPage() {
                                             {!checkout && <Button
                                                 variant="link"
                                                 onClick={() => removeItem(item.menuItem.id)}
-                                                disabled={checkout}
+                                                disabled={checkout || startingCheckout || placingOrder}
                                             >
                                                 Remove
                                             </Button>}
@@ -316,6 +320,18 @@ export default function CartPage() {
                                 </p>
                             )}
 
+                            {availability.reason && (
+                                <p id="order-availability" className="page__status" role="status">
+                                    {availability.reason}
+                                </p>
+                            )}
+                            {!availability.allowed && !availability.checking && (
+                                <Button variant="secondary" onClick={() => {
+                                    log("command", "Refresh order availability");
+                                    void availability.refresh();
+                                }} disabled={placingOrder || startingCheckout}>Retry availability</Button>
+                            )}
+
                             {orderError && (
                                 <p className="page__status page__status--error" role="alert">
                                     Error: {orderError}
@@ -323,11 +339,11 @@ export default function CartPage() {
                             )}
 
                             {!checkout && <div className="cart-summary__actions">
-                                <Button variant="secondary" onClick={clearCart} disabled={placingOrder && checkout}>
+                                <Button variant="secondary" onClick={clearCart} disabled={placingOrder || startingCheckout}>
                                     Clear cart
                                 </Button>
-                                <Button onClick={proceedToCheckout} disabled={placingOrder && checkout}>
-                                    Continue to Checkout
+                                <Button onClick={proceedToCheckout} disabled={orderDisabled || !pricing} aria-describedby={availability.reason ? "order-availability" : undefined}>
+                                    {startingCheckout ? "Checking checkout…" : "Continue to Checkout"}
                                 </Button>
                             </div>}
                         </section>
@@ -365,12 +381,13 @@ export default function CartPage() {
 
                                 <div className="cart-summary__actions">
                                     <Button variant="secondary" onClick={() => {
+                                        log("command", "Back to cart");
                                         setCheckout(false);
                                         setClientSecret(undefined);
                                     }} disabled={placingOrder}>
                                         Back to Cart
                                     </Button>
-                                    <Button onClick={placeOrder} disabled={placingOrder}>
+                                    <Button onClick={placeOrder} disabled={orderDisabled} aria-describedby={availability.reason ? "order-availability" : undefined}>
                                         {placingOrder ? "Placing Order…" : "Pay and Place Order"}
                                     </Button>
                                 </div>
