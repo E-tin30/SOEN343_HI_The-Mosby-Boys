@@ -1,6 +1,5 @@
 package com.mosbyboys.dishesbecrazy.application.dlv;
 
-import com.mosbyboys.dishesbecrazy.application.events.OrderOfferedEvent;
 import com.mosbyboys.dishesbecrazy.application.ord.OrderQueues;
 import com.mosbyboys.dishesbecrazy.application.ord.OrderService;
 import com.mosbyboys.dishesbecrazy.domain.ord.Order;
@@ -68,8 +67,12 @@ public class DispatchService {
 
         //Loop through all online couriers
         for (CourierData courier : courierService.getIdleCouriers()) {
+            //Check if the courier already has an offer
+             if (getPendingOffer(courier.id()) != null) {
+                continue;
+            }
 
-            // Calculate squared Euclidean distance
+            //Calculate squared Euclidean distance
             double latDiff = location.latitude() - courier.latitude();
             double lonDiff = location.longitude() - courier.longitude();
 
@@ -92,8 +95,6 @@ public class DispatchService {
         Order order = orderService.load(orderId);
         order.assignCourier(courierId);
         orderService.save(order);
-
-        eventPublisher.publishEvent(new OrderOfferedEvent(orderId, courierId));
     }
 
     public Order getPendingOffer(UUID courierId) {
@@ -106,4 +107,26 @@ public class DispatchService {
         }
         return null;
     }
+    
+    @Transactional
+    public void acceptOffer(UUID courierId, UUID orderId) {
+        //Verify the courier actually has this pending offer
+        Order offer = getPendingOffer(courierId);
+        if (offer == null || !offer.getId().equals(orderId)) {
+            throw new IllegalStateException(
+                "Courier does not have this pending offer"
+            );
+        }
+
+        //Change courier from IDLE to ASSIGNED
+        courierService.markAssigned(courierId);
+
+        //Remove the accepted order, not necessarily the head
+        boolean removed = queues.getGlobalReady().remove(orderId);
+        if (!removed) {
+            throw new IllegalStateException("Order is not queued");
+        }
+    }
+
+
 }

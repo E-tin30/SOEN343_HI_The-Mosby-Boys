@@ -1,6 +1,7 @@
 package com.mosbyboys.dishesbecrazy.application.dlv;
 
 import com.mosbyboys.dishesbecrazy.application.events.OrderReadyEvent;
+import com.mosbyboys.dishesbecrazy.application.events.DispatchRequestEvent;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -17,4 +18,10 @@ public class DispatchEventListener {
     public void onOrderReady(OrderReadyEvent event) {
         dispatchService.dispatchWaitingOrders();
     }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onDispatchRequested(DispatchRequestEvent event) {
+        dispatchService.dispatchWaitingOrders();
+    }
+    
 }
