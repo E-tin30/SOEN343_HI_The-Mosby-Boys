@@ -13,7 +13,7 @@ vi.mock("@stripe/react-stripe-js", () => ({
 beforeEach(() => { payment.ready = true; payment.confirm.mockReset(); });
 // Resets readiness and the SDK mock before each logging scenario.
 
-it.each(["declined", "network"])("logs payment commands and %s errors without payment details", async (failure) => {
+it.each(["declined", "network"])("logs payment handler commands and %s errors without payment details", async (failure) => {
   if (failure === "declined") payment.confirm.mockResolvedValue({ error: { message: "private payment details" } });
   else payment.confirm.mockRejectedValue(new Error("private payment details"));
   const before = getEntries().length;
@@ -25,7 +25,7 @@ it.each(["declined", "network"])("logs payment commands and %s errors without pa
   expect(entries[0].text).toBe("Confirm payment");
   expect(JSON.stringify(entries)).not.toContain("private payment details");
 });
-// Checks both SDK-declined and thrown failures are logged once without exposing payment details.
+// Direct submission covers handler logging with a mocked SDK; it does not exercise the real imperative handle wiring.
 
 it("logs the existing early return when the payment form is not ready", () => {
   payment.ready = false;
@@ -35,4 +35,4 @@ it("logs the existing early return when the payment form is not ready", () => {
   expect(payment.confirm).not.toHaveBeenCalled();
   expect(getEntries().slice(before).map((e) => e.text)).toEqual(["Confirm payment", "Payment form is not ready."]);
 });
-// Verifies the existing not-ready return now records its command and error in the application console.
+// Direct submission checks logging for the existing not-ready return, without claiming button-to-form wiring coverage.
