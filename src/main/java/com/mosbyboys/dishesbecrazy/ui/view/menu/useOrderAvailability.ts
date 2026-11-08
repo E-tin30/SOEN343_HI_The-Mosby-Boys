@@ -10,73 +10,137 @@ export type OrderAvailability = {
 };
 // Gives the cart the disabled state, loading state, and explanation for Place Order.
 
-const checking: OrderAvailability = {
-  allowed: false, checking: true, reason: "Checking restaurant and item availability…",
+type OrderAvailabilitySnapshot = {
+  cart: Cart | null;
+  token: string | null;
+  value: OrderAvailability;
+};
+// Associates each result with the selection and session that were checked.
+
+const CHECKING_AVAILABILITY: OrderAvailability = {
+  allowed: false,
+  checking: true,
+  reason: "Checking restaurant and item availability…",
 };
 // Keeps Place Order disabled until the current availability check has completed.
 
 export function useOrderAvailability(cart: Cart | null, token: string | null) {
-  const [snapshot, setSnapshot] = useState<{ cart: Cart | null; token: string | null; value: OrderAvailability }>();
-  const active = useRef<AbortController | null>(null);
-  // Associates results with their cart/session and tracks the request that is still relevant.
+  const [availabilitySnapshot, setAvailabilitySnapshot] = useState<OrderAvailabilitySnapshot>();
+  const activeRequest = useRef<AbortController | null>(null);
+  // Tracks the result's inputs and the request that may still publish a result.
 
-  const refresh = useCallback(async (): Promise<boolean> => {
-    active.current?.abort();
+  const refreshAvailability = useCallback(async (): Promise<boolean> => {
+    activeRequest.current?.abort();
     const controller = new AbortController();
-    active.current = controller;
-    // Cancels the previous check so a late response cannot overwrite a newer result.
-    const commit = (value: OrderAvailability) => {
-      if (!controller.signal.aborted) setSnapshot({ cart, token, value });
-      return !controller.signal.aborted && value.allowed;
+    activeRequest.current = controller;
+    // An explicit refresh replaces the previous check, so stale responses cannot overwrite it.
+
+    const updateAvailability = (value: OrderAvailability): boolean => {
+      if (controller.signal.aborted) {
+        return false;
+      }
+
+      setAvailabilitySnapshot({ cart, token, value });
+      return value.allowed;
     };
-    // Saves only active results and also returns a boolean for the placement-time recheck.
-    commit(checking);
-    // Resets the previous success while fresh restaurant and menu data is being requested.
-    if (!cart?.items.length || !token) {
-      return commit({ ...checking, checking: false, reason: cart?.items.length ? "Sign in to place an order." : "Your cart is empty." });
-    }
-    // Avoids network requests when there is no selection or authenticated session to check.
+    // Publishes only current results and returns the decision awaited by Place Order.
+
+    updateAvailability(CHECKING_AVAILABILITY);
+    // Disables placement while the current restaurant and menu data are being checked.
+
     try {
+      if (!cart?.items.length) {
+        return updateAvailability({
+          allowed: false,
+          checking: false,
+          reason: "Your cart is empty.",
+        });
+      }
+      // Avoids availability requests when there is no selected item to order.
+
+      if (!token) {
+        return updateAvailability({
+          allowed: false,
+          checking: false,
+          reason: "Sign in to place an order.",
+        });
+      }
+      // Requires an authenticated session before querying customer endpoints.
+
       const restaurants = await getRestaurants(token, controller.signal);
-      const restaurant = restaurants.find((r) => r.id === cart.restaurantId);
+      const restaurant = restaurants.find((restaurant) => restaurant.id === cart.restaurantId);
       // Customer lists contain only open restaurants, so a missing restaurant is unavailable.
+
       if (!restaurant || restaurant.status !== "OPEN") {
-        return commit({ allowed: false, checking: false, reason: "This restaurant is not accepting orders." });
+        return updateAvailability({
+          allowed: false,
+          checking: false,
+          reason: "This restaurant is not accepting orders.",
+        });
       }
       // Applies R-DASH-04 to paused, closed, or no-longer-listed restaurants.
+
       const menu = await getMenu(token, cart.restaurantId, controller.signal);
-      const allUnavailable = cart.items.every(({ menuItem }) =>
-        !menu.some((fresh) => fresh.id === menuItem.id && fresh.status === "AVAILABLE")
+      const hasAvailableSelectedItem = cart.items.some(({ menuItem: selectedItem }) =>
+        menu.some((menuItem) => menuItem.id === selectedItem.id && menuItem.status === "AVAILABLE")
       );
-      // Blocks the sold-out case only when EVERY selected item lacks an available menu match.
-      return commit({
-        allowed: !allUnavailable, checking: false,
-        reason: allUnavailable ? "All selected items are sold out or unavailable." : "",
+      // One available selected item is enough to avoid the ticket's EVERY-item sold-out restriction.
+
+      return updateAvailability({
+        allowed: hasAvailableSelectedItem,
+        checking: false,
+        reason: hasAvailableSelectedItem ? "" : "All selected items are sold out or unavailable.",
       });
-      // Mixed selections do not receive an additional UI restriction; ORD still validates submission.
     } catch (error) {
-      if (controller.signal.aborted) return false;
+      if (controller.signal.aborted) {
+        return false;
+      }
+
       log("error", "Could not check order availability.");
-      return commit({ allowed: false, checking: false, reason: "Could not check availability. Please retry." });
-      // Leaves placement disabled on a genuine lookup failure and records it in the output console.
+      return updateAvailability({
+        allowed: false,
+        checking: false,
+        reason: "Could not check availability. Please retry.",
+      });
+    } finally {
+      if (activeRequest.current === controller) {
+        activeRequest.current = null;
+      }
     }
+    // Lookup failures stay visible; finishing an old check cannot release a newer request's ownership.
   }, [cart, token]);
+  // Keeps the placement-time check tied to the current selection and session.
 
   useEffect(() => {
-    void refresh();
-    const onFocus = () => { void refresh(); };
-    const timer = window.setInterval(onFocus, 15_000);
-    window.addEventListener("focus", onFocus);
-    // Refreshes on selection/session changes, window focus, and a 15-second interval.
-    return () => {
-      active.current?.abort();
-      window.clearInterval(timer);
-      window.removeEventListener("focus", onFocus);
-    };
-    // Removes obsolete requests, timers, and listeners when this check is replaced or unmounted.
-  }, [refresh]);
+    void refreshAvailability();
+    // The hook owns initial checks and handles their failures without blocking rendering.
 
-  const availability = snapshot?.cart === cart && snapshot?.token === token ? snapshot.value : checking;
+    const refreshInBackground = () => {
+      if (activeRequest.current) {
+        return;
+      }
+
+      void refreshAvailability();
+    };
+    // Polling and focus skip an active check, including validation awaited by Place Order.
+
+    const timer = window.setInterval(refreshInBackground, 15_000);
+    window.addEventListener("focus", refreshInBackground);
+    // Keeps the disabled state current between cart edits and explicit placement attempts.
+
+    return () => {
+      activeRequest.current?.abort();
+      activeRequest.current = null;
+      window.clearInterval(timer);
+      window.removeEventListener("focus", refreshInBackground);
+    };
+  }, [refreshAvailability]);
+  // Cancels obsolete checks and removes background work when inputs change or the hook unmounts.
+
+  const availability = availabilitySnapshot?.cart === cart && availabilitySnapshot?.token === token
+    ? availabilitySnapshot.value
+    : CHECKING_AVAILABILITY;
   // Prevents a previous cart/session's success from briefly enabling Place Order for a new one.
-  return { ...availability, refresh };
+
+  return { ...availability, refreshAvailability };
 }
