@@ -15,6 +15,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import com.mosbyboys.dishesbecrazy.application.ord.ORDFacade;
 import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
 import com.mosbyboys.dishesbecrazy.domain.ord.MenuItem;
+import com.mosbyboys.dishesbecrazy.domain.ord.MenuItemStatus;
 import com.mosbyboys.dishesbecrazy.domain.reg.User;
 
 import lombok.RequiredArgsConstructor;
@@ -28,7 +29,9 @@ public class MenuController {
 
     public record MenuItemResponse(UUID id, String name, BigDecimal price, String status, String description) {
     static MenuItemResponse from(MenuItem m) {
-        return new MenuItemResponse(m.getId(), m.getName(), m.getPrice(), m.getStatus().name(), m.getDescription());
+        // Expose the same availability ORD checks at placement, including exhausted stock.
+        String availability = (m.isAvailable() ? MenuItemStatus.AVAILABLE : MenuItemStatus.SOLD_OUT).name();
+        return new MenuItemResponse(m.getId(), m.getName(), m.getPrice(), availability, m.getDescription());
     }
 }
 
