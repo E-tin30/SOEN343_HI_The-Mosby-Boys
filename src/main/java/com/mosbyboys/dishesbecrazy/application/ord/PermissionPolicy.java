@@ -196,4 +196,36 @@ public class PermissionPolicy {
             throw new PermissionDeniedException("Only an operator can reassign an order.");
         }
     }
+
+    // Who can pause a restaurant
+    // An operator can pause any restaurant; a restaurant can only pause itself (Appendix A, R-DASH-01).
+    public void checkCanPause(User caller, Restaurant restaurant) {
+        if (caller == null) {
+            throw new PermissionDeniedException("No caller.");
+        }
+        if (restaurant == null) {
+            throw new PermissionDeniedException("No restaurant.");
+        }
+        if (caller.getRole() == Role.OPERATOR) {
+            return;
+        }
+        if (caller.getRole() == Role.RESTAURANT && caller.getUserId().equals(restaurant.getUserId())) {
+            return;
+        }
+        throw new PermissionDeniedException("Only an operator or the restaurant itself can pause a restaurant.");
+    }
+
+    // Who can open a restaurant (from paused or closed)
+    // Only an operator can (Appendix A, R-DASH-01).
+    public void checkCanOpen(User caller, Restaurant restaurant) {
+        if (caller == null) {
+            throw new PermissionDeniedException("No caller.");
+        }
+        if (restaurant == null) {
+            throw new PermissionDeniedException("No restaurant.");
+        }
+        if (caller.getRole() != Role.OPERATOR) {
+            throw new PermissionDeniedException("Only an operator can open a restaurant.");
+        }
+    }
 }
