@@ -1,5 +1,3 @@
-import PageErrorBoundary from "./components/PageErrorBoundary";
-import { installRuntimeLogging, logError } from "./outputLog";
 import {createRoot} from "react-dom/client";
 import "./styles/base.css";
 import OutputConsole from "./components/OutputConsole";
@@ -24,17 +22,10 @@ import {CartProvider} from "./CartContext";
 import CartPage from "./menu/CartPage";
 import OrderSummaryPage from "./orders/OrderSummaryPage";
 
-const stopRuntimeLogging = installRuntimeLogging();
-if (import.meta.hot) import.meta.hot.dispose(stopRuntimeLogging);
-
-createRoot(document.getElementById("root")!, {
-    onUncaughtError: (error) => logError(error, "Could not render the application."),
-    onCaughtError: (error) => logError(error, "Could not render this page."),
-}).render(
+createRoot(document.getElementById("root")!).render(
     <BrowserRouter>
         <AuthProvider>
             <CartProvider>
-                <PageErrorBoundary>
                 <Routes>
                     <Route path="/" element={<Navigate to="/login" replace/>}/>
                     <Route path="/login" element={<LoginPage/>}/>
@@ -103,7 +94,6 @@ createRoot(document.getElementById("root")!, {
                         }
                     />
                 </Routes>
-                </PageErrorBoundary>
                 <OutputConsole/>
             </CartProvider>
         </AuthProvider>

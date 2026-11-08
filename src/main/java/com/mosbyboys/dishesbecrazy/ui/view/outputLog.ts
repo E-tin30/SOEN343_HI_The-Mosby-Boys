@@ -30,15 +30,3 @@ export function logError(error: unknown, description: string) {
   }
   log("error", description);
 }
-
-export function installRuntimeLogging() {
-  const onError = (event: ErrorEvent) => logError(event.error, "Unexpected application error.");
-  const onRejection = (event: PromiseRejectionEvent) =>
-    logError(event.reason, "An application action could not finish.");
-  window.addEventListener("error", onError);
-  window.addEventListener("unhandledrejection", onRejection);
-  return () => {
-    window.removeEventListener("error", onError);
-    window.removeEventListener("unhandledrejection", onRejection);
-  };
-}

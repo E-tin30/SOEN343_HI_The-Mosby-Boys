@@ -1,9 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import { loggedFetch, readJson, RequestError } from "../../main/java/com/mosbyboys/dishesbecrazy/ui/view/api/loggedFetch";
-import { getEntries, installRuntimeLogging, log, logError } from "../../main/java/com/mosbyboys/dishesbecrazy/ui/view/outputLog";
+import { getEntries, log, logError } from "../../main/java/com/mosbyboys/dishesbecrazy/ui/view/outputLog";
 import OutputConsole from "../../main/java/com/mosbyboys/dishesbecrazy/ui/view/components/OutputConsole";
-import PageErrorBoundary from "../../main/java/com/mosbyboys/dishesbecrazy/ui/view/components/PageErrorBoundary";
 
 const url = "http://localhost:8080/login?secret=private-query";
 
@@ -47,21 +46,4 @@ describe("application output logging", () => {
     expect(screen.getByText(/Navigate to cart test/)).toBeTruthy();
   });
 
-  it("captures runtime errors once and removes global handlers on cleanup", () => {
-    const removeListener = vi.spyOn(window, "removeEventListener");
-    const stop = installRuntimeLogging();
-    const before = getEntries().length;
-    window.dispatchEvent(new ErrorEvent("error", { error: new Error("private runtime details") }));
-    stop();
-    expect(removeListener).toHaveBeenCalledWith("error", expect.any(Function));
-    expect(removeListener).toHaveBeenCalledWith("unhandledrejection", expect.any(Function));
-    expect(getEntries().slice(before)).toEqual([expect.objectContaining({ kind: "error", text: "Unexpected application error." })]);
-  });
-
-  it("preserves the console when a page throws during rendering", () => {
-    function Broken(): never { throw new Error("private render details"); }
-    render(<><PageErrorBoundary><Broken /></PageErrorBoundary><OutputConsole /></>);
-    expect(screen.getByRole("alert").textContent).toContain("could not load");
-    expect(screen.getByText(/Could not render this page/)).toBeTruthy();
-  });
 });

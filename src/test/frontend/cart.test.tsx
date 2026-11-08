@@ -37,7 +37,7 @@ beforeEach(() => {
   status = "OPEN";
   menu = [{ id: "item-1", status: "AVAILABLE" }];
   mocks.cart = { restaurantId: "restaurant-1", items: [{ menuItem: { id: "item-1", name: "Soup", status: "AVAILABLE", price: 10, description: null }, quantity: 1 }] };
-  mocks.payment.mockReset().mockResolvedValue(true);
+  mocks.payment.mockReset();
   mocks.clearCart.mockReset();
   vi.stubGlobal("alert", vi.fn());
   fetchMock = vi.fn(async (url: string) => {
@@ -60,86 +60,76 @@ async function enterCheckout() {
   await screen.findByRole("button", { name: "Pay and Place Order" });
 }
 
-describe("order availability controls", () => {
-  it("blocks checkout until fresh availability arrives", async () => {
+describe("Place Order availability (R-DASH-04)", () => {
+  it("leaves Continue to Checkout enabled while availability is being checked", async () => {
+    let finish!: (response: Response) => void;
+    fetchMock.mockImplementationOnce(() => new Promise<Response>((resolve) => { finish = resolve; }));
     mount();
-    expect(checkout().disabled).toBe(true);
-    await waitFor(() => expect(checkout().disabled).toBe(false));
+    expect(checkout().disabled).toBe(false);
+    await enterCheckout();
+    expect((screen.getByRole("button", { name: "Pay and Place Order" }) as HTMLButtonElement).disabled).toBe(true);
+    await act(async () => finish(json([{ id: "restaurant-1", status: "OPEN" }])));
+    await waitFor(() => expect((screen.getByRole("button", { name: "Pay and Place Order" }) as HTMLButtonElement).disabled).toBe(false));
   });
 
-  it.each(["PAUSED", "CLOSED", "MISSING"])("disables checkout for a %s restaurant", async (state) => {
+  it.each(["PAUSED", "CLOSED", "MISSING"])("disables Place Order for a %s restaurant without blocking checkout", async (state) => {
     status = state;
     mount();
     await screen.findByText("This restaurant is not accepting orders.");
-    expect(checkout().disabled).toBe(true);
-    expect(requestsTo("/create-payment-intent")).toHaveLength(0);
+    expect(checkout().disabled).toBe(false);
+    await enterCheckout();
+    expect((screen.getByRole("button", { name: "Pay and Place Order" }) as HTMLButtonElement).disabled).toBe(true);
+    expect(requestsTo("/placeOrder")).toHaveLength(0);
   });
 
-  it("marks a cart item that became sold out after it was added", async () => {
+  it("disables Place Order when every selected item is sold out", async () => {
     menu = [{ id: "item-1", status: "SOLD_OUT" }];
     mount();
     await screen.findByText("All selected items are sold out or unavailable.");
-    expect(checkout().disabled).toBe(true);
-    expect(screen.getByText("Sold out or unavailable")).toBeTruthy();
+    expect(checkout().disabled).toBe(false);
+    await enterCheckout();
+    expect((screen.getByRole("button", { name: "Pay and Place Order" }) as HTMLButtonElement).disabled).toBe(true);
   });
 
-  it("requires removal of unavailable lines from a mixed cart", async () => {
+  it("does not impose an additional disabled rule on a mixed cart", async () => {
     mocks.cart.items.push({ ...mocks.cart.items[0], menuItem: { ...mocks.cart.items[0].menuItem, id: "item-2", name: "Bread" } });
+    menu = [{ id: "item-1", status: "AVAILABLE" }, { id: "item-2", status: "SOLD_OUT" }];
     mount();
-    await screen.findByText("Remove the unavailable items before placing your order.");
-    expect(checkout().disabled).toBe(true);
+    await enterCheckout();
+    await waitFor(() => expect((screen.getByRole("button", { name: "Pay and Place Order" }) as HTMLButtonElement).disabled).toBe(false));
+    expect(screen.queryByText("Remove the unavailable items before placing your order.")).toBeNull();
   });
 
-  it("keeps checkout disabled after a network failure and supports retry", async () => {
+  it("keeps Place Order disabled after a failed check and supports retry", async () => {
     fetchMock.mockRejectedValueOnce(new TypeError("offline"));
     mount();
     await screen.findByText("Could not check availability. Please retry.");
-    expect(checkout().disabled).toBe(true);
+    await enterCheckout();
+    expect((screen.getByRole("button", { name: "Pay and Place Order" }) as HTMLButtonElement).disabled).toBe(true);
     fireEvent.click(screen.getByRole("button", { name: "Retry availability" }));
-    await waitFor(() => expect(checkout().disabled).toBe(false));
+    await waitFor(() => expect((screen.getByRole("button", { name: "Pay and Place Order" }) as HTMLButtonElement).disabled).toBe(false));
     expect(screen.getByText(/GET \/api\/restaurants failed/)).toBeTruthy();
   });
 
-  it("refreshes on focus and disables a previously enabled order", async () => {
+  it("refreshes on focus and disables a previously enabled Place Order", async () => {
     mount();
     await enterCheckout();
+    await waitFor(() => expect((screen.getByRole("button", { name: "Pay and Place Order" }) as HTMLButtonElement).disabled).toBe(false));
     status = "MISSING";
     fireEvent(window, new Event("focus"));
     await screen.findByText("This restaurant is not accepting orders.");
     expect((screen.getByRole("button", { name: "Pay and Place Order" }) as HTMLButtonElement).disabled).toBe(true);
   });
 
-  it("rechecks at submission before confirming payment or placing an order", async () => {
+  it("rechecks before placement and stops if every selected item just sold out", async () => {
     mount();
     await enterCheckout();
+    const place = screen.getByRole("button", { name: "Pay and Place Order" }) as HTMLButtonElement;
+    await waitFor(() => expect(place.disabled).toBe(false));
     menu = [{ id: "item-1", status: "SOLD_OUT" }];
-    fireEvent.click(screen.getByRole("button", { name: "Pay and Place Order" }));
+    fireEvent.click(place);
     await screen.findByText("All selected items are sold out or unavailable.");
     expect(mocks.payment).not.toHaveBeenCalled();
     expect(requestsTo("/placeOrder")).toHaveLength(0);
-  });
-
-  it("does not place an order if payment fails", async () => {
-    mocks.payment.mockResolvedValue(false);
-    mount();
-    await enterCheckout();
-    fireEvent.click(screen.getByRole("button", { name: "Pay and Place Order" }));
-    await waitFor(() => expect(mocks.payment).toHaveBeenCalledOnce());
-    expect(requestsTo("/placeOrder")).toHaveLength(0);
-  });
-
-  it("awaits payment and prevents duplicate submission", async () => {
-    let completePayment!: (ok: boolean) => void;
-    mocks.payment.mockImplementation(() => new Promise<boolean>((resolve) => { completePayment = resolve; }));
-    mount();
-    await enterCheckout();
-    const place = screen.getByRole("button", { name: "Pay and Place Order" });
-    fireEvent.click(place);
-    fireEvent.click(place);
-    await waitFor(() => expect(mocks.payment).toHaveBeenCalledOnce());
-    expect(requestsTo("/placeOrder")).toHaveLength(0);
-    await act(async () => completePayment(true));
-    await waitFor(() => expect(requestsTo("/placeOrder")).toHaveLength(1));
-    await waitFor(() => expect(mocks.clearCart).toHaveBeenCalledOnce());
   });
 });

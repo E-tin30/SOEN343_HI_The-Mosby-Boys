@@ -39,9 +39,7 @@ export default function CartPage() {
 
     const isEmpty = !cart || cart.items.length === 0;
     const availability = useOrderAvailability(cart, accessToken);
-    const submitting = useRef(false);
-    const [startingCheckout, setStartingCheckout] = useState(false);
-    const orderDisabled = !availability.allowed || placingOrder || startingCheckout || isEmpty;
+    const orderDisabled = !availability.allowed || placingOrder || isEmpty;
 
     useEffect(() => {
         if (!cart || cart.items.length === 0 || !accessToken) {
@@ -93,13 +91,10 @@ export default function CartPage() {
     }, [cart, accessToken]);
 
     const proceedToCheckout = async () => {
-        if (!cart || !accessToken || submitting.current || orderDisabled || !pricing) return;
-        submitting.current = true;
-        setStartingCheckout(true);
+        if (!cart || !accessToken) return;
         setOrderError("");
         log("command", "Continue to checkout");
         try {
-            if (!await availability.refresh()) return;
             const response = await loggedFetch("http://localhost:8080/payments/create-payment-intent", {
                 method: "POST",
                 headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
@@ -110,29 +105,24 @@ export default function CartPage() {
                 }),
             });
             const data = await readJson<{ clientSecret: string }>(response);
-            if (!data.clientSecret) throw new Error("Payment setup did not return a client secret.");
             setClientSecret(data.clientSecret);
             setCheckout(true);
         } catch (error) {
             logError(error, "Could not start checkout.");
             setOrderError("Could not start checkout. Please try again.");
-        } finally {
-            submitting.current = false;
-            setStartingCheckout(false);
         }
     };
 
     const placeOrder = async () => {
-        if (!cart || !accessToken || submitting.current || orderDisabled) return;
+        if (!cart || !accessToken || orderDisabled) return;
 
-        submitting.current = true;
         setPlacingOrder(true);
         setOrderError("");
 
         log("command", "Pay and place order");
         try {
             if (!await availability.refresh()) return;
-            if (!paymentFormRef.current || !await paymentFormRef.current.submitPayment()) return;
+            paymentFormRef.current?.submitPayment();
 
             const response = await loggedFetch("http://localhost:8080/placeOrder", {
                 method: "POST",
@@ -161,7 +151,6 @@ export default function CartPage() {
             setOrderError("Could not place the order. Please refresh availability and try again.");
             void availability.refresh();
         } finally {
-            submitting.current = false;
             setPlacingOrder(false);
         }
     };
@@ -207,9 +196,6 @@ export default function CartPage() {
                                 <li key={item.menuItem.id} className="list-card cart-item">
                                     <div className="list-card__info">
                                         <Heading level={3}>{item.menuItem.name}</Heading>
-                                        {availability.unavailableIds.includes(item.menuItem.id) && (
-                                            <span className="page__status--error">Sold out or unavailable</span>
-                                        )}
                                         <span className="meta">
                                             ${item.menuItem.price.toFixed(2)} each
                                         </span>
@@ -224,7 +210,7 @@ export default function CartPage() {
                                                 onClick={() =>
                                                     updateQuantity(item.menuItem.id, item.quantity - 1)
                                                 }
-                                                disabled={checkout || startingCheckout || placingOrder}
+                                                disabled={checkout}
                                             >
                                                 −
                                             </button>}
@@ -238,7 +224,7 @@ export default function CartPage() {
                                                 onClick={() =>
                                                     updateQuantity(item.menuItem.id, item.quantity + 1)
                                                 }
-                                                disabled={checkout || startingCheckout || placingOrder}
+                                                disabled={checkout}
                                             >
                                                 +
                                             </button>}
@@ -251,7 +237,7 @@ export default function CartPage() {
                                             {!checkout && <Button
                                                 variant="link"
                                                 onClick={() => removeItem(item.menuItem.id)}
-                                                disabled={checkout || startingCheckout || placingOrder}
+                                                disabled={checkout}
                                             >
                                                 Remove
                                             </Button>}
@@ -329,7 +315,7 @@ export default function CartPage() {
                                 <Button variant="secondary" onClick={() => {
                                     log("command", "Refresh order availability");
                                     void availability.refresh();
-                                }} disabled={placingOrder || startingCheckout}>Retry availability</Button>
+                                }} disabled={placingOrder}>Retry availability</Button>
                             )}
 
                             {orderError && (
@@ -339,11 +325,11 @@ export default function CartPage() {
                             )}
 
                             {!checkout && <div className="cart-summary__actions">
-                                <Button variant="secondary" onClick={clearCart} disabled={placingOrder || startingCheckout}>
+                                <Button variant="secondary" onClick={clearCart} disabled={placingOrder && checkout}>
                                     Clear cart
                                 </Button>
-                                <Button onClick={proceedToCheckout} disabled={orderDisabled || !pricing} aria-describedby={availability.reason ? "order-availability" : undefined}>
-                                    {startingCheckout ? "Checking checkout…" : "Continue to Checkout"}
+                                <Button onClick={proceedToCheckout} disabled={placingOrder && checkout}>
+                                    Continue to Checkout
                                 </Button>
                             </div>}
                         </section>

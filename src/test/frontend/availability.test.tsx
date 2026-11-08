@@ -22,7 +22,7 @@ it("ignores an old cart's late response after selection changes", async () => {
   await waitFor(() => expect(view.result.current.reason).toContain("All selected items"));
   await act(async () => finishOld(json([{ id: "item-1", status: "AVAILABLE" }])));
   expect(view.result.current.allowed).toBe(false);
-  expect(view.result.current.unavailableIds).toEqual(["item-2"]);
+  expect(view.result.current.reason).toContain("All selected items");
 });
 
 it("polls availability and cleans up the timer on unmount", async () => {
@@ -52,4 +52,15 @@ it.each([null, { ...cart, items: [] }])("keeps an empty cart disabled without re
   await waitFor(() => expect(view.result.current.checking).toBe(false));
   expect(view.result.current.allowed).toBe(false);
   expect(fetchMock).not.toHaveBeenCalled();
+});
+
+it("allows a mixed selection when at least one selected item is available", async () => {
+  vi.stubGlobal("fetch", vi.fn(async (url: string) => url.endsWith("/api/restaurants")
+    ? json([{ id: "restaurant-1", status: "OPEN" }])
+    : json([{ id: "item-1", status: "AVAILABLE" }, { id: "item-2", status: "SOLD_OUT" }])));
+  const selection = { ...cart, items: [...cart.items, { ...cart.items[0], menuItem: { ...cart.items[0].menuItem, id: "item-2" } }] };
+  const view = renderHook(() => useOrderAvailability(selection, "token"));
+  await waitFor(() => expect(view.result.current.checking).toBe(false));
+  expect(view.result.current.allowed).toBe(true);
+  expect(view.result.current.reason).toBe("");
 });

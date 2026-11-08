@@ -7,11 +7,10 @@ export type OrderAvailability = {
   allowed: boolean;
   checking: boolean;
   reason: string;
-  unavailableIds: string[];
 };
 
 const checking: OrderAvailability = {
-  allowed: false, checking: true, reason: "Checking restaurant and item availability…", unavailableIds: [],
+  allowed: false, checking: true, reason: "Checking restaurant and item availability…",
 };
 
 export function useOrderAvailability(cart: Cart | null, token: string | null) {
@@ -35,22 +34,20 @@ export function useOrderAvailability(cart: Cart | null, token: string | null) {
       const restaurants = await getRestaurants(token, controller.signal);
       const restaurant = restaurants.find((r) => r.id === cart.restaurantId);
       if (!restaurant || restaurant.status !== "OPEN") {
-        return commit({ allowed: false, checking: false, reason: "This restaurant is not accepting orders.", unavailableIds: [] });
+        return commit({ allowed: false, checking: false, reason: "This restaurant is not accepting orders." });
       }
       const menu = await getMenu(token, cart.restaurantId, controller.signal);
-      const unavailableIds = cart.items.filter(({ menuItem }) =>
+      const allUnavailable = cart.items.every(({ menuItem }) =>
         !menu.some((fresh) => fresh.id === menuItem.id && fresh.status === "AVAILABLE")
-      ).map(({ menuItem }) => menuItem.id);
+      );
       return commit({
-        allowed: unavailableIds.length === 0, checking: false, unavailableIds,
-        reason: unavailableIds.length === 0 ? ""
-          : unavailableIds.length === cart.items.length ? "All selected items are sold out or unavailable."
-          : "Remove the unavailable items before placing your order.",
+        allowed: !allUnavailable, checking: false,
+        reason: allUnavailable ? "All selected items are sold out or unavailable." : "",
       });
     } catch (error) {
       if (controller.signal.aborted) return false;
       logError(error, "Could not check order availability.");
-      return commit({ allowed: false, checking: false, reason: "Could not check availability. Please retry.", unavailableIds: [] });
+      return commit({ allowed: false, checking: false, reason: "Could not check availability. Please retry." });
     }
   }, [cart, token]);
 
