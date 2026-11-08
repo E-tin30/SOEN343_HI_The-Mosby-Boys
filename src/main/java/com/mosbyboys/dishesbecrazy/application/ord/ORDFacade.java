@@ -11,11 +11,13 @@ import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
 import com.mosbyboys.dishesbecrazy.domain.reg.Role;
 import com.mosbyboys.dishesbecrazy.domain.reg.User;
 import com.mosbyboys.dishesbecrazy.domain.ord.MenuItem;
+import com.mosbyboys.dishesbecrazy.application.events.OrderReadyEvent;
 
 import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -39,6 +41,7 @@ public class ORDFacade {
     private final RestaurantService restaurantService;
     private final PricingService  pricingService;
     private final REGFacade regFacade;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public List<Restaurant> getRestaurants(User user) {
@@ -238,7 +241,13 @@ public class ORDFacade {
 
         orderService.save(order);
         orderEventService.save(orderId, before, order.getState().toString(), user.getUserId(), "READY");
+        
+        //Enqueue the order in both the individual restaurant queue and global ready queue
         queues.ready(order.getRestaurantId()).enqueue(orderId);
+        queues.enqueueGlobalReady(orderId);
+
+        //Notify the dispatch system to find a courier
+        eventPublisher.publishEvent(new OrderReadyEvent());
     }
 
     @Transactional

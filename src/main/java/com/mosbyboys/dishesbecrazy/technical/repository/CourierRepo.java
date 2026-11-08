@@ -7,5 +7,8 @@ import java.util.List;
 import java.util.UUID;
 
 public interface CourierRepo extends JpaRepository<CourierEntity, UUID> {
+    
     List<CourierEntity> findByStateNot(String state);
+    
+    List<CourierEntity> findByState(String state);
 }
