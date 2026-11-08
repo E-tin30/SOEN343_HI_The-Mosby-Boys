@@ -68,5 +68,7 @@ If they don't exist yet, create them (and the demo restaurant's menu) once from 
 ## Tests
 
 ```sh
+npm test                      # mocked frontend tests
+npm run build                 # TypeScript and production build
 ./mvnw test
 ```
