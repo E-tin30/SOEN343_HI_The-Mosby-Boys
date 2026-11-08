@@ -1,9 +1,10 @@
 import { useOrderAvailability } from "./useOrderAvailability";
+import { loggedFetch, readJson } from "../api/loggedFetch";
 import {useEffect, useRef, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {useCart} from "../CartContext";
 import {useAuth} from "../AuthContext";
-import {log} from "../outputLog";
+import {log, logError} from "../outputLog";
 import AppHeader from "../components/AppHeader";
 import Button from "../components/Button";
 import Heading from "../components/Heading";
@@ -32,7 +33,8 @@ export default function CartPage() {
     const [placingOrder, setPlacingOrder] = useState(false);
     const [orderError, setOrderError] = useState("");
     const [checkout, setCheckout] = useState(false);
-    const [clientSecret, setClientSecret] = useState();
+    const [clientSecret, setClientSecret] = useState<string>();
+    // Types the checkout value returned by the shared JSON reader without changing its use.
     const [pricing, setPricing] = useState<PricingBreakdown | null>(null);
     const [pricingError, setPricingError] = useState("");
 
@@ -47,11 +49,14 @@ export default function CartPage() {
             return;
         }
 
+        setPricing(null);
+        setPricingError("");
+        // Clears the previous pricing display before loading the current selection.
         const controller = new AbortController();
 
         const fetchPricing = async () => {
             try {
-                const response = await fetch(
+                const response = await loggedFetch(
                     "http://localhost:8080/payments/breakdown",
                     {
                         method: "POST",
@@ -70,18 +75,18 @@ export default function CartPage() {
                     }
                 );
 
-                if (!response.ok) {
-                    throw new Error("Failed to retrieve pricing breakdown.");
-                }
-
-                const data: PricingBreakdown = await response.json();
-
+                const data = await readJson<PricingBreakdown>(response);
+                // Routes pricing request and JSON errors through the existing application console.
+                if (controller.signal.aborted) return;
+                // Prevents an obsolete pricing response from updating the current cart display.
                 setPricing(data);
                 setPricingError("");
             } catch (error) {
-                if (error instanceof Error && error.name !== "AbortError") {
-                    setPricingError(error.message);
+                if (!controller.signal.aborted) {
+                    logError(error, "Could not load the pricing breakdown.");
+                    setPricingError("Could not load the pricing breakdown.");
                 }
+                // Shows/logs genuine pricing failures while ignoring deliberate request cancellation.
             }
         };
 
@@ -93,32 +98,29 @@ export default function CartPage() {
 
     const proceedToCheckout = async () => {
         if (!cart || !accessToken) return;
-
-        const response = await fetch(
-            "http://localhost:8080/payments/create-payment-intent",
-            {
+        setOrderError("");
+        log("command", "Continue to checkout");
+        // Records the local checkout action; availability does not add a restriction to this step.
+        try {
+            const response = await loggedFetch("http://localhost:8080/payments/create-payment-intent", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${accessToken}`,
-                },
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
                 body: JSON.stringify({
                     userId: user?.id,
                     restaurantId: cart.restaurantId,
-                    items: cart.items.map((item) => ({
-                        menuItemId: item.menuItem.id,
-                        quantity: item.quantity,
-                        price: item.menuItem.price,
-                    })),
+                    items: cart.items.map((item) => ({ menuItemId: item.menuItem.id, quantity: item.quantity, price: item.menuItem.price })),
                 }),
-            }
-        );
-
-        const data = await response.json();
-
-        setClientSecret(data.clientSecret);
-        setCheckout(true);
-    }
+            });
+            const data = await readJson<{ clientSecret: string }>(response);
+            setClientSecret(data.clientSecret);
+            setCheckout(true);
+            // Keeps the existing checkout flow while logging payment-intent request and parsing failures.
+        } catch (error) {
+            logError(error, "Could not start checkout.");
+            setOrderError("Could not start checkout. Please try again.");
+            // Exposes checkout errors in the page and console without printing the client secret.
+        }
+    };
 
     const placeOrder = async () => {
         if (!cart || !accessToken || orderDisabled) return;
@@ -127,13 +129,14 @@ export default function CartPage() {
         setPlacingOrder(true);
         setOrderError("");
 
+        log("command", "Pay and place order");
+        // Records the user action separately from its subsequent backend request.
         try {
             if (!await availability.refresh()) return;
             // Rechecks immediately before placement in case availability changed after rendering.
             paymentFormRef.current?.submitPayment();
 
-            log("command", "POST /placeOrder");
-            const response = await fetch("http://localhost:8080/placeOrder", {
+            const response = await loggedFetch("http://localhost:8080/placeOrder", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -151,22 +154,16 @@ export default function CartPage() {
                 }),
             });
 
-            if (!response.ok) {
-                throw new Error(await response.text() || "Failed to place order.");
-            }
-
+            const order = await readJson<{ id: string }>(response);
+            // Uses the shared parser so an unreadable order confirmation is also logged.
             clearCart();
             alert("Order placed successfully!");
-
-            //wait for backend before redirecting
-            const order = await response.json();
             navigate(`/order-summary/${order.id}`);
         } catch (error) {
-            const message = error instanceof Error ? error.message : "Something went wrong.";
-            log("error", `POST /placeOrder: ${message}`);
-            setOrderError(message);
+            logError(error, "Could not place the order.");
+            setOrderError("Could not place the order. Please refresh availability and try again.");
             void availability.refresh();
-            // Refreshes the disabled state after a possible backend availability rejection.
+            // Reports placement failure and refreshes the disabled state after a possible backend rejection.
         } finally {
             setPlacingOrder(false);
         }
@@ -386,6 +383,8 @@ export default function CartPage() {
 
                                 <div className="cart-summary__actions">
                                     <Button variant="secondary" onClick={() => {
+                                        log("command", "Back to cart");
+                                        // Records this local action while preserving the existing return-to-cart flow.
                                         setCheckout(false);
                                         setClientSecret(undefined);
                                     }} disabled={placingOrder}>

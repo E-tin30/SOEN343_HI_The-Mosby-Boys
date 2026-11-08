@@ -1,3 +1,4 @@
+import { log, logError } from "../outputLog";
 import {
     PaymentElement,
     useStripe,
@@ -24,20 +25,31 @@ const StripePaymentForm = forwardRef<StripePaymentFormHandle>((params, ref) => {
     async function handleSubmit(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
 
+        log("command", "Confirm payment");
+        // Records the existing SDK action without changing the payment submission contract.
         if (!stripe || !elements) {
+            log("error", "Payment form is not ready.");
+            // Makes the existing early return visible in the application console.
             return;
         }
 
         setError("");
 
-        const { error } = await stripe.confirmPayment({
-            elements,
-            redirect: "if_required",
-        });
-
-        if (error) {
-            setError(error.message ?? "Payment failed.");
+        try {
+            const { error } = await stripe.confirmPayment({
+                elements,
+                redirect: "if_required",
+            });
+            if (error) {
+                log("error", "Payment confirmation failed.");
+                // Logs a safe description instead of exposing payment details from the SDK error.
+                setError(error.message ?? "Payment failed.");
+            }
+        } catch (error) {
+            logError(error, "Payment confirmation failed.");
+            setError("Payment failed.");
         }
+        // Reports thrown SDK/network failures through the same console as application requests.
 
     }
 

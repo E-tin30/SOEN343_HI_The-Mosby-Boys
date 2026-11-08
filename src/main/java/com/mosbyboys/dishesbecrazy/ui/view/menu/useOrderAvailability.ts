@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getMenu, getRestaurants } from "./api/menuApi";
 import type { Cart } from "./types/cart";
-import { log } from "../outputLog";
+import { logError } from "../outputLog";
 
 export type OrderAvailability = {
   allowed: boolean;
@@ -56,7 +56,7 @@ export function useOrderAvailability(cart: Cart | null, token: string | null) {
       // Mixed selections do not receive an additional UI restriction; ORD still validates submission.
     } catch (error) {
       if (controller.signal.aborted) return false;
-      log("error", "Could not check order availability.");
+      logError(error, "Could not check order availability.");
       return commit({ allowed: false, checking: false, reason: "Could not check availability. Please retry." });
       // Leaves placement disabled on a genuine lookup failure and records it in the output console.
     }
