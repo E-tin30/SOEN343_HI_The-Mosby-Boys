@@ -22,7 +22,7 @@ class DemoProfileSeederTests {
     // Builds the seeder with simulated external services.
     private DemoProfileSeeder seeder() {
         when(manager.getTransaction(any())).thenReturn(new SimpleTransactionStatus());
-        return new DemoProfileSeeder(jdbc, manager, JsonMapper.builder().build(), auth);
+        return new DemoProfileSeeder(jdbc, manager, new DemoFixtureLoader(JsonMapper.builder().build()), auth);
     }
 
     // A failed Auth creation must prevent all profile inserts.
