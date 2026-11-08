@@ -1,3 +1,4 @@
+import { log } from "./outputLog";
 import {
     createContext,
     useContext,
@@ -23,7 +24,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const [cart, setCart] = useState<Cart | null>(null);
 
     const addItem = (restaurantId: string, item: MenuItem) => {
-        if (item.status === "SOLD_OUT") return;
+        log("command", "Add item to cart");
+        if (item.status === "SOLD_OUT") {
+            log("error", "Cannot add a sold-out item.");
+            return;
+        }
+        if (cart && cart.restaurantId !== restaurantId) {
+            log("error", "Cart items must come from one restaurant.");
+            return;
+        }
 
         setCart((current) => {
             // Start a new cart if there isn't one yet.
@@ -66,6 +75,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             removeItem(itemId);
             return;
         }
+        log("command", "Update cart quantity");
 
         setCart((current) => {
             if (!current) return current;
@@ -80,6 +90,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     };
 
     const removeItem = (itemId: string) => {
+        log("command", "Remove cart item");
         setCart((current) => {
             if (!current) return current;
 
@@ -93,7 +104,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
         });
     };
 
-    const clearCart = () => setCart(null);
+    const clearCart = () => {
+        log("command", "Clear cart");
+        setCart(null);
+    };
 
     const itemCount =
         cart?.items.reduce((total, item) => total + item.quantity, 0) ?? 0;

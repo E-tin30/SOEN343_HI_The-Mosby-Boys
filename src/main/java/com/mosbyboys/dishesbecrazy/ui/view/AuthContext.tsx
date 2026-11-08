@@ -1,3 +1,4 @@
+import { loggedFetch, readJson } from "./api/loggedFetch";
 
 import {
   createContext,
@@ -6,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { log } from "./outputLog";
+import { log, logError } from "./outputLog";
 
 export type LoginTokens = {
   accessToken: string;
@@ -58,22 +59,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       try {
-        const response = await fetch(`${API_URL}/api/auth/me`, {
+        const response = await loggedFetch(`${API_URL}/api/auth/me`, {
           headers: {
             Authorization: `Bearer ${savedAccessToken}`,
           },
         });
 
-        if (!response.ok) {
-          throw new Error("Session expired or invalid");
-        }
-
-        const profile: CurrentUser = await response.json();
+        const profile: CurrentUser = await readJson<CurrentUser>(response);
 
         setAccessToken(savedAccessToken);
         setUser(profile);
       } catch (error) {
-        console.error("Could not restore session:", error);
+        logError(error, "Could not restore session. Please sign in again.");
 
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
@@ -89,19 +86,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   async function completeLogin(tokens: LoginTokens): Promise<CurrentUser> {
-    log("command", "GET /api/auth/me");
-
-    const response = await fetch(`${API_URL}/api/auth/me`, {
+    const response = await loggedFetch(`${API_URL}/api/auth/me`, {
       headers: {
         Authorization: `Bearer ${tokens.accessToken}`,
       },
     });
 
-    if (!response.ok) {
-      throw new Error("Could not retrieve authenticated user");
-    }
-
-    const profile: CurrentUser = await response.json();
+    const profile: CurrentUser = await readJson<CurrentUser>(response);
 
     // Persist tokens across page reloads.
     localStorage.setItem("accessToken", tokens.accessToken);
@@ -114,6 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   function logout() {
+    log("command", "Log out");
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
 

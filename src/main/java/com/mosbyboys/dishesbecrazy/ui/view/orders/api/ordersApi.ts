@@ -1,27 +1,20 @@
+import { loggedFetch, readJson } from "../../api/loggedFetch";
 import type { HistoryOrder, RestaurantOrder } from "../types/order";
-import { log } from "../../outputLog";
 
 const API = "http://localhost:8080";
 
 export async function getRestaurantOrders(token: string): Promise<RestaurantOrder[]> {
   const path = "/api/restaurant/orders";
-  log("command", `GET ${path}`);
-  const response = await fetch(API + path, {
+
+  const response = await loggedFetch(API + path, {
     headers: { Authorization: `Bearer ${token}` },
   });
-
-  if (!response.ok) {
-    const message = (await response.text()) || `Request failed (${response.status})`;
-    log("error", `GET ${path} → ${response.status}: ${message}`);
-    throw new Error(message);
-  }
-  return response.json();
+  return readJson(response);
 }
 
 // The action endpoints reply 204 with no body, so there is nothing to parse on success.
 async function post(path: string, token: string, body?: unknown): Promise<void> {
-  log("command", `POST ${path}`);
-  const response = await fetch(API + path, {
+  await await loggedFetch(API + path, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -29,12 +22,6 @@ async function post(path: string, token: string, body?: unknown): Promise<void> 
     },
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
-
-  if (!response.ok) {
-    const message = (await response.text()) || `Request failed (${response.status})`;
-    log("error", `POST ${path} → ${response.status}: ${message}`);
-    throw new Error(message);
-  }
 }
 
 export function acceptOrder(token: string, orderId: string): Promise<void> {
@@ -56,17 +43,11 @@ export function markOrderReady(token: string, orderId: string): Promise<void> {
 // The logged-in user's order history. The backend picks which orders to return from the token's role.
 export async function getOrderHistory(token: string): Promise<HistoryOrder[]> {
   const path = "/api/orders/history";
-  log("command", `GET ${path}`);
-  const response = await fetch(API + path, {
+
+  const response = await loggedFetch(API + path, {
     headers: { Authorization: `Bearer ${token}` },
   });
-
-  if (!response.ok) {
-    const message = (await response.text()) || `Request failed (${response.status})`;
-    log("error", `GET ${path} → ${response.status}: ${message}`);
-    throw new Error(message);
-  }
-  return response.json();
+  return readJson(response);
 }
 
 export function cancelOrder(token: string, orderId: string): Promise<void> {
