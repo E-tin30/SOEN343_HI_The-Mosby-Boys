@@ -379,4 +379,31 @@ class ORDFacadeTest {
 
         assertEquals("A B", views.get(0).customerNames().get(customerId));
     }
+
+    // pause / open restaurant
+
+    // an operator pauses an OPEN restaurant: the restaurant that gets saved is PAUSED
+    @Test
+    void operatorPausesOpenRestaurant() {
+    }
+
+    // a customer tries to pause: permission denied, and nothing is saved
+    @Test
+    void customerCannotPauseRestaurant() {
+    }
+
+    // an operator pauses a CLOSED restaurant: refused by Restaurant, and nothing is saved
+    @Test
+    void operatorCannotPauseClosedRestaurant() {
+    }
+
+    // a restaurant tries to open itself: permission denied, and nothing is saved (Appendix A, R-DASH-01)
+    @Test
+    void ownerCannotOpenOwnRestaurant() {
+    }
+
+    // an operator opens a PAUSED restaurant: the restaurant that gets saved is OPEN
+    @Test
+    void operatorOpensPausedRestaurant() {
+    }
 }
