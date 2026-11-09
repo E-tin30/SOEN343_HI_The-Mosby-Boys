@@ -20,15 +20,20 @@ export default function HomePage() {
   const { itemCount } = useCart();
   const isCustomer = user?.role === "CUSTOMER";
   const [activeOrder, setActiveOrder] = useState<ActiveOrderSummary | null>(null);
+  const [activeCount, setActiveCount] = useState(0);
 
-  // Show the customer's most recent order that's still in progress.
+  // Show the customer's in-progress order that's furthest along.
   useEffect(() => {
     if (!accessToken) return;
     getOrderHistory(accessToken)
       .then((orders) => {
-        const latest = orders
-          .filter((o) => IN_PROGRESS.includes(o.status))
-          .sort((a, b) => b.placedAt.localeCompare(a.placedAt))[0];
+        const inProgress = orders.filter((o) => IN_PROGRESS.includes(o.status));
+        setActiveCount(inProgress.length);
+        const latest = inProgress.sort(
+          (a, b) =>
+            IN_PROGRESS.indexOf(b.status) - IN_PROGRESS.indexOf(a.status) ||
+            a.placedAt.localeCompare(b.placedAt)
+        )[0];
         setActiveOrder(
           latest
             ? {
@@ -41,7 +46,10 @@ export default function HomePage() {
             : null
         );
       })
-      .catch(() => setActiveOrder(null));
+      .catch(() => {
+        setActiveOrder(null);
+        setActiveCount(0);
+      });
   }, [accessToken]);
 
   const handleLogout = () => {
@@ -76,7 +84,7 @@ export default function HomePage() {
           <MapCard active={activeOrder !== null} emptyMessage="No active deliveries" />
 
           <section className="dashboard-card dashboard-card--active card">
-            <Heading level={3}>Active order</Heading>
+            <Heading level={3}>{`Active orders (${activeCount})`}</Heading>
             {activeOrder ? (
               <ActiveOrderDetails order={activeOrder} />
             ) : (
