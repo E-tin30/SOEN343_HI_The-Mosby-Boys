@@ -26,6 +26,7 @@ public class CourierService {
     private final OrderRepo orderRepo;
     private final CustomerRepo customerRepo;
     private final CourierRepo courierRepo;
+    private final JdbcTemplate jdbcTemplate;
 
     public List<CourierData> getOnlineCouriers() {
         return courierRepo.findByStateNot("OFFLINE").stream().map(this::toCourierData).toList();
@@ -112,7 +113,6 @@ public class CourierService {
 
     @Transactional
     public void moveToCustomerLocation(UUID courierId, UUID customerId) {
-
         Location destination = jdbcTemplate.queryForObject(
             "SELECT latitude, longitude FROM \"Customer\" WHERE user_id = ?",
             (rs, rowNum) -> new Location(
