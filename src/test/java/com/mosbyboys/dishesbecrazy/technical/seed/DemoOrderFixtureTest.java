@@ -30,9 +30,9 @@ class DemoOrderFixtureTest {
 
         assertEquals(Map.of("demo_restaurant_building", 3L, "demo_restaurant_busy", 6L), accepted);
         assertTrue(fixtures.orders().stream().noneMatch(o -> o.restaurantUsername().equals("demo_restaurant")));
-        assertEquals(12, fixtures.orders().size());
-        assertEquals(12, fixtures.orders().stream().mapToInt(o -> o.lines().size()).sum());
-        assertEquals(28, fixtures.orders().stream().mapToInt(o -> o.events().size()).sum());
+        assertEquals(13, fixtures.orders().size());
+        assertEquals(13, fixtures.orders().stream().mapToInt(o -> o.lines().size()).sum());
+        assertEquals(35, fixtures.orders().stream().mapToInt(o -> o.events().size()).sum());
         for (String restaurant : accepted.keySet()) {
             var placementTimes = fixtures.orders().stream().filter(o -> o.state().equals("AcceptedState"))
                     .filter(o -> o.restaurantUsername().equals(restaurant))
@@ -53,12 +53,13 @@ class DemoOrderFixtureTest {
     // Fixed timestamps preserve FIFO; validating fixtures does not populate the database or queues.
 
     @Test
-    void terminalHistoryIncludesDeliveredRejectedAndCancelledOrders() throws Exception {
+    void terminalHistoryIncludesDeliveredRefundedRejectedAndCancelledOrders() throws Exception {
         var fixtures = loader.load();
         var states = fixtures.orders().stream().collect(Collectors.groupingBy(
                 DemoFixtures.OrderSeed::state, Collectors.counting()));
 
-        assertEquals(Map.of("AcceptedState", 9L, "DeliveredState", 1L, "RejectedState", 1L, "CancelledState", 1L), states);
+        assertEquals(Map.of("AcceptedState", 9L, "DeliveredState", 1L, "RefundedState", 1L,
+                "RejectedState", 1L, "CancelledState", 1L), states);
         var delivered = fixtures.orders().stream().filter(o -> o.state().equals("DeliveredState")).findFirst().orElseThrow();
         assertEquals("demo_courier", delivered.courierUsername());
         assertEquals(java.util.List.of("PLACE", "ACCEPT", "PREPARING", "READY", "PICKUP", "DELIVER"),
@@ -95,23 +96,40 @@ class DemoOrderFixtureTest {
 
     @Test
     void operatorRefundHistoryReplaysToRefundedState() throws Exception {
-        var orders = orders();
-        var delivered = historical(orders, "DeliveredState");
-        delivered.put("state", "RefundedState");
-        var events = delivered.get("events").asArray();
-        var refund = events.get(events.size() - 1).deepCopy().asObject();
-        refund.put("id", "34330000-0000-4000-8000-000000002117");
-        refund.put("action", "REFUND");
-        refund.put("previousState", "DeliveredState");
-        refund.put("newState", "RefundedState");
-        refund.put("createdAt", "2026-01-14T12:36:00Z");
-        refund.put("performedByUsername", "demo_operator");
-        events.add(refund);
+        var refunded = loader.load().orders().stream().filter(order -> order.state().equals("RefundedState"))
+                .findFirst().orElseThrow();
 
-        var fixtures = load(orders);
-        assertEquals(1, fixtures.orders().stream().filter(order -> order.state().equals("RefundedState")).count());
+        assertEquals("demo_courier", refunded.courierUsername());
+        assertEquals(java.util.List.of("PLACE", "ACCEPT", "PREPARING", "READY", "PICKUP", "DELIVER", "REFUND"),
+                refunded.events().stream().map(DemoFixtures.EventSeed::action).toList());
+        var refund = refunded.events().getLast();
+        assertEquals("demo_operator", refund.performedByUsername());
+        assertEquals("DeliveredState", refund.previousState());
+        assertEquals("RefundedState", refund.newState());
     }
-    // A delivered purchase with an operator REFUND event must replay successfully into the terminal refunded state.
+    // The checked-in baseline itself must include a complete delivered purchase followed by its operator refund.
+
+    @ParameterizedTest
+    @ValueSource(strings = {"demo_customer", "demo_courier", "demo_restaurant_building"})
+    void rejectsRefundsRecordedByNonOperators(String actor) throws Exception {
+        var orders = orders();
+        var events = historical(orders, "RefundedState").get("events").asArray();
+        events.get(events.size() - 1).asObject().put("performedByUsername", actor);
+
+        assertThrows(IllegalArgumentException.class, () -> load(orders));
+    }
+    // Owning or delivering a purchase does not authorize its customer, cook or courier to issue a refund.
+
+    @Test
+    void rejectsRefundHistoryThatSkipsDelivery() throws Exception {
+        var orders = orders();
+        var events = historical(orders, "RefundedState").get("events").asArray();
+        events.remove(events.size() - 2);
+        events.get(events.size() - 1).asObject().put("previousState", "PickedUpState");
+
+        assertThrows(IllegalTransitionException.class, () -> load(orders));
+    }
+    // An operator REFUND event must follow delivery rather than skipping directly from pickup.
 
     @Test
     void ordersLinesAndEventsCannotBeChangedAfterLoading() throws Exception {
