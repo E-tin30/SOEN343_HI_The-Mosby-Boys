@@ -2,6 +2,7 @@ package com.mosbyboys.dishesbecrazy.technical.seed;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -28,12 +29,17 @@ class DemoFixtureLoaderTest {
     private final DemoFixtureLoader loader = new DemoFixtureLoader(json);
 
     @Test
-    void loadsExistingProfilesAndMenuWithoutExternalServices() throws Exception {
+    void loadsDemoProfilesAndMenuWithoutExternalServices() throws Exception {
         DemoFixtures fixtures = loader.load();
 
-        assertEquals(4, fixtures.accounts().size());
+        assertEquals(6, fixtures.accounts().size());
         assertEquals(Role.CUSTOMER, fixtures.accounts().getFirst().role());
         assertEquals("demo_customer", fixtures.accounts().getFirst().username());
+        var restaurants = fixtures.accounts().stream().filter(a -> a.role() == Role.RESTAURANT).toList();
+        assertEquals(Set.of("demo_restaurant", "demo_restaurant_building", "demo_restaurant_busy"),
+                restaurants.stream().map(DemoFixtures.Account::username).collect(Collectors.toSet()));
+        assertTrue(restaurants.stream().allMatch(a -> a.status().equals("OPEN")));
+        assertEquals(3, restaurants.stream().map(a -> List.of(a.latitude(), a.longitude())).distinct().count());
         assertEquals(4, fixtures.menuItems().size());
         assertEquals(new BigDecimal("18.50"), fixtures.menuItems().getFirst().price());
         assertEquals("demo_restaurant", fixtures.menuItems().getFirst().restaurantUsername());
@@ -56,6 +62,7 @@ class DemoFixtureLoaderTest {
     @EnumSource(Role.class)
     void allowsAnotherDistinctAccountForEachRole(Role role) throws Exception {
         var profiles = profiles();
+        long originalCount = profiles.valueStream().filter(a -> a.get("role").asString().equals(role.name())).count();
         var extra = account(profiles, role).deepCopy();
         extra.put("email", "another-" + role.name().toLowerCase(java.util.Locale.ROOT) + ".demo@example.com");
         extra.put("username", "another_" + role.name().toLowerCase(java.util.Locale.ROOT));
@@ -63,7 +70,7 @@ class DemoFixtureLoaderTest {
 
         var fixtures = load(profiles, menu());
 
-        assertEquals(2, fixtures.accounts().stream().filter(a -> a.role() == role).count());
+        assertEquals(originalCount + 1, fixtures.accounts().stream().filter(a -> a.role() == role).count());
     }
     // Repeated roles are supported for customers, couriers and operators as well as restaurants.
 
@@ -169,7 +176,7 @@ class DemoFixtureLoaderTest {
         account(profiles, Role.CUSTOMER).put("latitude", -90).put("longitude", 180);
         account(profiles, Role.RESTAURANT).put("latitude", 90).put("longitude", -180);
 
-        assertEquals(4, load(profiles, menu()).accounts().size());
+        assertEquals(profiles.size(), load(profiles, menu()).accounts().size());
     }
     // Boundary coordinates are legal; operator fixtures do not require unused location fields.
 

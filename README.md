@@ -55,7 +55,9 @@ Password for all of them: `DEMO_SEED_PASSWORD` from `.env`.
 | Role | Email |
 |---|---|
 | Customer | `customer.demo@example.com` |
-| Restaurant | `restaurant.demo@example.com` |
+| Restaurant — Dishes Be Crazy Demo | `restaurant.demo@example.com` |
+| Restaurant — Demo Kitchen Building | `restaurant2.demo@example.com` |
+| Restaurant — Demo Kitchen Busy | `restaurant3.demo@example.com` |
 | Courier | `courier.demo@example.com` |
 | Operator | `operator.demo@example.com` |
 
