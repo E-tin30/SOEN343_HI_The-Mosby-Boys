@@ -3,7 +3,6 @@ package com.mosbyboys.dishesbecrazy.application.ord;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.*;
 
 import java.math.BigDecimal;
@@ -31,11 +30,13 @@ import com.mosbyboys.dishesbecrazy.domain.ord.state.PlacedState;
 import com.mosbyboys.dishesbecrazy.domain.reg.Courier;
 import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
 import com.mosbyboys.dishesbecrazy.domain.reg.Operator;
+import org.springframework.context.ApplicationEventPublisher;
+import com.mosbyboys.dishesbecrazy.domain.ord.OrderStateChanged;
 
 class ORDFacadeTest {
 
     private OrderService orderService;
-    private OrderEventService orderEventService;
+    private ApplicationEventPublisher eventPublisher;
     private MenuService menuService;
     private RestaurantService restaurantService;
     private PricingService pricingService;
@@ -50,7 +51,7 @@ class ORDFacadeTest {
     @BeforeEach
     void setUp() {
         orderService = mock(OrderService.class);
-        orderEventService = mock(OrderEventService.class);
+        eventPublisher = mock(ApplicationEventPublisher.class);
         menuService = mock(MenuService.class);
         restaurantService = mock(RestaurantService.class);
         pricingService = mock(PricingService.class);
@@ -58,8 +59,8 @@ class ORDFacadeTest {
         regFacade = mock(REGFacade.class);
         queues = new OrderQueues();
         // same order as the fields in ORDFacade
-        facade = new ORDFacade(orderService, orderEventService, new PermissionPolicy(),
-                queues, menuService, restaurantService, pricingService, regFacade);
+        facade = new ORDFacade(orderService, eventPublisher, new PermissionPolicy(),
+            queues, menuService, restaurantService, pricingService, regFacade);
         // The facade looks the caller up through REGFacade, so tell the mock who each id is.
         when(regFacade.getCurrentUser(customerId)).thenReturn(customer());
         when(regFacade.getCurrentUser(restaurantId)).thenReturn(owner(restaurantId));
@@ -126,7 +127,7 @@ class ORDFacadeTest {
         assertEquals(customerId, order.getCustomerId());
         assertTrue(queues.placed(restaurantId).contains(order.getId()));
         verify(orderService).save(order);
-        verify(orderEventService).save(eq(order.getId()), isNull(), eq("PlacedState"), any(), eq("PLACE"));
+        verify(eventPublisher).publishEvent(new OrderStateChanged(order.getId(), null, "PlacedState", customerId, "PLACE"));
     }
 
     @ParameterizedTest
@@ -139,7 +140,7 @@ class ORDFacadeTest {
         assertThrows(IllegalArgumentException.class,
                 () -> facade.placeOrder(customer(), restaurantId, List.of(line())));
 
-        verifyNoInteractions(orderService, orderEventService);
+        verifyNoInteractions(orderService, eventPublisher);
         assertEquals(0, queues.placed(restaurantId).size());
     }
     // Covers PAUSED and CLOSED restaurants and verifies rejection creates no order, event, or queue entry.
@@ -155,7 +156,7 @@ class ORDFacadeTest {
         assertThrows(IllegalArgumentException.class,
                 () -> facade.placeOrder(customer(), restaurantId, List.of(line())));
 
-        verifyNoInteractions(orderService, orderEventService);
+        verifyNoInteractions(orderService, eventPublisher);
         assertEquals(0, queues.placed(restaurantId).size());
     }
     // Confirms the existing sold-out guard rejects placement without persistence or queue side effects.
@@ -180,7 +181,7 @@ class ORDFacadeTest {
         assertInstanceOf(AcceptedState.class, order.getState());
         assertFalse(queues.placed(restaurantId).contains(order.getId()));
         assertTrue(queues.preparation(restaurantId).contains(order.getId()));
-        verify(orderEventService).save(eq(order.getId()), eq("PlacedState"), eq("AcceptedState"), any(), eq("ACCEPT"));
+        verify(eventPublisher).publishEvent(new OrderStateChanged(order.getId(), "PlacedState", "AcceptedState", restaurantId, "ACCEPT"));
     }
 
     @Test
