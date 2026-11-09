@@ -92,7 +92,7 @@ class DemoOrderFixtureTest {
     }
 
     @Test
-    void refundedHistoryRequiresTheCorrectDomainTransition() throws Exception {
+    void operatorRefundHistoryReplaysToRefundedState() throws Exception {
         var orders = orders();
         var delivered = historical(orders, "DeliveredState");
         delivered.put("state", "RefundedState");
@@ -106,10 +106,10 @@ class DemoOrderFixtureTest {
         refund.put("performedByUsername", "demo_operator");
         events.add(refund);
 
-        var failure = assertThrows(IllegalArgumentException.class, () -> load(orders));
-        assertEquals("Event action and new state disagree.", failure.getMessage());
+        var fixtures = load(orders);
+        assertEquals(1, fixtures.orders().stream().filter(order -> order.state().equals("RefundedState")).count());
     }
-    // DeliveredState.refund currently returns ReadyState; refunded fixtures require it to return RefundedState.
+    // A delivered purchase with an operator REFUND event must replay successfully into the terminal refunded state.
 
     @Test
     void ordersLinesAndEventsCannotBeChangedAfterLoading() throws Exception {
