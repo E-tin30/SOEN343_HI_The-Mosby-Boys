@@ -75,15 +75,17 @@ beforeEach(() => {
   status = "OPEN";
   menu = [{ id: "item-1", status: "AVAILABLE" }];
   cart = createCart();
-  mocks.payment.mockReset();
+  localStorage.clear();
+  mocks.payment.mockReset().mockResolvedValue("pi_test");
   mocks.clearCart.mockReset();
   vi.stubGlobal("alert", vi.fn());
-  fetchMock = vi.fn(async (url: string) => {
+  fetchMock = vi.fn(async (url: string, options?: RequestInit) => {
     if (url.endsWith("/api/restaurants")) return json(status === "MISSING" ? [] : [{ id: "restaurant-1", status }]);
     if (url.endsWith("/menu")) return json(menu);
     if (url.endsWith("/breakdown")) return json(pricing);
-    if (url.endsWith("/create-payment-intent")) return json({ clientSecret: "private-secret" });
-    if (url.endsWith("/placeOrder")) return json({ id: "order-1" });
+    if (url.endsWith("/create-payment-intent")) return json({ checkoutId: JSON.parse(options!.body as string).checkoutId, clientSecret: "private-secret", orderId: null, totalMinor: 1200 });
+    if (url.endsWith("/placeOrder")) return json({ id: JSON.parse(options!.body as string).checkoutId });
+    if (url.endsWith("/cancel")) return json({ orderId: null });
     throw new Error(`Unexpected URL: ${url}`);
   });
   vi.stubGlobal("fetch", fetchMock);
@@ -195,4 +197,141 @@ describe("Place Order availability (R-DASH-04)", () => {
     expect(getRequestsTo("/placeOrder")).toHaveLength(0);
   });
   // Confirms the final recheck stops both placement and the existing payment call when all items just sold out.
+});
+
+it("waits for authorization before creating the order", async () => {
+  let authorize!: (id: string) => void;
+  mocks.payment.mockImplementation(() => new Promise((resolve) => { authorize = resolve; }));
+  renderCart();
+  await enterCheckout();
+  await waitFor(() => expect(getPlaceOrderButton().disabled).toBe(false));
+  fireEvent.click(getPlaceOrderButton());
+  await waitFor(() => expect(mocks.payment).toHaveBeenCalledOnce());
+  expect(screen.getByText("Payment total: $12.00 CAD")).toBeTruthy();
+  expect(getRequestsTo("/placeOrder")).toHaveLength(0);
+  expect(mocks.clearCart).not.toHaveBeenCalled();
+  await act(async () => { authorize("pi_authorized"); });
+  await waitFor(() => expect(getRequestsTo("/placeOrder")).toHaveLength(1));
+  await waitFor(() => expect(mocks.clearCart).toHaveBeenCalledOnce());
+});
+
+it("a declined payment never creates an order or clears the cart", async () => {
+  mocks.payment.mockRejectedValue(new Error("Card declined"));
+  renderCart();
+  await enterCheckout();
+  await waitFor(() => expect(getPlaceOrderButton().disabled).toBe(false));
+  fireEvent.click(getPlaceOrderButton());
+  await screen.findByText(/Checkout is not confirmed/);
+  expect(getRequestsTo("/placeOrder")).toHaveLength(0);
+  expect(mocks.clearCart).not.toHaveBeenCalled();
+});
+
+it("retries a lost order response using the same checkout", async () => {
+  const normal = fetchMock.getMockImplementation()!;
+  let completions = 0;
+  fetchMock.mockImplementation(async (url: string, options?: RequestInit) => {
+    if (url.endsWith("/placeOrder") && ++completions === 1) throw new TypeError("Lost response");
+    return normal(url, options);
+  });
+  renderCart();
+  await enterCheckout();
+  await waitFor(() => expect(getPlaceOrderButton().disabled).toBe(false));
+  fireEvent.click(getPlaceOrderButton());
+  await screen.findByText(/Checkout is not confirmed/);
+  expect(mocks.clearCart).not.toHaveBeenCalled();
+  await waitFor(() => expect(getPlaceOrderButton().disabled).toBe(false));
+  fireEvent.click(getPlaceOrderButton());
+  await waitFor(() => expect(mocks.clearCart).toHaveBeenCalledOnce());
+  const completionsSent = getRequestsTo("/placeOrder").map(([, options]) => JSON.parse(options.body).checkoutId);
+  expect(completionsSent).toHaveLength(2);
+  expect(completionsSent[0]).toBe(completionsSent[1]);
+  expect(getRequestsTo("/create-payment-intent")).toHaveLength(1);
+});
+
+it("retains the attempt ID after payment setup loses its response", async () => {
+  const normal = fetchMock.getMockImplementation()!;
+  let attempts = 0;
+  fetchMock.mockImplementation(async (url: string, options?: RequestInit) => {
+    if (url.endsWith("/create-payment-intent") && ++attempts === 1) throw new TypeError("Lost setup response");
+    return normal(url, options);
+  });
+  renderCart();
+  fireEvent.click(getCheckoutButton());
+  await screen.findByText(/Could not start checkout/);
+  await enterCheckout();
+  const ids = getRequestsTo("/create-payment-intent").map(([, options]) => JSON.parse(options.body).checkoutId);
+  expect(ids).toHaveLength(2);
+  expect(ids[0]).toBe(ids[1]);
+});
+
+it("a double click cannot start two checkout requests", async () => {
+  renderCart();
+  fireEvent.click(getCheckoutButton());
+  fireEvent.click(getCheckoutButton());
+  await screen.findByRole("button", { name: "Pay and Place Order" });
+  expect(getRequestsTo("/create-payment-intent")).toHaveLength(1);
+});
+
+it("Back to Cart requires a confirmed cancellation before editing again", async () => {
+  const normal = fetchMock.getMockImplementation()!;
+  let release!: (response: Response) => void;
+  fetchMock.mockImplementation(async (url: string, options?: RequestInit) => {
+    if (url.endsWith("/cancel")) return new Promise<Response>((resolve) => { release = resolve; });
+    return normal(url, options);
+  });
+  renderCart();
+  await enterCheckout();
+  fireEvent.click(screen.getByRole("button", { name: "Back to Cart" }));
+  await waitFor(() => expect(fetchMock.mock.calls.some(([url]) => url.endsWith("/cancel"))).toBe(true));
+  expect(screen.queryByRole("button", { name: "Continue to Checkout" })).toBeNull();
+  await act(async () => { release(json({ orderId: null })); });
+  await screen.findByRole("button", { name: "Continue to Checkout" });
+  expect(mocks.clearCart).not.toHaveBeenCalled();
+});
+
+it("a lost cancellation response cannot discard the existing checkout", async () => {
+  const normal = fetchMock.getMockImplementation()!;
+  fetchMock.mockImplementation(async (url: string, options?: RequestInit) => {
+    if (url.endsWith("/cancel")) throw new TypeError("Lost cancellation response");
+    return normal(url, options);
+  });
+  renderCart();
+  await enterCheckout();
+  const record = localStorage.getItem("dishes.checkout.customer-1");
+  fireEvent.click(screen.getByRole("button", { name: "Back to Cart" }));
+  await screen.findByText(/Cancellation is not confirmed/);
+  expect(screen.queryByRole("button", { name: "Continue to Checkout" })).toBeNull();
+  expect(localStorage.getItem("dishes.checkout.customer-1")).toBe(record);
+});
+
+it("Back to Cart resolves an already-paid checkout to its order", async () => {
+  const normal = fetchMock.getMockImplementation()!;
+  fetchMock.mockImplementation(async (url: string, options?: RequestInit) => {
+    if (url.endsWith("/cancel")) {
+      const id = JSON.parse(localStorage.getItem("dishes.checkout.customer-1")!).id;
+      return json({ orderId: id });
+    }
+    return normal(url, options);
+  });
+  renderCart();
+  await enterCheckout();
+  fireEvent.click(screen.getByRole("button", { name: "Back to Cart" }));
+  await waitFor(() => expect(mocks.clearCart).toHaveBeenCalledOnce());
+  expect(getRequestsTo("/placeOrder")).toHaveLength(0);
+  expect(mocks.payment).not.toHaveBeenCalled();
+});
+
+it("an old payment response cannot clear a different cart", async () => {
+  let authorize!: (id: string) => void;
+  mocks.payment.mockImplementation(() => new Promise((resolve) => { authorize = resolve; }));
+  const view = renderCart();
+  await enterCheckout();
+  await waitFor(() => expect(getPlaceOrderButton().disabled).toBe(false));
+  fireEvent.click(getPlaceOrderButton());
+  await waitFor(() => expect(mocks.payment).toHaveBeenCalledOnce());
+  cart = createCart([{ menuItem: createMenuItem(), quantity: 2 }]);
+  view.rerender(<MemoryRouter><CartPage /><OutputConsole /></MemoryRouter>);
+  await act(async () => { authorize("pi_authorized"); });
+  expect(mocks.clearCart).not.toHaveBeenCalled();
+  expect(getRequestsTo("/placeOrder")).toHaveLength(0);
 });

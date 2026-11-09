@@ -1,3 +1,4 @@
+import { startCheckout, completeCheckout, cancelCheckout, forgetCheckout } from "./api/checkoutApi";
 import { useOrderAvailability } from "./useOrderAvailability";
 import { loggedFetch, readJson } from "../api/loggedFetch";
 import {useEffect, useRef, useState} from "react";
@@ -13,6 +14,7 @@ import {Elements} from "@stripe/react-stripe-js";
 import {loadStripe} from "@stripe/stripe-js";
 import StripePaymentForm, {StripePaymentFormHandle} from "../components/StripePaymentForm";
 import {PricingBreakdown} from "../orders/types/PricingBreakdown";
+import type { Cart } from "./types/cart";
 
 const stripePromise = loadStripe(
     import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
@@ -29,18 +31,42 @@ export default function CartPage() {
     } = useCart();
     const {accessToken, user} = useAuth();
     const paymentFormRef = useRef<StripePaymentFormHandle>(null);
+    const checkoutRequestActive = useRef(false);
+    const checkoutScope = useRef<{ cart: Cart; token: string } | null>(null);
+    const currentSelection = useRef({ cart, token: accessToken });
+    currentSelection.current = { cart, token: accessToken };
+    const mounted = useRef(true);
+    useEffect(() => {
+        mounted.current = true;
+        return () => { mounted.current = false; };
+    }, []);
+    // Late responses can finish the original checkout without clearing a newer cart or session.
+
 
     const [placingOrder, setPlacingOrder] = useState(false);
     const [orderError, setOrderError] = useState("");
     const [checkout, setCheckout] = useState(false);
     const [clientSecret, setClientSecret] = useState<string>();
-    // Types the checkout value returned by the shared JSON reader without changing its use.
+    const [checkoutId, setCheckoutId] = useState<string>();
+    const [checkoutTotal, setCheckoutTotal] = useState<number>();
     const [pricing, setPricing] = useState<PricingBreakdown | null>(null);
     const [pricingError, setPricingError] = useState("");
 
+    const checkoutMatchesSelection = checkoutScope.current?.cart === cart && checkoutScope.current?.token === accessToken;
+    useEffect(() => {
+        if (checkoutScope.current && !checkoutMatchesSelection) {
+            checkoutScope.current = null;
+            setCheckout(false);
+            setClientSecret(undefined);
+            setCheckoutId(undefined);
+            setCheckoutTotal(undefined);
+        }
+    }, [cart, accessToken, checkoutMatchesSelection]);
+    // The original attempt remains recoverable, but its payment form cannot be reused for another cart or session.
+
     const isEmpty = !cart || cart.items.length === 0;
     const availability = useOrderAvailability(cart, accessToken);
-    const isOrderDisabled = !availability.allowed || placingOrder || isEmpty;
+    const isOrderDisabled = !availability.allowed || placingOrder || isEmpty || (checkout && !checkoutMatchesSelection);
     const canRetryAvailability = !availability.allowed && !availability.checking;
     // Applies availability to Place Order and offers retry only after a check has finished.
 
@@ -66,6 +92,7 @@ export default function CartPage() {
                             Authorization: `Bearer ${accessToken}`,
                         },
                         body: JSON.stringify({
+                            restaurantId: cart.restaurantId,
                             items: cart.items.map((item) => ({
                                 menuItemId: item.menuItem.id,
                                 quantity: item.quantity,
@@ -97,89 +124,108 @@ export default function CartPage() {
 
     }, [cart, accessToken]);
 
+    const isCurrentSelection = () => mounted.current
+        && currentSelection.current.cart === cart && currentSelection.current.token === accessToken;
+
+    const showCompletedOrder = (orderId: string, attemptId: string) => {
+        if (!user || !isCurrentSelection()) return;
+        forgetCheckout(user.id, attemptId);
+        clearCart();
+        alert("Order placed successfully!");
+        navigate(`/order-summary/${orderId}`);
+    };
+    // Only a verified backend confirmation can clear the cart and show success.
+
     const proceedToCheckout = async () => {
-        if (!cart || !accessToken) return;
+        if (!cart || !accessToken || !user || checkoutRequestActive.current) return;
+        checkoutRequestActive.current = true;
+        setPlacingOrder(true);
         setOrderError("");
         log("command", "Continue to checkout");
-        // Records the local checkout action; availability does not add a restriction to this step.
         try {
-            const response = await loggedFetch("http://localhost:8080/payments/create-payment-intent", {
-                method: "POST",
-                headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
-                body: JSON.stringify({
-                    userId: user?.id,
-                    restaurantId: cart.restaurantId,
-                    items: cart.items.map((item) => ({ menuItemId: item.menuItem.id, quantity: item.quantity, price: item.menuItem.price })),
-                }),
-            });
-            const data = await readJson<{ clientSecret: string }>(response);
-            setClientSecret(data.clientSecret);
+            const data = await startCheckout(cart, accessToken, user.id);
+            if (!isCurrentSelection()) return;
+            if (data.orderId) {
+                showCompletedOrder(data.orderId, data.checkoutId);
+                return;
+            }
+            setCheckoutId(data.checkoutId);
+            checkoutScope.current = { cart, token: accessToken };
+            setCheckoutTotal(data.totalMinor);
+            setClientSecret(data.clientSecret!);
             setCheckout(true);
-            // Keeps the existing checkout flow while logging payment-intent request and parsing failures.
         } catch (error) {
             logError(error, "Could not start checkout.");
-            setOrderError("Could not start checkout. Please try again.");
-            // Exposes checkout errors in the page and console without printing the client secret.
+            if (isCurrentSelection()) setOrderError("Could not start checkout. Refresh the menu and retry this checkout.");
+        } finally {
+            checkoutRequestActive.current = false;
+            if (mounted.current) setPlacingOrder(false);
         }
     };
+    // Reuses the stored checkout ID after an interrupted request instead of creating a second payment attempt.
 
     const handleRetryAvailability = () => {
         log("command", "Refresh order availability");
         void availability.refreshAvailability();
     };
-    // Starts a customer-requested retry; the hook handles lookup errors and updates the disabled state.
 
     const placeOrder = async () => {
-        if (!cart || !accessToken || isOrderDisabled) {
-            return;
-        }
-        // Stops placement when the current selection/session is missing or R-DASH-04 blocks the order.
-
+        if (!cart || !accessToken || !checkoutId || isOrderDisabled || checkoutRequestActive.current) return;
+        checkoutRequestActive.current = true;
         setPlacingOrder(true);
         setOrderError("");
-
         log("command", "Pay and place order");
-        // Records the user action separately from its subsequent backend request.
         try {
-            const canPlaceOrder = await availability.refreshAvailability();
-            if (!canPlaceOrder) {
-                return;
+            if (!await availability.refreshAvailability() || !isCurrentSelection()) return;
+            if (!paymentFormRef.current) throw new Error("Payment form is not ready.");
+            const paymentId = await paymentFormRef.current.submitPayment();
+            if (typeof paymentId !== "string" || !paymentId.startsWith("pi_")) {
+                throw new Error("Payment authorization could not be confirmed.");
             }
-            // Rechecks immediately before placement in case availability changed after rendering.
-            paymentFormRef.current?.submitPayment();
-
-            const response = await loggedFetch("http://localhost:8080/placeOrder", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${accessToken}`,
-                },
-                body: JSON.stringify({
-                    userId: user?.id,
-                    restaurantId: cart.restaurantId,
-                    items: cart.items.map((item) => ({
-                        menuItemId: item.menuItem.id,
-                        menuItemName: item.menuItem.name,
-                        quantity: item.quantity,
-                        price: item.menuItem.price,
-                    })),
-                }),
-            });
-
-            const order = await readJson<{ id: string }>(response);
-            // Uses the shared parser so an unreadable order confirmation is also logged.
-            clearCart();
-            alert("Order placed successfully!");
-            navigate(`/order-summary/${order.id}`);
+            if (!isCurrentSelection()) return;
+            const orderId = await completeCheckout(checkoutId, accessToken);
+            showCompletedOrder(orderId, checkoutId);
         } catch (error) {
-            logError(error, "Could not place the order.");
-            setOrderError("Could not place the order. Please refresh availability and try again.");
-            void availability.refreshAvailability();
-            // Reports placement failure and refreshes the disabled state after a possible backend rejection.
+            logError(error, "Could not complete checkout.");
+            if (isCurrentSelection()) {
+                setOrderError("Checkout is not confirmed. Retry this checkout or use Back to Cart to resolve it safely.");
+                void availability.refreshAvailability();
+            }
         } finally {
-            setPlacingOrder(false);
+            checkoutRequestActive.current = false;
+            if (mounted.current) setPlacingOrder(false);
         }
     };
+    // A declined/not-ready payment stops before /placeOrder; an uncertain response retains the same checkout for recovery.
+
+    const backToCart = async () => {
+        if (!accessToken || !checkoutId || !user || !checkoutMatchesSelection || checkoutRequestActive.current) return;
+        checkoutRequestActive.current = true;
+        setPlacingOrder(true);
+        setOrderError("");
+        log("command", "Back to cart");
+        try {
+            const orderId = await cancelCheckout(checkoutId, accessToken);
+            if (!isCurrentSelection()) return;
+            if (orderId) {
+                showCompletedOrder(orderId, checkoutId);
+                return;
+            }
+            forgetCheckout(user.id, checkoutId);
+            setCheckout(false);
+            setClientSecret(undefined);
+            setCheckoutId(undefined);
+            setCheckoutTotal(undefined);
+            checkoutScope.current = null;
+        } catch (error) {
+            logError(error, "Could not resolve checkout.");
+            if (isCurrentSelection()) setOrderError("Cancellation is not confirmed. Retry Back to Cart before starting another payment.");
+        } finally {
+            checkoutRequestActive.current = false;
+            if (mounted.current) setPlacingOrder(false);
+        }
+    };
+    // A timeout cannot discard an authorized payment; completed checkouts resolve to their existing order.
 
     return (
         <div className="page">
@@ -356,10 +402,10 @@ export default function CartPage() {
                             )}
 
                             {!checkout && <div className="cart-summary__actions">
-                                <Button variant="secondary" onClick={clearCart} disabled={placingOrder && checkout}>
+                                <Button variant="secondary" onClick={clearCart} disabled={placingOrder}>
                                     Clear cart
                                 </Button>
-                                <Button onClick={proceedToCheckout} disabled={placingOrder && checkout}>
+                                <Button onClick={proceedToCheckout} disabled={placingOrder}>
                                     Continue to Checkout
                                 </Button>
                             </div>}
@@ -367,6 +413,7 @@ export default function CartPage() {
 
                         {checkout && (
                             <section className="cart-summary" aria-label="Checkout">
+                                <p>Payment total: ${((checkoutTotal ?? 0) / 100).toFixed(2)} CAD</p>
                                 <Elements
                                     stripe={stripePromise}
                                     options={{
@@ -393,16 +440,11 @@ export default function CartPage() {
                                     }}
 
                                 >
-                                    <StripePaymentForm ref={paymentFormRef}/>
+                                    <StripePaymentForm ref={paymentFormRef} clientSecret={clientSecret!} onSubmitCheckout={() => { void placeOrder(); }}/>
                                 </Elements>
 
                                 <div className="cart-summary__actions">
-                                    <Button variant="secondary" onClick={() => {
-                                        log("command", "Back to cart");
-                                        // Records this local action while preserving the existing return-to-cart flow.
-                                        setCheckout(false);
-                                        setClientSecret(undefined);
-                                    }} disabled={placingOrder}>
+                                    <Button variant="secondary" onClick={() => { void backToCart(); }} disabled={placingOrder}>
                                         Back to Cart
                                     </Button>
                                     <Button onClick={placeOrder} disabled={isOrderDisabled} aria-describedby={availability.reason ? "order-availability" : undefined}>
