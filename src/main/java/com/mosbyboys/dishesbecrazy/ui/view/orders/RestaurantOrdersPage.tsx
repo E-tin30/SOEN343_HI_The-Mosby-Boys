@@ -4,6 +4,7 @@ import { useAuth } from "../AuthContext";
 import AppHeader from "../components/AppHeader";
 import Button from "../components/Button";
 import Heading from "../components/Heading";
+import RestaurantStatusControl from "../components/RestaurantStatusControl";
 import Tag from "../components/Tag";
 import {
   acceptOrder,
@@ -123,6 +124,8 @@ export default function RestaurantOrdersPage() {
       </AppHeader>
 
       <main className="orders-board">
+        <RestaurantStatusControl />
+
         {error && (
           <p className="page__status page__status--error" role="alert">
             Error: {error}

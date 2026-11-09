@@ -3,6 +3,7 @@ import { useAuth } from "./AuthContext";
 import AppHeader from "./components/AppHeader";
 import Button from "./components/Button";
 import Heading from "./components/Heading";
+import RestaurantStatusControl from "./components/RestaurantStatusControl";
 import "./styles/HomePage.css";
 
 export default function RestaurantHomePage() {
@@ -36,6 +37,8 @@ export default function RestaurantHomePage() {
             View Orders
           </Button>
         </section>
+
+        <RestaurantStatusControl className="home-card card" />
 
         <section className="home-card card">
           <Heading level={3}>Development placeholder</Heading>
