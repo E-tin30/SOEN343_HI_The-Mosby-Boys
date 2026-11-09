@@ -7,14 +7,21 @@ import Heading from "./Heading";
 
 type RestaurantStatusControlProps = {
   className?: string;
+  // Called with the restaurant whenever it is loaded or changed, e.g. so a page can show its name.
+  onRestaurant?: (restaurant: Restaurant) => void;
 };
 
 // The logged-in restaurant's status, with Pause shown only while it is open (R-DASH-01).
 // Used on the restaurant home page and the orders page (Dinner Rush: pause while watching the queue).
-export default function RestaurantStatusControl({ className = "card" }: RestaurantStatusControlProps) {
+export default function RestaurantStatusControl({ className = "card", onRestaurant }: RestaurantStatusControlProps) {
   const { accessToken } = useAuth();
-  const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
+  const [restaurant, setRestaurantState] = useState<Restaurant | null>(null);
   const [error, setError] = useState("");
+
+  const setRestaurant = (r: Restaurant) => {
+    setRestaurantState(r);
+    onRestaurant?.(r);
+  };
 
   useEffect(() => {
     if (!accessToken) return;
