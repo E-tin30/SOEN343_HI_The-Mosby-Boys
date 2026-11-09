@@ -82,9 +82,10 @@ Their dishes have distinct names and prices so a kitchen mix-up is visible durin
 | Casey's Home Kitchen | Home Braised Beef Bowl, Homemade Chicken Burrito, Black Bean Tacos (3) | Cinnamon Churros |
 
 The order fixture defines nine accepted orders for preparation queues of 0 / 3 / 6 on a fresh demo dataset,
-plus delivered, rejected and cancelled customer history: twelve orders, twelve lines and twenty-eight events.
-Delivered orders support the operator refund transition to `RefundedState`. Adding a refunded order to the baseline
-and integrating billing records remain separate demo-data work.
+plus delivered, refunded, rejected and cancelled customer history: thirteen orders, thirteen lines and thirty-five events.
+The refunded purchase is a separate Handmade Spinach Ravioli order from Robin's Sunday Kitchen, delivered by the
+demo courier and then refunded by the operator. Its seven events cover placement through refund; the original
+delivered example remains available. Billing records remain separate integration work.
 With `demo-seed`, the profile and menu seeders run first, followed by `DemoOrderSeeder`.
 The order seeder resolves usernames to established user IDs and inserts missing orders, purchased-item lines
 and events together in one transaction. Historical lines retain their purchased names/prices and event times;
@@ -118,8 +119,8 @@ It loads and validates the same JSON fixtures, then restores the database in one
 - Recreate deleted public profiles and fixture menu items under the existing Auth IDs.
 - Remove orders belonging to a fixture customer **or** fixture restaurant, including their lines, events and bills.
   Remove other bills owned by those demo customers/restaurants and extra menu items under demo restaurants.
-- Reinsert the twelve fixture orders, twelve lines and twenty-eight events, restoring the persisted
-  preparation counts to 0 / 3 / 6 and the original delivered/rejected/cancelled customer history.
+- Reinsert the thirteen fixture orders, thirteen lines and thirty-five events, restoring the persisted
+  preparation counts to 0 / 3 / 6 and the original delivered/refunded/rejected/cancelled customer history.
 
 For example: pause a demo restaurant, sell out its menu and progress an accepted order to delivery.
 Restoration reopens that restaurant, restores its stock, and puts that order and its event history back
