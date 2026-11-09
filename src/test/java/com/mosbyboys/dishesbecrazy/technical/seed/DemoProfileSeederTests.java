@@ -1,12 +1,19 @@
 package com.mosbyboys.dishesbecrazy.technical.seed;
 
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.SimpleTransactionStatus;
+
+import com.mosbyboys.dishesbecrazy.domain.reg.Role;
+
 import tools.jackson.databind.json.JsonMapper;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -21,8 +28,12 @@ class DemoProfileSeederTests {
 
     // Builds the seeder with simulated external services.
     private DemoProfileSeeder seeder() {
+        return seeder(new DemoFixtureLoader(JsonMapper.builder().build()));
+    }
+
+    private DemoProfileSeeder seeder(DemoFixtureLoader fixtures) {
         when(manager.getTransaction(any())).thenReturn(new SimpleTransactionStatus());
-        return new DemoProfileSeeder(jdbc, manager, new DemoFixtureLoader(JsonMapper.builder().build()), auth);
+        return new DemoProfileSeeder(jdbc, manager, fixtures, auth);
     }
 
     // A failed Auth creation must prevent all profile inserts.
@@ -60,4 +71,51 @@ class DemoProfileSeederTests {
         verify(manager).rollback(any());
         verify(manager, never()).commit(any());
     }
+
+    @Test
+    void invalidMenuPreventsAuthAndAllDatabaseAccess() throws Exception {
+        var loader = spy(new DemoFixtureLoader(JsonMapper.builder().build()));
+        doAnswer(invocation -> loader.load(new ClassPathResource("demo/profiles.json"),
+                new ByteArrayResource("[]".getBytes(StandardCharsets.UTF_8)))).when(loader).load();
+        var seeder = seeder(loader);
+
+        assertThrows(IllegalArgumentException.class, seeder::run);
+
+        verifyNoInteractions(auth, jdbc, manager);
+    }
+    // Menu validation must finish before even profile lookup or Auth provisioning starts.
+
+    @Test
+    void reusesExistingAccountsAndSeedsAllThreeRestaurants() throws Exception {
+        var fixtures = new DemoFixtureLoader(JsonMapper.builder().build()).load(
+                new ClassPathResource("demo/fixtures/multiple-profiles.json"),
+                new ClassPathResource("demo/fixtures/multiple-menu.json"));
+        var loader = mock(DemoFixtureLoader.class);
+        when(loader.load()).thenReturn(fixtures);
+        var ids = new HashMap<String, UUID>();
+        var roles = new HashMap<UUID, String>();
+        for (var account : fixtures.accounts()) {
+            UUID id = UUID.nameUUIDFromBytes(account.email().getBytes(StandardCharsets.UTF_8));
+            ids.put(account.email(), id);
+            roles.put(id, account.role().name());
+        }
+        when(jdbc.queryForList(anyString(), eq(UUID.class), any(Object[].class)))
+                .thenAnswer(invocation -> List.of(ids.get(invocation.getArgument(2, String.class))));
+        when(jdbc.queryForObject(anyString(), eq(String.class), any(Object[].class)))
+                .thenAnswer(invocation -> roles.get(invocation.getArgument(2, UUID.class)));
+        var seeder = seeder(loader);
+
+        seeder.run();
+
+        for (var account : fixtures.accounts()) {
+            if (account.role() == Role.RESTAURANT) {
+                verify(jdbc).update(contains("INSERT INTO public.\"Restaurant\""),
+                        eq(ids.get(account.email())), eq(account.restaurantName()), eq(account.status()),
+                        eq(account.latitude()), eq(account.longitude()));
+            }
+        }
+        verifyNoInteractions(auth);
+        verify(manager).commit(any());
+    }
+    // Repeated RESTAURANT roles reach their own inserts without recreating existing Auth identities.
 }
