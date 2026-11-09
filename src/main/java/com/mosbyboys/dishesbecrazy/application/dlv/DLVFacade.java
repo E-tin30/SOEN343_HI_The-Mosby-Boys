@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.mosbyboys.dishesbecrazy.application.events.DispatchRequestEvent;
 import com.mosbyboys.dishesbecrazy.application.dlv.DispatchService;
 import com.mosbyboys.dishesbecrazy.domain.ord.Order;
-import com.mosbyboys.dishesbecrazy.application.ord.OrderService;
+import com.mosbyboys.dishesbecrazy.application.ord.ORDFacade;
 
 import java.util.List;
 import java.util.UUID;
@@ -19,7 +19,7 @@ public class DLVFacade {
     private final CourierService courierService;
     private final DispatchService dispatchService;
     private final ApplicationEventPublisher eventPublisher;
-    private final OrderService orderService;
+    private final ORDFacade ordFacade;
 
     public List<CourierData> getOnlineCouriers() {
         return courierService.getOnlineCouriers();
@@ -36,27 +36,25 @@ public class DLVFacade {
         eventPublisher.publishEvent(new DispatchRequestEvent());
     }
 
-    @Transactional
     public void goOffline(UUID courierId) {
-        Order pendingOffer = getPendingOffer(courierId);
-
-        //Reject any outstanding offer
-        if (pendingOffer != null) {
-            pendingOffer.clearCourierOffer(courierId);
-            orderService.save(pendingOffer);
-        }
-
-        //Change courier state to OFFLINE
-        courierService.markOffline(courierId);
-
-        //Retry dispatch if an offer was rejected
-        if (pendingOffer != null) {
-            eventPublisher.publishEvent(new DispatchRequestEvent());
-        }
+        dispatchService.goOffline(courierId);
     }
 
+    //Order goes READY -> PICKED_UP and the courier ASSIGNED -> CARRYING at the same time (thread-safe)
+    @Transactional
+    public void confirmPickup(UUID courierId, UUID orderId) {
+        //Checks the courier is ASSIGNED to this order, so it must run before they become CARRYING
+        ordFacade.pickUpOrder(courierId, orderId);
+
+        courierService.markCarrying(courierId);
+    }
+
+    //Order goes PICKED_UP -> DELIVERED and the courier CARRYING -> IDLE at the same time (thread-safe)
     @Transactional
     public void confirmDelivery(UUID courierId, UUID orderId) {
+        //Checks the courier is CARRYING this order, so it must run before they become IDLE
+        ordFacade.deliverOrder(courierId, orderId);
+
         //Courier's location updates to where they just dropped the meal off
         courierService.moveToDropoffLocation(courierId, orderId);
 
@@ -72,11 +70,6 @@ public class DLVFacade {
     @Transactional
     public void acceptOffer(UUID courierId, UUID orderId) {
         dispatchService.acceptOffer(courierId, orderId);
-    }
-
-    @Transactional
-    public void carryDelivery(UUID courierId) {
-        courierService.markCarrying(courierId);
     }
 
 }

@@ -13,8 +13,10 @@ import java.util.List;
 import java.util.Comparator;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.context.ApplicationEventPublisher;
 
 import lombok.RequiredArgsConstructor;
@@ -27,10 +29,49 @@ public class DispatchService {
     private final CourierService courierService;
     private final RestaurantService restaurantService;
     private final ApplicationEventPublisher eventPublisher;
-    
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void dispatchWaitingOrders() {
-        for (UUID orderId : queues.getGlobalReady()) {
+    private final PlatformTransactionManager transactionManager;
+
+    /* Only one dispatch runs at a time, otherwise two runs could both see the same order without 
+    a courier and offer it twice.*/
+    public synchronized void dispatchWaitingOrders() {
+        inNewTransaction(this::offerWaitingOrders);
+    }
+
+    /* Takes the courier OFFLINE, giving back any offer they hold. It shares the dispatch lock, so a
+    dispatch can't offer this courier an order while they go offline. */
+    public synchronized void goOffline(UUID courierId) {
+        boolean gaveBackOffer = inNewTransaction(() -> {
+            Order offer = getPendingOffer(courierId);
+            if (offer != null) {
+                offer.clearCourierOffer(courierId);
+                orderService.save(offer);
+            }
+            courierService.markOffline(courierId);
+            return offer != null;
+        });
+
+        // Offer the given-back order to another courier. Same thread, so the lock can be re-entered
+        if (gaveBackOffer) {
+            dispatchWaitingOrders();
+        }
+    }
+
+    // Runs the work in its own transaction, committed before this returns, so the commit happens inside the lock
+    private <T> T inNewTransaction(java.util.function.Supplier<T> work) {
+        TransactionTemplate transaction = new TransactionTemplate(transactionManager);
+        transaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        return transaction.execute(status -> work.get());
+    }
+
+    private void inNewTransaction(Runnable work) {
+        inNewTransaction(() -> {
+            work.run();
+            return null;
+        });
+    }
+
+    private void offerWaitingOrders() {
+        for (UUID orderId : queues.globalReadySnapshot()) {
 
             Order order = orderService.load(orderId);
 
@@ -98,7 +139,7 @@ public class DispatchService {
     }
 
     public Order getPendingOffer(UUID courierId) {
-        for (UUID orderId : queues.getGlobalReady()) {
+        for (UUID orderId : queues.globalReadySnapshot()) {
             Order order = orderService.load(orderId);
 
             if (courierId.equals(order.getCourierId())) {
@@ -122,7 +163,7 @@ public class DispatchService {
         courierService.markAssigned(courierId);
 
         //Remove the accepted order, not necessarily the head
-        boolean removed = queues.getGlobalReady().remove(orderId);
+        boolean removed = queues.removeGlobalReady(orderId);
         if (!removed) {
             throw new IllegalStateException("Order is not queued");
         }

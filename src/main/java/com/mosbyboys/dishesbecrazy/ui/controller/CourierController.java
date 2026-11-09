@@ -11,7 +11,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.mosbyboys.dishesbecrazy.application.dlv.DLVFacade;
 import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
-import com.mosbyboys.dishesbecrazy.application.ord.ORDFacade;
 
 import com.mosbyboys.dishesbecrazy.domain.ord.Order;
 import com.mosbyboys.dishesbecrazy.domain.reg.Role;
@@ -25,7 +24,6 @@ public class CourierController {
 
     private final DLVFacade dlvFacade;
     private final REGFacade regFacade;
-    private final ORDFacade ordFacade;
 
     public record PendingOfferResponse(UUID orderId, UUID restaurantId) {
 
@@ -106,9 +104,7 @@ public class CourierController {
     @PostMapping("/orders/{orderId}/pickup")
     public ResponseEntity<Void> confirmPickup(@AuthenticationPrincipal Jwt jwt,@PathVariable UUID orderId) {
         UUID courierId = getCourierId(jwt);
-        
-        ordFacade.pickUpOrder(courierId, orderId);
-        dlvFacade.carryDelivery(courierId);
+        dlvFacade.confirmPickup(courierId, orderId);
 
         return ResponseEntity.noContent().build();
     }
@@ -117,9 +113,7 @@ public class CourierController {
     @PostMapping("/orders/{orderId}/deliver")
     public ResponseEntity<Void> confirmDelivery(@AuthenticationPrincipal Jwt jwt,@PathVariable UUID orderId) {
         UUID courierId = getCourierId(jwt);
-        
         dlvFacade.confirmDelivery(courierId, orderId);
-        ordFacade.deliverOrder(courierId, orderId);
 
         return ResponseEntity.noContent().build();
     }
