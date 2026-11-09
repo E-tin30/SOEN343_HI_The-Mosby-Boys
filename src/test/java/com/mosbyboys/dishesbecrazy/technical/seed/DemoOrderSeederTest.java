@@ -45,7 +45,7 @@ class DemoOrderSeederTest {
         for (String statement : schema()) jdbc.execute(statement);
         var loader = new DemoFixtureLoader(JsonMapper.builder().build());
         baseline = loader.load();
-        seeder = new DemoOrderSeeder(jdbc, new TransactionTemplate(new DataSourceTransactionManager(source)), loader);
+        seeder = new DemoOrderSeeder(new DemoOrderStore(jdbc), new TransactionTemplate(new DataSourceTransactionManager(source)), loader);
         for (var account : baseline.accounts()) {
             UUID id = UUID.nameUUIDFromBytes(account.username().getBytes(StandardCharsets.UTF_8));
             users.put(account.username(), id);
