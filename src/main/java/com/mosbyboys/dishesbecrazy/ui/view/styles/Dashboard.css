@@ -38,12 +38,43 @@
 }
 
 .dashboard-card__map {
+  position: relative;
   display: flex;
   flex: 1;
   align-items: center;
   justify-content: center;
+  min-height: 0;
+  overflow: hidden;
   background: var(--linen);
   border-radius: var(--radius-md);
+}
+
+/* The live map fills the whole area, whatever height the grid gives the card. */
+.dashboard-card__map .live-map {
+  position: absolute;
+  inset: 0;
+}
+
+/* Frosted cover with a centred message, e.g. when there's no delivery to show. */
+.dashboard-card__map-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--porcelain) 70%, transparent);
+  backdrop-filter: blur(3px);
+}
+
+.dashboard-card__map-overlay p {
+  margin: 0;
+  padding: var(--space-2) var(--space-4);
+  background: var(--porcelain);
+  border: var(--border-width) solid var(--linen);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-card);
+  color: var(--cocoa);
 }
 
 /* Pinned to the bottom of the card, centred. */

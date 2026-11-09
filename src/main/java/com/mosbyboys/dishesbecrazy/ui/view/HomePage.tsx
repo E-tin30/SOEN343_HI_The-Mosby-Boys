@@ -6,6 +6,7 @@ import AppHeader from "./components/AppHeader";
 import ActiveOrderDetails from "./components/ActiveOrderDetails";
 import Button from "./components/Button";
 import Heading from "./components/Heading";
+import { MapCard } from "./dashboard/LiveMap";
 import { getOrderHistory } from "./orders/api/ordersApi";
 import type { ActiveOrderSummary, HistoryStatus } from "./orders/types/order";
 import "./styles/Dashboard.css";
@@ -69,16 +70,10 @@ export default function HomePage() {
           <Button onClick={() => navigate("/restaurants")}>
             Browse restaurants
           </Button>
-          <Button onClick={() => navigate("/dashboard")}>
-            View Dashboard Map
-          </Button>
         </section>
 
         <div className="dashboard-grid">
-          <section className="dashboard-card dashboard-card--map card">
-            {/* TODO: render the delivery map here. */}
-            <div className="dashboard-card__map meta">Map coming soon</div>
-          </section>
+          <MapCard active={activeOrder !== null} emptyMessage="No active deliveries" />
 
           <section className="dashboard-card dashboard-card--active card">
             <Heading level={3}>Active order</Heading>

@@ -6,6 +6,7 @@ import Button from "./components/Button";
 import Heading from "./components/Heading";
 import ActiveOrderDetails from "./components/ActiveOrderDetails";
 import Tag from "./components/Tag";
+import { MapCard } from "./dashboard/LiveMap";
 import type { ActiveDelivery } from "./orders/types/order";
 import "./styles/Dashboard.css";
 
@@ -66,10 +67,7 @@ export default function CourierHomePage() {
         </section>
 
         <div className="dashboard-grid">
-          <section className="dashboard-card dashboard-card--map card">
-            {/* Render the delivery map here */}
-            <div className="dashboard-card__map meta">Map coming soon</div>
-          </section>
+          <MapCard active={active} emptyMessage="Start driving to see the map" />
 
           <section className="dashboard-card dashboard-card--active card">
             <Heading level={3}>Active delivery</Heading>
