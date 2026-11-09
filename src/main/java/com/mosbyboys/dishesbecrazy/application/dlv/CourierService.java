@@ -1,12 +1,20 @@
 package com.mosbyboys.dishesbecrazy.application.dlv;
 
 import com.mosbyboys.dishesbecrazy.technical.repository.CourierRepo;
+import com.mosbyboys.dishesbecrazy.technical.repository.CustomerRepo;
+import com.mosbyboys.dishesbecrazy.technical.repository.OrderRepo;
 import com.mosbyboys.dishesbecrazy.technical.repository.entity.CourierEntity;
+import com.mosbyboys.dishesbecrazy.technical.repository.entity.CustomerEntity;
+import com.mosbyboys.dishesbecrazy.technical.repository.entity.OrderEntity;
+import com.mosbyboys.dishesbecrazy.domain.ord.Location;
+
+
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.util.List;
 import java.util.UUID;
@@ -15,6 +23,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CourierService {
 
+    private final OrderRepo orderRepo;
+    private final CustomerRepo customerRepo;
     private final CourierRepo courierRepo;
 
     public List<CourierData> getOnlineCouriers() {
@@ -100,6 +110,52 @@ public class CourierService {
         courierRepo.save(courier);
     }
 
+    @Transactional
+    public void moveToCustomerLocation(UUID courierId, UUID customerId) {
+
+        Location destination = jdbcTemplate.queryForObject(
+            "SELECT latitude, longitude FROM \"Customer\" WHERE user_id = ?",
+            (rs, rowNum) -> new Location(
+                rs.getDouble("latitude"),
+                rs.getDouble("longitude")
+            ),
+            customerId
+        );
+
+        CourierEntity courier = courierRepo.findById(courierId)
+            .orElseThrow(() -> new IllegalArgumentException("Courier not found"));
+
+        courier.setLatitude(destination.latitude());
+        courier.setLongitude(destination.longitude());
+
+        courierRepo.save(courier);
+    }
+
+    @Transactional
+    public void moveToDropoffLocation(UUID courierId, UUID orderId) {
+        //Find the order
+        OrderEntity order = orderRepo.findById(orderId)
+            .orElseThrow(() -> new IllegalArgumentException("Order not found"));
+        
+        //Find the courier
+        CourierEntity courier = courierRepo.findById(courierId)
+            .orElseThrow(() -> new IllegalArgumentException("Courier not found"));
+        
+        //Verify this courier was assigned to the order
+        if (!courierId.equals(order.getCourierId())) {
+            throw new IllegalStateException("Order does not belong to this courier");
+        }
+
+        //Find the customer who placed the order
+        CustomerEntity customer = customerRepo.findById(order.getUserId())
+            .orElseThrow(() -> new IllegalArgumentException("Customer not found"));
+
+        //Move the courier to the customer's coordinates
+        courier.setLatitude(customer.getLatitude());
+        courier.setLongitude(customer.getLongitude());
+
+        courierRepo.save(courier);
+    }
 
 }
 

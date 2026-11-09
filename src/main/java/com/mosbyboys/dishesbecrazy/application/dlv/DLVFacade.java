@@ -57,8 +57,8 @@ public class DLVFacade {
 
     @Transactional
     public void confirmDelivery(UUID courierId, UUID orderId) {
-        //Complete the order's delivery transition
-        ordFacade.deliverOrder(courierId, orderId);
+        //Courier's location updates to where they just dropped the meal off
+        courierService.moveToDropoffLocation(courierId, orderId);
 
         //Courier becomes available again
         courierService.markIdle(courierId);
@@ -67,6 +67,16 @@ public class DLVFacade {
         eventPublisher.publishEvent(
             new DispatchRequestEvent()
         );
+    }
+
+    @Transactional
+    public void acceptOffer(UUID courierId, UUID orderId) {
+        dispatchService.acceptOffer(courierId, orderId);
+    }
+
+    @Transactional
+    public void carryDelivery(UUID courierId) {
+        courierService.markCarrying(courierId);
     }
 
 }
