@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 import AppHeader from "./components/AppHeader";
@@ -7,24 +7,98 @@ import Heading from "./components/Heading";
 import ActiveOrderDetails from "./components/ActiveOrderDetails";
 import Tag from "./components/Tag";
 import { MapCard } from "./dashboard/LiveMap";
-import type { ActiveDelivery } from "./orders/types/order";
+import {
+  acceptOffer,
+  declineOffer,
+  deliverOrder,
+  getCourierState,
+  getCurrentOrders,
+  getPendingOffer,
+  goOffDuty,
+  goOnDuty,
+  pickUpOrder,
+  type CourierState,
+} from "./orders/api/courierApi";
+import type { ActiveDelivery, HistoryOrder } from "./orders/types/order";
 import "./styles/Dashboard.css";
+
+// How often an idle courier checks for a new offer.
+const OFFER_POLL_MS = 5000;
+
+const STATE_TAG: Record<CourierState, { tone: "sage" | "mustard" | "navy" | "neutral"; label: string }> = {
+  OFFLINE: { tone: "neutral", label: "Offline: The dishes are too crazy" },
+  IDLE: { tone: "sage", label: "Idle: Let's get this party started" },
+  ASSIGNED: { tone: "mustard", label: "Delivering: Heading to the restaurant" },
+  CARRYING: { tone: "navy", label: "Delivering: On the way to the customer" },
+};
+
+const toDelivery = (order: HistoryOrder): ActiveDelivery => ({
+  id: order.id,
+  restaurantName: order.restaurantName,
+  status: order.status as ActiveDelivery["status"],
+  lines: order.lines,
+  total: order.total,
+});
 
 export default function CourierHomePage() {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
-  const [active, setActive] = useState(false);
+  const { user, accessToken, logout } = useAuth();
+  const [courierState, setCourierState] = useState<CourierState | null>(null);
+  // An order offered to the courier that they haven't accepted or declined yet.
+  const [offer, setOffer] = useState<HistoryOrder | null>(null);
+  // The accepted order the courier is picking up or delivering.
+  const [activeDelivery, setActiveDelivery] = useState<ActiveDelivery | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
 
-  // Load the courier's assigned order once the backend is connected
-  const [activeDelivery] = useState<ActiveDelivery | null>(null);
+  // Reread backend after eavry action to keep page in sync
+  const refresh = useCallback(async () => {
+    if (!accessToken || !user) return;
+    const [state, pending, current] = await Promise.all([
+      getCourierState(accessToken, user.id),
+      getPendingOffer(accessToken),
+      getCurrentOrders(accessToken),
+    ]);
+    setCourierState(state);
+    setOffer(pending ? current.find((o) => o.id === pending.orderId) ?? null : null);
+    const delivery = current.find((o) => o.id !== pending?.orderId);
+    setActiveDelivery(delivery ? toDelivery(delivery) : null);
+  }, [accessToken, user]);
 
-  // A courier can't go offline in the middle of a delivery.
-  const canEndDriving = active && !activeDelivery;
+  useEffect(() => {
+    refresh().catch((e: Error) => setError(e.message));
+  }, [refresh]);
 
-  const handleEndDriving = () => {
-    if (!canEndDriving) return;
-    setActive(false);
+  // While idle, keep checking for an offer from dispatch
+  useEffect(() => {
+    if (courierState !== "IDLE") return;
+    const timer = window.setInterval(() => {
+      refresh().catch(() => {});
+    }, OFFER_POLL_MS);
+    return () => window.clearInterval(timer);
+  }, [courierState, refresh]);
+
+  // Runs one courier action, then reloads everything so the page matches the backend
+  const run = (action: (token: string) => Promise<void>) => async () => {
+    if (!accessToken || busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      await action(accessToken);
+    } catch (e) {
+      setError((e as Error).message);
+    }
+    try {
+      await refresh();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
   };
+
+  // A courier can only go offline while idle, never in the middle of a delivery
+  const canEndDriving = courierState === "IDLE" && !busy;
 
   const handleLogout = () => {
     logout();
@@ -49,44 +123,71 @@ export default function CourierHomePage() {
           <p className="intro-card__text meta">
             Start driving to receive delivery offers.
           </p>
-          {/* Send the courier's availability to the backend */}
           <div className="intro-card__actions">
-            <Button onClick={() => setActive(true)} disabled={active}>
+            <Button onClick={run(goOnDuty)} disabled={courierState !== "OFFLINE" || busy}>
               Start Driving
             </Button>
-            <Button variant="secondary" onClick={handleEndDriving} disabled={!canEndDriving}>
+            <Button variant="secondary" onClick={run(goOffDuty)} disabled={!canEndDriving}>
               End Driving
             </Button>
-            <Tag tone={active ? "sage" : "neutral"}>{active ? "Online: Let's get this party started" : "Offline: The dishes are too crazy"}</Tag>
+            {courierState && (
+              <Tag tone={STATE_TAG[courierState].tone}>{STATE_TAG[courierState].label}</Tag>
+            )}
           </div>
-          {active && activeDelivery && (
-            <p className="intro-card__text meta">
-              Finish your active delivery before you end driving.
+          {error && (
+            <p className="page__status page__status--error" role="alert">
+              {error}
             </p>
           )}
         </section>
 
         <div className="dashboard-grid">
-          <MapCard active={active} emptyMessage="Start driving to see the map" />
+          <MapCard active={courierState !== null && courierState !== "OFFLINE"} emptyMessage="Start driving to see the map" />
 
           <section className="dashboard-card dashboard-card--active card">
-            <Heading level={3}>Active delivery</Heading>
             {activeDelivery ? (
-              <ActiveOrderDetails order={activeDelivery} />
+              <>
+                <Heading level={3}>Active delivery</Heading>
+                <ActiveOrderDetails order={activeDelivery} />
+              </>
+            ) : offer ? (
+              <>
+                <Heading level={3}>New offer</Heading>
+                <ActiveOrderDetails order={toDelivery(offer)} />
+              </>
             ) : (
-              <p className="dashboard-card__empty meta">No active delivery right now.</p>
+              <>
+                <Heading level={3}>Active delivery</Heading>
+                <p className="dashboard-card__empty meta">
+                  {courierState === "IDLE" ? "Waiting for an offer…" : "No active delivery right now."}
+                </p>
+              </>
             )}
           </section>
 
           <section className="dashboard-card dashboard-card--action card">
-            {/* Call the pick-up / deliver endpoints once they exist */}
-            <Button block disabled={!activeDelivery}>
-              {!activeDelivery
-                ? "No deliveries"
-                : activeDelivery.status === "READY"
-                  ? "Pick Up Order"
-                  : "Deliver"}
-            </Button>
+            {courierState === "ASSIGNED" && activeDelivery ? (
+              <Button block onClick={run((t) => pickUpOrder(t, activeDelivery.id))} disabled={busy}>
+                Pick Up Order
+              </Button>
+            ) : courierState === "CARRYING" && activeDelivery ? (
+              <Button block onClick={run((t) => deliverOrder(t, activeDelivery.id))} disabled={busy}>
+                Deliver
+              </Button>
+            ) : offer ? (
+              <>
+                <Button block onClick={run((t) => acceptOffer(t, offer.id))} disabled={busy}>
+                  Accept
+                </Button>
+                <Button block variant="secondary" onClick={run((t) => declineOffer(t, offer.id))} disabled={busy}>
+                  Decline
+                </Button>
+              </>
+            ) : (
+              <Button block disabled>
+                No deliveries
+              </Button>
+            )}
           </section>
         </div>
       </main>

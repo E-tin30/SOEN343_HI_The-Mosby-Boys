@@ -1,0 +1,67 @@
+import type { HistoryOrder } from "../types/order";
+import { log } from "../../outputLog";
+import { post } from "./ordersApi";
+
+const API = "http://localhost:8080";
+
+export type CourierState = "OFFLINE" | "IDLE" | "ASSIGNED" | "CARRYING";
+
+export type PendingOffer = {
+  orderId: string;
+  restaurantId: string;
+};
+
+// GET that returns null on 204 No Content (e.g. no pending offer).
+async function get<T>(path: string, token: string): Promise<T | null> {
+  log("command", `GET ${path}`);
+  const response = await fetch(API + path, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!response.ok) {
+    const message = (await response.text()) || `Request failed (${response.status})`;
+    log("error", `GET ${path} → ${response.status}: ${message}`);
+    throw new Error(message);
+  }
+  return response.status === 204 ? null : response.json();
+}
+
+// The dashboard lists every courier who isn't offline, so a courier missing from it is OFFLINE.
+export async function getCourierState(token: string, courierId: string): Promise<CourierState> {
+  const online = await get<{ id: string; state: CourierState }[]>("/api/dashboard/couriers", token);
+  return online?.find((c) => c.id === courierId)?.state ?? "OFFLINE";
+}
+
+export function getPendingOffer(token: string): Promise<PendingOffer | null> {
+  return get<PendingOffer>("/api/courier/offers/pending", token);
+}
+
+// Orders offered to, accepted by or being carried by the courier, oldest first.
+export async function getCurrentOrders(token: string): Promise<HistoryOrder[]> {
+  return (await get<HistoryOrder[]>("/api/orders/courier/current", token)) ?? [];
+}
+
+export function goOnDuty(token: string): Promise<void> {
+  return post("/api/courier/on-duty", token);
+}
+
+export function goOffDuty(token: string): Promise<void> {
+  return post("/api/courier/off-duty", token);
+}
+
+export function acceptOffer(token: string, orderId: string): Promise<void> {
+  return post(`/api/courier/offers/${orderId}/accept`, token);
+}
+
+// The backend also takes the courier offline when they decline.
+export function declineOffer(token: string, orderId: string): Promise<void> {
+  return post(`/api/courier/offers/${orderId}/reject`, token);
+}
+
+export function pickUpOrder(token: string, orderId: string): Promise<void> {
+  return post(`/api/courier/orders/${orderId}/pickup`, token);
+}
+
+export function deliverOrder(token: string, orderId: string): Promise<void> {
+  return post(`/api/courier/orders/${orderId}/deliver`, token);
+}

@@ -9,7 +9,9 @@ import com.mosbyboys.dishesbecrazy.application.ord.RestaurantService;
 
 
 import java.util.UUID;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.Comparator;
 
 import org.springframework.stereotype.Service;
@@ -56,7 +58,7 @@ public class DispatchService {
         }
     }
 
-    // Runs the work in its own transaction, committed before this returns, so the commit happens inside the lock
+    // Runs the work in its own transaction and ensures changes are committed before returning
     private <T> T inNewTransaction(java.util.function.Supplier<T> work) {
         TransactionTemplate transaction = new TransactionTemplate(transactionManager);
         transaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
@@ -138,11 +140,12 @@ public class DispatchService {
         orderService.save(order);
     }
 
+    /* An offer is an order given to this courier that is still in the ready queue (accepting removes it).
+    Loads only this courier's current orders in one query instead of loading every queued order. */
     public Order getPendingOffer(UUID courierId) {
-        for (UUID orderId : queues.globalReadySnapshot()) {
-            Order order = orderService.load(orderId);
-
-            if (courierId.equals(order.getCourierId())) {
+        Set<UUID> queued = new HashSet<>(queues.globalReadySnapshot());
+        for (Order order : orderService.findCurrentForCourier(courierId)) {
+            if (queued.contains(order.getId())) {
                 return order;
             }
         }

@@ -301,6 +301,21 @@ public class ORDFacade {
             case OPERATOR   -> orderService.findHistoryForAll();
         };
 
+        return toViews(user, orders);
+    }
+
+    // A courier's orders that are still in their hands: offered or accepted (READY) or on the way (PICKEDUP)
+    // History leaves READY orders out, so the courier dashboard reads these instead
+    @Transactional
+    public List<OrderHistoryView> getCourierCurrentOrders(User user) {
+        if (user.getRole() != Role.COURIER) {
+            throw new PermissionDeniedException("Only a courier has current deliveries.");
+        }
+        return toViews(user, orderService.findCurrentForCourier(user.getUserId()));
+    }
+
+    // Wraps orders with the item, restaurant and customer names and the pricing the caller's role may see
+    private List<OrderHistoryView> toViews(User user, List<Order> orders) {
         // One query for every item name on the page, same as getRestaurantOrders.
         Map<UUID, String> itemNames = menuService.getNames(orders.stream()
                 .flatMap(o -> o.getOrderLineItems().stream())
