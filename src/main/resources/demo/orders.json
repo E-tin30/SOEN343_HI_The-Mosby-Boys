@@ -313,5 +313,144 @@
         "performedByUsername": "demo_restaurant_busy"
       }
     ]
+  },
+  {
+    "id": "34310000-0000-4000-8000-000000000211",
+    "customerUsername": "demo_customer",
+    "restaurantUsername": "demo_restaurant_building",
+    "state": "DeliveredState",
+    "placedAt": "2026-01-14T12:00:00Z",
+    "subtotal": 16.0,
+    "lines": [
+      {
+        "id": "34320000-0000-4000-8000-000000000211",
+        "menuItemId": "34300000-0000-4000-8000-000000000202",
+        "menuItemName": "Butter Chicken",
+        "quantity": 1,
+        "unitPrice": 16.0
+      }
+    ],
+    "events": [
+      {
+        "id": "34330000-0000-4000-8000-000000002111",
+        "action": "PLACE",
+        "previousState": null,
+        "newState": "PlacedState",
+        "createdAt": "2026-01-14T12:00:00Z",
+        "performedByUsername": "demo_customer"
+      },
+      {
+        "id": "34330000-0000-4000-8000-000000002112",
+        "action": "ACCEPT",
+        "previousState": "PlacedState",
+        "newState": "AcceptedState",
+        "createdAt": "2026-01-14T12:01:00Z",
+        "performedByUsername": "demo_restaurant_building"
+      },
+      {
+        "id": "34330000-0000-4000-8000-000000002113",
+        "action": "PREPARING",
+        "previousState": "AcceptedState",
+        "newState": "PreparingState",
+        "createdAt": "2026-01-14T12:05:00Z",
+        "performedByUsername": "demo_restaurant_building"
+      },
+      {
+        "id": "34330000-0000-4000-8000-000000002114",
+        "action": "READY",
+        "previousState": "PreparingState",
+        "newState": "ReadyState",
+        "createdAt": "2026-01-14T12:15:00Z",
+        "performedByUsername": "demo_restaurant_building"
+      },
+      {
+        "id": "34330000-0000-4000-8000-000000002115",
+        "action": "PICKUP",
+        "previousState": "ReadyState",
+        "newState": "PickedUpState",
+        "createdAt": "2026-01-14T12:20:00Z",
+        "performedByUsername": "demo_courier"
+      },
+      {
+        "id": "34330000-0000-4000-8000-000000002116",
+        "action": "DELIVER",
+        "previousState": "PickedUpState",
+        "newState": "DeliveredState",
+        "createdAt": "2026-01-14T12:35:00Z",
+        "performedByUsername": "demo_courier"
+      }
+    ],
+    "courierUsername": "demo_courier"
+  },
+  {
+    "id": "34310000-0000-4000-8000-000000000212",
+    "customerUsername": "demo_customer",
+    "restaurantUsername": "demo_restaurant_building",
+    "state": "RejectedState",
+    "placedAt": "2026-01-14T13:00:00Z",
+    "subtotal": 16.0,
+    "lines": [
+      {
+        "id": "34320000-0000-4000-8000-000000000212",
+        "menuItemId": "34300000-0000-4000-8000-000000000202",
+        "menuItemName": "Butter Chicken",
+        "quantity": 1,
+        "unitPrice": 16.0
+      }
+    ],
+    "events": [
+      {
+        "id": "34330000-0000-4000-8000-000000002121",
+        "action": "PLACE",
+        "previousState": null,
+        "newState": "PlacedState",
+        "createdAt": "2026-01-14T13:00:00Z",
+        "performedByUsername": "demo_customer"
+      },
+      {
+        "id": "34330000-0000-4000-8000-000000002122",
+        "action": "REJECT",
+        "previousState": "PlacedState",
+        "newState": "RejectedState",
+        "createdAt": "2026-01-14T13:02:00Z",
+        "performedByUsername": "demo_restaurant_building"
+      }
+    ],
+    "rejectionReason": "Kitchen could not fulfil this historical demo order."
+  },
+  {
+    "id": "34310000-0000-4000-8000-000000000213",
+    "customerUsername": "demo_customer",
+    "restaurantUsername": "demo_restaurant_building",
+    "state": "CancelledState",
+    "placedAt": "2026-01-14T14:00:00Z",
+    "subtotal": 16.0,
+    "lines": [
+      {
+        "id": "34320000-0000-4000-8000-000000000213",
+        "menuItemId": "34300000-0000-4000-8000-000000000202",
+        "menuItemName": "Butter Chicken",
+        "quantity": 1,
+        "unitPrice": 16.0
+      }
+    ],
+    "events": [
+      {
+        "id": "34330000-0000-4000-8000-000000002131",
+        "action": "PLACE",
+        "previousState": null,
+        "newState": "PlacedState",
+        "createdAt": "2026-01-14T14:00:00Z",
+        "performedByUsername": "demo_customer"
+      },
+      {
+        "id": "34330000-0000-4000-8000-000000002132",
+        "action": "CANCEL",
+        "previousState": "PlacedState",
+        "newState": "CancelledState",
+        "createdAt": "2026-01-14T14:01:00Z",
+        "performedByUsername": "demo_customer"
+      }
+    ]
   }
 ]

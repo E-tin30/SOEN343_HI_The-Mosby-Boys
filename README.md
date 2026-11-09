@@ -62,8 +62,11 @@ Password for all of them: `DEMO_SEED_PASSWORD` from `.env`.
 | Operator | `operator.demo@example.com` |
 
 The fixtures define three OPEN restaurants, each with three available dishes and one sold-out dessert.
-The order fixture defines nine accepted orders for future preparation queues of 0 / 3 / 6.
-Startup validates `orders.json` but does not yet insert its orders or events, so those queues are not populated by seeding.
+The order fixture defines nine accepted orders for future preparation queues of 0 / 3 / 6,
+plus delivered, rejected and cancelled customer history: twelve orders, twelve lines and twenty-eight events.
+Refunded history awaits the missing `DeliveredState.refund()` implementation; billing records remain separate integration work.
+With `demo-seed`, startup validates `orders.json` but does not yet insert its orders or events,
+so those queues are not populated by seeding.
 Seeding creates missing records; it does not reset existing data.
 
 If they don't exist yet, create the accounts and menus once from `src/main/resources/demo/`:

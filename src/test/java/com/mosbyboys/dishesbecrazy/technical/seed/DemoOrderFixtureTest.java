@@ -30,10 +30,12 @@ class DemoOrderFixtureTest {
 
         assertEquals(Map.of("demo_restaurant_building", 3L, "demo_restaurant_busy", 6L), accepted);
         assertTrue(fixtures.orders().stream().noneMatch(o -> o.restaurantUsername().equals("demo_restaurant")));
-        assertEquals(9, fixtures.orders().size());
-        assertEquals(18, fixtures.orders().stream().mapToInt(o -> o.events().size()).sum());
+        assertEquals(12, fixtures.orders().size());
+        assertEquals(12, fixtures.orders().stream().mapToInt(o -> o.lines().size()).sum());
+        assertEquals(28, fixtures.orders().stream().mapToInt(o -> o.events().size()).sum());
         for (String restaurant : accepted.keySet()) {
-            var placementTimes = fixtures.orders().stream().filter(o -> o.restaurantUsername().equals(restaurant))
+            var placementTimes = fixtures.orders().stream().filter(o -> o.state().equals("AcceptedState"))
+                    .filter(o -> o.restaurantUsername().equals(restaurant))
                     .map(DemoFixtures.OrderSeed::placedAt).toList();
             assertEquals(placementTimes.stream().sorted().toList(), placementTimes);
             assertEquals(placementTimes.size(), placementTimes.stream().distinct().count());
@@ -41,10 +43,72 @@ class DemoOrderFixtureTest {
         for (var order : fixtures.orders()) {
             assertEquals("demo_customer", order.customerUsername());
             assertEquals(0, new BigDecimal("16.00").compareTo(order.subtotal()));
-            assertNull(order.courierUsername());
+            if (order.state().equals("AcceptedState")) {
+                assertNull(order.courierUsername());
+            }
         }
     }
     // Fixed timestamps preserve FIFO; validating fixtures does not populate the database or queues.
+
+    @Test
+    void terminalHistoryIncludesDeliveredRejectedAndCancelledOrders() throws Exception {
+        var fixtures = loader.load();
+        var states = fixtures.orders().stream().collect(Collectors.groupingBy(
+                DemoFixtures.OrderSeed::state, Collectors.counting()));
+
+        assertEquals(Map.of("AcceptedState", 9L, "DeliveredState", 1L, "RejectedState", 1L, "CancelledState", 1L), states);
+        var delivered = fixtures.orders().stream().filter(o -> o.state().equals("DeliveredState")).findFirst().orElseThrow();
+        assertEquals("demo_courier", delivered.courierUsername());
+        assertEquals(java.util.List.of("PLACE", "ACCEPT", "PREPARING", "READY", "PICKUP", "DELIVER"),
+                delivered.events().stream().map(DemoFixtures.EventSeed::action).toList());
+        assertEquals("OFF_DUTY", fixtures.accounts().stream().filter(a -> a.username().equals("demo_courier"))
+                .findFirst().orElseThrow().state());
+    }
+    // A past delivery references its courier without changing the courier's current state.
+
+    @Test
+    void rejectedHistoryRequiresItsReason() throws Exception {
+        var orders = orders();
+        historical(orders, "RejectedState").remove("rejectionReason");
+
+        assertThrows(IllegalArgumentException.class, () -> load(orders));
+    }
+
+    @Test
+    void deliveryHistoryRequiresTheAssignedCourier() throws Exception {
+        var orders = orders();
+        historical(orders, "DeliveredState").remove("courierUsername");
+
+        assertThrows(IllegalArgumentException.class, () -> load(orders));
+    }
+
+    @Test
+    void courierCannotCancelTheCustomersPlacedOrder() throws Exception {
+        var orders = orders();
+        historical(orders, "CancelledState").get("events").get(1).asObject()
+                .put("performedByUsername", "demo_courier");
+
+        assertThrows(IllegalArgumentException.class, () -> load(orders));
+    }
+
+    @Test
+    void refundedHistoryWaitsForTheMissingDomainTransition() throws Exception {
+        var orders = orders();
+        var delivered = historical(orders, "DeliveredState");
+        delivered.put("state", "RefundedState");
+        var events = delivered.get("events").asArray();
+        var refund = events.get(events.size() - 1).deepCopy().asObject();
+        refund.put("id", "34330000-0000-4000-8000-000000002117");
+        refund.put("action", "REFUND");
+        refund.put("previousState", "DeliveredState");
+        refund.put("newState", "RefundedState");
+        refund.put("createdAt", "2026-01-14T12:36:00Z");
+        refund.put("performedByUsername", "demo_operator");
+        events.add(refund);
+
+        assertThrows(IllegalTransitionException.class, () -> load(orders));
+    }
+    // Remove this integration gate when DeliveredState supports refunds, then add the fourth history fixture.
 
     @Test
     void ordersLinesAndEventsCannotBeChangedAfterLoading() throws Exception {
@@ -186,6 +250,11 @@ class DemoOrderFixtureTest {
         try (var input = new ClassPathResource("demo/orders.json").getInputStream()) {
             return json.readTree(input).asArray();
         }
+    }
+
+    private tools.jackson.databind.node.ObjectNode historical(ArrayNode orders, String state) {
+        return orders.valueStream().filter(o -> o.get("state").asString().equals(state))
+                .findFirst().orElseThrow().asObject();
     }
 
     private DemoFixtures load(ArrayNode orders) throws Exception {
