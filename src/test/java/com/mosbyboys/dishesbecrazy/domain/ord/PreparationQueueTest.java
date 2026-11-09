@@ -111,4 +111,33 @@ class PreparationQueueTest {
         assertThrows(IllegalStateException.class, () -> queue.dequeueIfFirst(UUID.randomUUID()));
         assertThrows(IllegalArgumentException.class, () -> queue.dequeueIfFirst(null));
     }
+
+    @Test
+    void clearingRemovesPendingOrdersAndTheQueueCanBeReused() {
+        PreparationQueue queue = new PreparationQueue(restaurantId);
+        UUID previous = UUID.randomUUID();
+        UUID next = UUID.randomUUID();
+        queue.enqueue(previous);
+        queue.enqueue(UUID.randomUUID());
+
+        queue.clear();
+
+        assertEquals(0, queue.size());
+        assertFalse(queue.contains(previous));
+        assertThrows(IllegalStateException.class, queue::peek);
+        queue.enqueue(next);
+        assertEquals(next, queue.dequeue());
+    }
+    // A cleared queue must remain usable for the next restored or newly placed order.
+
+    @Test
+    void clearingAnEmptyQueueRepeatedlyIsSafe() {
+        PreparationQueue queue = new PreparationQueue(restaurantId);
+
+        queue.clear();
+        queue.clear();
+
+        assertEquals(0, queue.size());
+    }
+    // Repeated Reset operations may encounter queues that are already empty.
 }
