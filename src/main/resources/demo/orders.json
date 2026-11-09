@@ -5,14 +5,14 @@
     "restaurantUsername": "demo_restaurant_building",
     "state": "AcceptedState",
     "placedAt": "2026-01-15T18:00:00Z",
-    "subtotal": 16.0,
+    "subtotal": 17.25,
     "lines": [
       {
         "id": "34320000-0000-4000-8000-000000000201",
         "menuItemId": "34300000-0000-4000-8000-000000000202",
-        "menuItemName": "Butter Chicken",
+        "menuItemName": "Handmade Spinach Ravioli",
         "quantity": 1,
-        "unitPrice": 16.0
+        "unitPrice": 17.25
       }
     ],
     "events": [
@@ -40,14 +40,14 @@
     "restaurantUsername": "demo_restaurant_building",
     "state": "AcceptedState",
     "placedAt": "2026-01-15T18:01:00Z",
-    "subtotal": 16.0,
+    "subtotal": 17.25,
     "lines": [
       {
         "id": "34320000-0000-4000-8000-000000000202",
         "menuItemId": "34300000-0000-4000-8000-000000000202",
-        "menuItemName": "Butter Chicken",
+        "menuItemName": "Handmade Spinach Ravioli",
         "quantity": 1,
-        "unitPrice": 16.0
+        "unitPrice": 17.25
       }
     ],
     "events": [
@@ -75,14 +75,14 @@
     "restaurantUsername": "demo_restaurant_building",
     "state": "AcceptedState",
     "placedAt": "2026-01-15T18:02:00Z",
-    "subtotal": 16.0,
+    "subtotal": 17.25,
     "lines": [
       {
         "id": "34320000-0000-4000-8000-000000000203",
         "menuItemId": "34300000-0000-4000-8000-000000000202",
-        "menuItemName": "Butter Chicken",
+        "menuItemName": "Handmade Spinach Ravioli",
         "quantity": 1,
-        "unitPrice": 16.0
+        "unitPrice": 17.25
       }
     ],
     "events": [
@@ -110,14 +110,14 @@
     "restaurantUsername": "demo_restaurant_busy",
     "state": "AcceptedState",
     "placedAt": "2026-01-15T18:10:00Z",
-    "subtotal": 16.0,
+    "subtotal": 14.75,
     "lines": [
       {
         "id": "34320000-0000-4000-8000-000000000301",
         "menuItemId": "34300000-0000-4000-8000-000000000302",
-        "menuItemName": "Butter Chicken",
+        "menuItemName": "Homemade Chicken Burrito",
         "quantity": 1,
-        "unitPrice": 16.0
+        "unitPrice": 14.75
       }
     ],
     "events": [
@@ -145,14 +145,14 @@
     "restaurantUsername": "demo_restaurant_busy",
     "state": "AcceptedState",
     "placedAt": "2026-01-15T18:11:00Z",
-    "subtotal": 16.0,
+    "subtotal": 14.75,
     "lines": [
       {
         "id": "34320000-0000-4000-8000-000000000302",
         "menuItemId": "34300000-0000-4000-8000-000000000302",
-        "menuItemName": "Butter Chicken",
+        "menuItemName": "Homemade Chicken Burrito",
         "quantity": 1,
-        "unitPrice": 16.0
+        "unitPrice": 14.75
       }
     ],
     "events": [
@@ -180,14 +180,14 @@
     "restaurantUsername": "demo_restaurant_busy",
     "state": "AcceptedState",
     "placedAt": "2026-01-15T18:12:00Z",
-    "subtotal": 16.0,
+    "subtotal": 14.75,
     "lines": [
       {
         "id": "34320000-0000-4000-8000-000000000303",
         "menuItemId": "34300000-0000-4000-8000-000000000302",
-        "menuItemName": "Butter Chicken",
+        "menuItemName": "Homemade Chicken Burrito",
         "quantity": 1,
-        "unitPrice": 16.0
+        "unitPrice": 14.75
       }
     ],
     "events": [
@@ -215,14 +215,14 @@
     "restaurantUsername": "demo_restaurant_busy",
     "state": "AcceptedState",
     "placedAt": "2026-01-15T18:13:00Z",
-    "subtotal": 16.0,
+    "subtotal": 14.75,
     "lines": [
       {
         "id": "34320000-0000-4000-8000-000000000304",
         "menuItemId": "34300000-0000-4000-8000-000000000302",
-        "menuItemName": "Butter Chicken",
+        "menuItemName": "Homemade Chicken Burrito",
         "quantity": 1,
-        "unitPrice": 16.0
+        "unitPrice": 14.75
       }
     ],
     "events": [
@@ -250,14 +250,14 @@
     "restaurantUsername": "demo_restaurant_busy",
     "state": "AcceptedState",
     "placedAt": "2026-01-15T18:14:00Z",
-    "subtotal": 16.0,
+    "subtotal": 14.75,
     "lines": [
       {
         "id": "34320000-0000-4000-8000-000000000305",
         "menuItemId": "34300000-0000-4000-8000-000000000302",
-        "menuItemName": "Butter Chicken",
+        "menuItemName": "Homemade Chicken Burrito",
         "quantity": 1,
-        "unitPrice": 16.0
+        "unitPrice": 14.75
       }
     ],
     "events": [
@@ -285,14 +285,14 @@
     "restaurantUsername": "demo_restaurant_busy",
     "state": "AcceptedState",
     "placedAt": "2026-01-15T18:15:00Z",
-    "subtotal": 16.0,
+    "subtotal": 14.75,
     "lines": [
       {
         "id": "34320000-0000-4000-8000-000000000306",
         "menuItemId": "34300000-0000-4000-8000-000000000302",
-        "menuItemName": "Butter Chicken",
+        "menuItemName": "Homemade Chicken Burrito",
         "quantity": 1,
-        "unitPrice": 16.0
+        "unitPrice": 14.75
       }
     ],
     "events": [
@@ -320,14 +320,14 @@
     "restaurantUsername": "demo_restaurant_building",
     "state": "DeliveredState",
     "placedAt": "2026-01-14T12:00:00Z",
-    "subtotal": 16.0,
+    "subtotal": 17.25,
     "lines": [
       {
         "id": "34320000-0000-4000-8000-000000000211",
         "menuItemId": "34300000-0000-4000-8000-000000000202",
-        "menuItemName": "Butter Chicken",
+        "menuItemName": "Handmade Spinach Ravioli",
         "quantity": 1,
-        "unitPrice": 16.0
+        "unitPrice": 17.25
       }
     ],
     "events": [
@@ -388,14 +388,14 @@
     "restaurantUsername": "demo_restaurant_building",
     "state": "RejectedState",
     "placedAt": "2026-01-14T13:00:00Z",
-    "subtotal": 16.0,
+    "subtotal": 17.25,
     "lines": [
       {
         "id": "34320000-0000-4000-8000-000000000212",
         "menuItemId": "34300000-0000-4000-8000-000000000202",
-        "menuItemName": "Butter Chicken",
+        "menuItemName": "Handmade Spinach Ravioli",
         "quantity": 1,
-        "unitPrice": 16.0
+        "unitPrice": 17.25
       }
     ],
     "events": [
@@ -424,14 +424,14 @@
     "restaurantUsername": "demo_restaurant_building",
     "state": "CancelledState",
     "placedAt": "2026-01-14T14:00:00Z",
-    "subtotal": 16.0,
+    "subtotal": 17.25,
     "lines": [
       {
         "id": "34320000-0000-4000-8000-000000000213",
         "menuItemId": "34300000-0000-4000-8000-000000000202",
-        "menuItemName": "Butter Chicken",
+        "menuItemName": "Handmade Spinach Ravioli",
         "quantity": 1,
-        "unitPrice": 16.0
+        "unitPrice": 17.25
       }
     ],
     "events": [
