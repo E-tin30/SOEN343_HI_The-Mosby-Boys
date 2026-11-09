@@ -78,3 +78,27 @@ it.each(["polling", "focus"])("keeps a placement check active during %s refresh"
   // Finishing the explicit check releases ownership so later background refreshes can still run.
 });
 // Covers both background triggers that previously canceled an otherwise valid placement attempt.
+
+it.each(["polling", "focus"])("retains the previous result during a %s refresh", async (trigger) => {
+  vi.useFakeTimers();
+  let menuRequests = 0;
+  let finishRefresh!: (response: Response) => void;
+  vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+    if (url.endsWith("/api/restaurants")) return json([{ id: "restaurant-1", status: "OPEN" }]);
+    if (++menuRequests === 2) return new Promise<Response>((resolve) => { finishRefresh = resolve; });
+    return json([{ id: "item-1", status: "AVAILABLE" }]);
+  }));
+  const view = renderHook(() => useOrderAvailability(cart, "token"));
+  await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+
+  await act(async () => {
+    if (trigger === "polling") await vi.advanceTimersByTimeAsync(15_000);
+    else window.dispatchEvent(new Event("focus"));
+  });
+  expect(menuRequests).toBe(2);
+  expect(view.result.current.allowed).toBe(true);
+  expect(view.result.current.checking).toBe(false);
+  await act(async () => { finishRefresh(json([{ id: "item-1", status: "SOLD_OUT" }])); });
+  expect(view.result.current.allowed).toBe(false);
+});
+// A delayed background lookup cannot flicker the button, but its final changed result must still take effect.

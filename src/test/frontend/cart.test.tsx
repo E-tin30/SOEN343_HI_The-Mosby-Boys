@@ -140,14 +140,14 @@ describe("Place Order availability (R-DASH-04)", () => {
   it("disables Place Order when every selected item is sold out", async () => {
     menu = [{ id: "item-1", status: "SOLD_OUT" }];
     renderCart();
-    await screen.findByText("All selected items are sold out or unavailable.");
+    await screen.findByText("One or more selected items are sold out or unavailable.");
     expect(getCheckoutButton().disabled).toBe(false);
     await enterCheckout();
     expect(getPlaceOrderButton().disabled).toBe(true);
   });
   // Verifies every selected item being sold out disables Place Order and shows the explanation.
 
-  it("does not impose an additional disabled rule on a mixed cart", async () => {
+  it("disables Place Order when a mixed cart contains an unavailable item", async () => {
     cart = createCart([
       { menuItem: createMenuItem(), quantity: 1 },
       { menuItem: createMenuItem({ id: "item-2", name: "Bread" }), quantity: 1 },
@@ -155,10 +155,10 @@ describe("Place Order availability (R-DASH-04)", () => {
     menu = [{ id: "item-1", status: "AVAILABLE" }, { id: "item-2", status: "SOLD_OUT" }];
     renderCart();
     await enterCheckout();
-    await waitFor(() => expect(getPlaceOrderButton().disabled).toBe(false));
-    expect(screen.queryByText("Remove the unavailable items before placing your order.")).toBeNull();
+    await waitFor(() => expect(getPlaceOrderButton().disabled).toBe(true));
+    expect(screen.getByText("One or more selected items are sold out or unavailable.")).toBeTruthy();
   });
-  // Guards against introducing an extra mixed-cart restriction beyond the ticket's all-sold-out rule.
+  // Matches backend validation before a mixed selection can trigger payment.
 
   it("keeps Place Order disabled after a failed check and supports retry", async () => {
     fetchMock.mockRejectedValueOnce(new TypeError("offline"));
@@ -190,7 +190,7 @@ describe("Place Order availability (R-DASH-04)", () => {
     await waitFor(() => expect(placeOrderButton.disabled).toBe(false));
     menu = [{ id: "item-1", status: "SOLD_OUT" }];
     fireEvent.click(placeOrderButton);
-    await screen.findByText("All selected items are sold out or unavailable.");
+    await screen.findByText("One or more selected items are sold out or unavailable.");
     expect(mocks.payment).not.toHaveBeenCalled();
     expect(getRequestsTo("/placeOrder")).toHaveLength(0);
   });

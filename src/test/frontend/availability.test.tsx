@@ -20,10 +20,10 @@ it("ignores an old cart's late response after selection changes", async () => {
   await waitFor(() => expect(menus).toBe(1));
   const next = { ...cart, items: [{ ...cart.items[0], menuItem: { ...cart.items[0].menuItem, id: "item-2" } }] };
   view.rerender({ selection: next });
-  await waitFor(() => expect(view.result.current.reason).toContain("All selected items"));
+  await waitFor(() => expect(view.result.current.reason).toContain("One or more selected items"));
   await act(async () => finishOld(json([{ id: "item-1", status: "AVAILABLE" }])));
   expect(view.result.current.allowed).toBe(false);
-  expect(view.result.current.reason).toContain("All selected items");
+  expect(view.result.current.reason).toContain("One or more selected items");
 });
 // Ensures a delayed response for an old selection cannot re-enable Place Order for the current selection.
 
@@ -58,14 +58,14 @@ it.each([null, { ...cart, items: [] }])("keeps an empty cart disabled without re
 });
 // Checks both missing and empty carts stay disabled without unnecessary requests.
 
-it("allows a mixed selection when at least one selected item is available", async () => {
+it("blocks a mixed selection when one selected item is unavailable", async () => {
   vi.stubGlobal("fetch", vi.fn(async (url: string) => url.endsWith("/api/restaurants")
     ? json([{ id: "restaurant-1", status: "OPEN" }])
     : json([{ id: "item-1", status: "AVAILABLE" }, { id: "item-2", status: "SOLD_OUT" }])));
   const selection = { ...cart, items: [...cart.items, { ...cart.items[0], menuItem: { ...cart.items[0].menuItem, id: "item-2" } }] };
   const view = renderHook(() => useOrderAvailability(selection, "token"));
   await waitFor(() => expect(view.result.current.checking).toBe(false));
-  expect(view.result.current.allowed).toBe(true);
-  expect(view.result.current.reason).toBe("");
+  expect(view.result.current.allowed).toBe(false);
+  expect(view.result.current.reason).toContain("One or more selected items");
 });
-// Protects the ticket's EVERY-item rule: one available item prevents the all-sold-out UI restriction.
+// Mixed selections cannot proceed to a payment attempt that the backend would reject.
