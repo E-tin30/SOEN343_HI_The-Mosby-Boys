@@ -121,6 +121,17 @@ class DemoFixtureLoaderTest {
     // Differently cased spellings cannot represent separate Auth identities in a demo fixture.
 
     @Test
+    void returnsCanonicalEmailsForAuthAccountReuse() throws Exception {
+        var profiles = profiles();
+        account(profiles, Role.CUSTOMER).put("email", "CUSTOMER.DEMO@EXAMPLE.COM");
+
+        var fixtures = load(profiles, menu());
+
+        assertEquals("customer.demo@example.com", fixtures.accounts().getFirst().email());
+    }
+    // The validated snapshot must use the same lowercase email that Supabase stores and seeders look up.
+
+    @Test
     void rejectsDuplicateUsernamesAcrossRoles() throws Exception {
         var profiles = profiles();
         account(profiles, Role.OPERATOR).put("username", "demo_customer");

@@ -3,9 +3,12 @@ package com.mosbyboys.dishesbecrazy.technical.seed;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -99,22 +102,37 @@ class DemoProfileSeederTests {
     }
     // New order data joins the existing preflight, even though this runner only persists profiles.
 
-    @Test
-    void reusesExistingAccountsAndSeedsAllThreeRestaurants() throws Exception {
-        var fixtures = new DemoFixtureLoader(JsonMapper.builder().build()).load(
-                new ClassPathResource("demo/fixtures/multiple-profiles.json"),
+    @ParameterizedTest
+    @ValueSource(strings = {"restaurant.demo@example.com", "RESTAURANT.DEMO@EXAMPLE.COM", "Restaurant.Demo@Example.Com"})
+    void reusesExistingAccountsAndSeedsAllThreeRestaurants(String restaurantEmail) throws Exception {
+        var json = JsonMapper.builder().build();
+        var profilesResource = new ClassPathResource("demo/fixtures/multiple-profiles.json");
+        byte[] profiles;
+        try (var input = profilesResource.getInputStream()) {
+            var accounts = json.readTree(input).asArray();
+            accounts.get(1).asObject().put("email", restaurantEmail);
+            profiles = json.writeValueAsBytes(accounts);
+        }
+        var fixtures = new DemoFixtureLoader(json).load(
+                new ByteArrayResource(profiles),
                 new ClassPathResource("demo/fixtures/multiple-menu.json"));
         var loader = mock(DemoFixtureLoader.class);
         when(loader.load()).thenReturn(fixtures);
         var ids = new HashMap<String, UUID>();
         var roles = new HashMap<UUID, String>();
         for (var account : fixtures.accounts()) {
-            UUID id = UUID.nameUUIDFromBytes(account.email().getBytes(StandardCharsets.UTF_8));
-            ids.put(account.email(), id);
+            String email = account.email().toLowerCase(Locale.ROOT);
+            UUID id = UUID.nameUUIDFromBytes(email.getBytes(StandardCharsets.UTF_8));
+            ids.put(email, id);
             roles.put(id, account.role().name());
         }
         when(jdbc.queryForList(anyString(), eq(UUID.class), any(Object[].class)))
-                .thenAnswer(invocation -> List.of(ids.get(invocation.getArgument(2, String.class))));
+                .thenAnswer(invocation -> {
+                    UUID id = ids.get(invocation.getArgument(2, String.class));
+                    return id == null ? List.of() : List.of(id);
+                });
+        doThrow(new AssertionError("Existing Auth accounts must be reused")).when(auth).create(any());
+        // Simulate lowercase stored emails with exact matching; a missed lookup must not trigger duplicate provisioning.
         when(jdbc.queryForObject(anyString(), eq(String.class), any(Object[].class)))
                 .thenAnswer(invocation -> roles.get(invocation.getArgument(2, UUID.class)));
         var seeder = seeder(loader);

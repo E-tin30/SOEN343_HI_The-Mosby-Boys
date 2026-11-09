@@ -1,3 +1,5 @@
+import { log, logError } from "../outputLog";
+import { loggedFetch, readJson } from "../api/loggedFetch";
 import {useNavigate, useParams} from "react-router-dom";
 import {useAuth} from "../AuthContext";
 import AppHeader from "../components/AppHeader";
@@ -21,6 +23,8 @@ export default function OrderSummaryPage() {
     useEffect(() => {
         if (!orderId || !accessToken) {
             setLoading(false);
+            log("error", "Unable to retrieve your order: missing order or session.");
+            // Records this local validation failure even though no request can be sent.
             setError("Unable to retrieve your order.");
             return;
         }
@@ -32,7 +36,7 @@ export default function OrderSummaryPage() {
                 setLoading(true);
                 setError(null);
 
-                const response = await fetch(
+                const response = await loggedFetch(
                     `http://localhost:8080/api/orders/${orderId}`,
                     {
                         headers: {
@@ -42,23 +46,22 @@ export default function OrderSummaryPage() {
                     }
                 );
 
-                if (!response.ok) {
-                    throw new Error("Failed to retrieve order.");
-                }
+                const data: OrderResponse = await readJson<OrderResponse>(response);
+                // Logs the order lookup and unreadable responses through the shared request helpers.
 
-                const data: OrderResponse = await response.json();
-
+                if (controller.signal.aborted) return null;
+                // Discards a response that belongs to a canceled order-summary load.
                 setOrder(data);
 
                 return data;
             } catch (error) {
-                if (
-                    error instanceof Error &&
-                    error.name === "AbortError"
-                ) {
+                if (controller.signal.aborted) {
                     return null;
                 }
+                // Ignores deliberate cancellation instead of showing it as an order-loading error.
 
+                logError(error, "Unable to load your order.");
+                // Covers local load failures without repeating errors already logged by the transport.
                 setError("Unable to load your order.");
                 return null;
             } finally {
@@ -70,7 +73,7 @@ export default function OrderSummaryPage() {
 
         const fetchPricing = async (order: OrderResponse) => {
             try {
-                const response = await fetch(
+                const response = await loggedFetch(
                     "http://localhost:8080/payments/breakdown",
                     {
                         method: "POST",
@@ -89,14 +92,18 @@ export default function OrderSummaryPage() {
                     }
                 );
 
-                if (!response.ok) {
-                    throw new Error("Failed to retrieve pricing breakdown.");
+                const data: PricingBreakdown = await readJson<PricingBreakdown>(response);
+                // Gives the summary pricing request the same command/error coverage as other API calls.
+
+                if (!controller.signal.aborted) setPricing(data);
+                // Updates pricing only while this summary load is still relevant.
+            } catch (error) {
+                if (!controller.signal.aborted) {
+                    logError(error, "Unable to load the order pricing.");
+                    setError("Unable to load the order pricing.");
                 }
-
-                const data: PricingBreakdown = await response.json();
-
-                setPricing(data);
-            } catch (error) {}
+                // Replaces the former silent catch with visible feedback and application-console logging.
+            }
         };
 
         const loadOrder = async () => {

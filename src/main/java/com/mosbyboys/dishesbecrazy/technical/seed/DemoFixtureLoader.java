@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -71,7 +70,7 @@ public class DemoFixtureLoader {
         var usernames = new HashSet<String>();
         for (Account account : accounts) {
             Assert.isTrue(account != null && account.role() != null, "Every demo account requires a role.");
-            String email = account.email() == null ? null : account.email().toLowerCase(Locale.ROOT);
+            String email = account.email();
             Assert.isTrue(email != null && email.matches("[^\\s@]+\\.demo@example\\.com") && emails.add(email),
                     "Demo accounts require unique emails ending in .demo@example.com.");
             Assert.hasText(account.username(), "Demo username is required.");

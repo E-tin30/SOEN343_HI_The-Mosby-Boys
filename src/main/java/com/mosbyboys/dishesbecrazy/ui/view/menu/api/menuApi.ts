@@ -1,26 +1,22 @@
+import { loggedFetch, readJson } from "../../api/loggedFetch";
 import type { Restaurant, MenuItem } from "../types/menu";
-import { log } from "../../outputLog";
 
 const API = "http://localhost:8080";
 
-async function get<T>(path: string, token: string): Promise<T> {
-  log("command", `GET ${path}`);
-  const response = await fetch(API + path, {
+async function get<T>(path: string, token: string, signal?: AbortSignal): Promise<T> {
+  const response = await loggedFetch(API + path, {
     headers: { Authorization: `Bearer ${token}` },
+    signal,
   });
-
-  if (!response.ok) {
-    const message = (await response.text()) || `Request failed (${response.status})`;
-    log("error", `GET ${path} → ${response.status}: ${message}`);
-    throw new Error(message);
-  }
-  return response.json();
+  // Logs menu/restaurant reads through the shared helper and allows obsolete checks to be canceled.
+  return readJson(response);
+  // Reports JSON parsing failures through the same output console as request failures.
 }
 
-export function getRestaurants(token: string): Promise<Restaurant[]> {
-  return get("/api/restaurants", token);
+export function getRestaurants(token: string, signal?: AbortSignal): Promise<Restaurant[]> {
+  return get("/api/restaurants", token, signal);
 }
 
-export function getMenu(token: string, restaurantId: string): Promise<MenuItem[]> {
-  return get(`/api/restaurants/${restaurantId}/menu`, token);
+export function getMenu(token: string, restaurantId: string, signal?: AbortSignal): Promise<MenuItem[]> {
+  return get(`/api/restaurants/${restaurantId}/menu`, token, signal);
 }
