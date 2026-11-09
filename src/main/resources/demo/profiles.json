@@ -15,7 +15,7 @@
     "lastName": "Demo",
     "username": "demo_restaurant",
     "role": "RESTAURANT",
-    "restaurantName": "Dishes Be Crazy Demo",
+    "restaurantName": "Sam's Family Kitchen",
     "status": "OPEN",
     "latitude": 45.5017,
     "longitude": -73.5673
@@ -43,7 +43,7 @@
     "lastName": "Demo",
     "username": "demo_restaurant_building",
     "role": "RESTAURANT",
-    "restaurantName": "Demo Kitchen Building",
+    "restaurantName": "Robin's Sunday Kitchen",
     "status": "OPEN",
     "latitude": 45.5100,
     "longitude": -73.5700
@@ -54,7 +54,7 @@
     "lastName": "Demo",
     "username": "demo_restaurant_busy",
     "role": "RESTAURANT",
-    "restaurantName": "Demo Kitchen Busy",
+    "restaurantName": "Casey's Home Kitchen",
     "status": "OPEN",
     "latitude": 45.5250,
     "longitude": -73.5800
