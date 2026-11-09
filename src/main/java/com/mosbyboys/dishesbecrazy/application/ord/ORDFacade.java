@@ -327,7 +327,7 @@ public class ORDFacade {
     }
     
     @Transactional
-    private Restaurant openRestaurant(UUID userId, UUID restaurantId) {
+    public Restaurant openRestaurant(UUID userId, UUID restaurantId) {
         Restaurant restaurant = restaurantService.load(restaurantId);
         User user = regFacade.getCurrentUser(userId);
         permissionPolicy.checkCanOpen(user, restaurant);
@@ -337,7 +337,7 @@ public class ORDFacade {
     }
 
     @Transactional
-    private Restaurant pauseRestaurant(UUID userId, UUID restaurantId) {
+    public Restaurant pauseRestaurant(UUID userId, UUID restaurantId) {
         Restaurant restaurant = restaurantService.load(restaurantId);
         User user = regFacade.getCurrentUser(userId);
         permissionPolicy.checkCanPause(user, restaurant);

@@ -73,6 +73,13 @@ class ORDFacadeTest {
         return new Restaurant(forRestaurant, OffsetDateTime.now(), "A", "B", "a@b.c", "ab", "hash",
                 "Resto", RestaurantStatus.OPEN, null);
     }
+
+    // a restaurant in the given status, for the pause/open tests
+    private Restaurant restaurantWithStatus(RestaurantStatus status) {
+        return new Restaurant(restaurantId, OffsetDateTime.now(), "A", "B", "a@b.c", "ab", "hash",
+                "Resto", status, null);
+    }
+
     
     private Operator operator() {
         return new Operator(UUID.randomUUID(), OffsetDateTime.now(), "A", "B", "a@b.c", "ab", "hash");
@@ -385,7 +392,18 @@ class ORDFacadeTest {
     // an operator pauses an OPEN restaurant: the restaurant that gets saved is PAUSED
     @Test
     void operatorPausesOpenRestaurant() {
+        Operator op = operator();
+        when(regFacade.getCurrentUser(op.getUserId())).thenReturn(op);
+        Restaurant restaurant = restaurantWithStatus(RestaurantStatus.OPEN);
+        when(restaurantService.load(restaurantId)).thenReturn(restaurant);
+
+        Restaurant result = facade.pauseRestaurant(op.getUserId(), restaurantId);
+
+        // Assert: it was paused and saved
+        assertEquals(RestaurantStatus.PAUSED, result.getStatus());
+        verify(restaurantService).save(restaurant);
     }
+
 
     // a customer tries to pause: permission denied, and nothing is saved
     @Test
