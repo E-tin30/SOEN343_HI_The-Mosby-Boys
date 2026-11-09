@@ -38,73 +38,73 @@
   {
     "id": "34300000-0000-4000-8000-000000000201",
     "restaurantUsername": "demo_restaurant_building",
-    "name": "Grandma's Tourtière",
-    "price": 18.50,
+    "name": "Mushroom Risotto",
+    "price": 19.25,
     "stockQuantity": 6,
     "status": "AVAILABLE",
-    "description": "Spiced pork pie, family recipe"
+    "description": "Creamy arborio rice with mushrooms and parmesan"
   },
   {
     "id": "34300000-0000-4000-8000-000000000202",
     "restaurantUsername": "demo_restaurant_building",
-    "name": "Butter Chicken",
-    "price": 16.00,
+    "name": "Spinach Ravioli",
+    "price": 17.25,
     "stockQuantity": 10,
     "status": "AVAILABLE",
-    "description": "With basmati rice"
+    "description": "Ricotta-filled pasta with spinach and tomato sauce"
   },
   {
     "id": "34300000-0000-4000-8000-000000000203",
     "restaurantUsername": "demo_restaurant_building",
-    "name": "Pierogi (6)",
-    "price": 12.00,
+    "name": "Margherita Flatbread",
+    "price": 13.25,
     "stockQuantity": 15,
     "status": "AVAILABLE",
-    "description": "Potato and cheese, fried onions"
+    "description": "Tomato, mozzarella and fresh basil"
   },
   {
     "id": "34300000-0000-4000-8000-000000000204",
     "restaurantUsername": "demo_restaurant_building",
-    "name": "Pouding Chômeur",
-    "price": 7.50,
+    "name": "Tiramisu",
+    "price": 8.25,
     "stockQuantity": 0,
     "status": "SOLD_OUT",
-    "description": "Maple syrup cake"
+    "description": "Coffee-soaked sponge with mascarpone"
   },
   {
     "id": "34300000-0000-4000-8000-000000000301",
     "restaurantUsername": "demo_restaurant_busy",
-    "name": "Grandma's Tourtière",
-    "price": 18.50,
+    "name": "Carne Asada Bowl",
+    "price": 20.75,
     "stockQuantity": 6,
     "status": "AVAILABLE",
-    "description": "Spiced pork pie, family recipe"
+    "description": "Grilled beef with rice, beans and salsa"
   },
   {
     "id": "34300000-0000-4000-8000-000000000302",
     "restaurantUsername": "demo_restaurant_busy",
-    "name": "Butter Chicken",
-    "price": 16.00,
+    "name": "Chicken Burrito",
+    "price": 14.75,
     "stockQuantity": 10,
     "status": "AVAILABLE",
-    "description": "With basmati rice"
+    "description": "Chicken, rice and black beans in a flour tortilla"
   },
   {
     "id": "34300000-0000-4000-8000-000000000303",
     "restaurantUsername": "demo_restaurant_busy",
-    "name": "Pierogi (6)",
-    "price": 12.00,
+    "name": "Black Bean Tacos (3)",
+    "price": 11.75,
     "stockQuantity": 15,
     "status": "AVAILABLE",
-    "description": "Potato and cheese, fried onions"
+    "description": "Corn tortillas with black beans, slaw and lime"
   },
   {
     "id": "34300000-0000-4000-8000-000000000304",
     "restaurantUsername": "demo_restaurant_busy",
-    "name": "Pouding Chômeur",
-    "price": 7.50,
+    "name": "Churros",
+    "price": 6.75,
     "stockQuantity": 0,
     "status": "SOLD_OUT",
-    "description": "Maple syrup cake"
+    "description": "Cinnamon sugar pastries with chocolate dip"
   }
 ]
