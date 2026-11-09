@@ -86,6 +86,20 @@ class DemoProfileSeederTests {
     // Menu validation must finish before even profile lookup or Auth provisioning starts.
 
     @Test
+    void invalidOrdersPreventAuthAndAllDatabaseAccess() throws Exception {
+        var loader = spy(new DemoFixtureLoader(JsonMapper.builder().build()));
+        doAnswer(invocation -> loader.load(new ClassPathResource("demo/profiles.json"),
+                new ClassPathResource("demo/menu.json"),
+                new ByteArrayResource("[]".getBytes(StandardCharsets.UTF_8)))).when(loader).load();
+        var seeder = seeder(loader);
+
+        assertThrows(IllegalArgumentException.class, seeder::run);
+
+        verifyNoInteractions(auth, jdbc, manager);
+    }
+    // New order data joins the existing preflight, even though this runner only persists profiles.
+
+    @Test
     void reusesExistingAccountsAndSeedsAllThreeRestaurants() throws Exception {
         var fixtures = new DemoFixtureLoader(JsonMapper.builder().build()).load(
                 new ClassPathResource("demo/fixtures/multiple-profiles.json"),
