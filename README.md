@@ -55,11 +55,17 @@ Password for all of them: `DEMO_SEED_PASSWORD` from `.env`.
 | Role | Email |
 |---|---|
 | Customer | `customer.demo@example.com` |
-| Restaurant | `restaurant.demo@example.com` |
+| Restaurant — Dishes Be Crazy Demo | `restaurant.demo@example.com` |
+| Restaurant — Demo Kitchen Building | `restaurant2.demo@example.com` |
+| Restaurant — Demo Kitchen Busy | `restaurant3.demo@example.com` |
 | Courier | `courier.demo@example.com` |
 | Operator | `operator.demo@example.com` |
 
-If they don't exist yet, create them (and the demo restaurant's menu) once from `src/main/resources/demo/`:
+The fixtures define three OPEN restaurants, each with three available dishes and one sold-out dessert.
+Orders and event history will be added separately; the restaurant names do not yet represent populated queues.
+Seeding creates missing records; it does not reset existing data.
+
+If they don't exist yet, create the accounts and menus once from `src/main/resources/demo/`:
 
 ```sh
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=demo-seed

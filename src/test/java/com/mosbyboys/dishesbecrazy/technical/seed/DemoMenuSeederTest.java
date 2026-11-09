@@ -40,9 +40,7 @@ class DemoMenuSeederTest {
 
     @Test
     void insertsEachMenuForItsOwnRestaurantIdentity() throws Exception {
-        var fixtures = new DemoFixtureLoader(JsonMapper.builder().build()).load(
-                new ClassPathResource("demo/fixtures/multiple-profiles.json"),
-                new ClassPathResource("demo/fixtures/multiple-menu.json"));
+        var fixtures = new DemoFixtureLoader(JsonMapper.builder().build()).load();
         var loader = mock(DemoFixtureLoader.class);
         when(loader.load()).thenReturn(fixtures);
         var ids = new HashMap<String, UUID>();
@@ -65,5 +63,5 @@ class DemoMenuSeederTest {
         }
         verify(manager).commit(any());
     }
-    // Distinct menus retain ownership when several profiles share the restaurant role.
+    // All twelve production menu items retain ownership without contacting the shared database.
 }
