@@ -1,5 +1,5 @@
 import { useOrderAvailability } from "./useOrderAvailability";
-import { loggedFetch, readJson } from "../api/loggedFetch";
+import { loggedFetch, readJson, RequestError } from "../api/loggedFetch";
 import {useEffect, useRef, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {useCart} from "../CartContext";
@@ -173,7 +173,10 @@ export default function CartPage() {
             navigate(`/order-summary/${order.id}`);
         } catch (error) {
             logError(error, "Could not place the order.");
-            setOrderError("Could not place the order. Please refresh availability and try again.");
+            setOrderError(error instanceof RequestError
+                ? error.message
+                : "Could not place the order. Please refresh availability and try again.");
+            // Shows the request helper's safe explanation while retaining generic feedback for unexpected failures.
             void availability.refreshAvailability();
             // Reports placement failure and refreshes the disabled state after a possible backend rejection.
         } finally {
