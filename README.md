@@ -48,6 +48,16 @@ npm run dev                   # frontend → http://127.0.0.1:5173
 
 Open http://127.0.0.1:5173.
 
+### With Docker
+
+Needs only Docker and the `.env` above. Stop any local backend/frontend first (ports 8080, 5173).
+
+```sh
+docker compose up --build     # stop with: docker compose down
+```
+
+Open http://localhost:5173.
+
 ## Demo accounts
 
 Password for all of them: `DEMO_SEED_PASSWORD` from `.env`.
