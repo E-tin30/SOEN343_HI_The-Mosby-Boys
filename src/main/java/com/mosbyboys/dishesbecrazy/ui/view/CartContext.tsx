@@ -1,3 +1,4 @@
+import { log } from "./outputLog";
 import {
     createContext,
     useContext,
@@ -23,7 +24,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const [cart, setCart] = useState<Cart | null>(null);
 
     const addItem = (restaurantId: string, item: MenuItem) => {
-        if (item.status === "SOLD_OUT") return;
+        log("command", "Add item to cart");
+        // Records the local command outside React state updaters, which may be executed more than once.
+        if (item.status === "SOLD_OUT") {
+            log("error", "Cannot add a sold-out item.");
+            // Makes the existing sold-out rejection visible in the output console.
+            return;
+        }
+        if (cart && cart.restaurantId !== restaurantId) {
+            log("error", "Cart items must come from one restaurant.");
+            // Explains the existing single-restaurant cart rule when an add attempt is rejected.
+            return;
+        }
 
         setCart((current) => {
             // Start a new cart if there isn't one yet.
@@ -66,6 +78,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
             removeItem(itemId);
             return;
         }
+        log("command", "Update cart quantity");
+        // Includes local quantity changes in R-DASH-06 command coverage.
 
         setCart((current) => {
             if (!current) return current;
@@ -80,6 +94,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     };
 
     const removeItem = (itemId: string) => {
+        log("command", "Remove cart item");
+        // Records removal commands even though they do not contact the backend.
         setCart((current) => {
             if (!current) return current;
 
@@ -93,7 +109,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
         });
     };
 
-    const clearCart = () => setCart(null);
+    const clearCart = () => {
+        log("command", "Clear cart");
+        setCart(null);
+    };
+    // Records clearing the cart and preserves the existing local reset behavior.
 
     const itemCount =
         cart?.items.reduce((total, item) => total + item.quantity, 0) ?? 0;

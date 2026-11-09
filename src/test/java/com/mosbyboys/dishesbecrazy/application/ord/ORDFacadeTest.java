@@ -15,6 +15,8 @@ import java.util.UUID;
 import com.mosbyboys.dishesbecrazy.application.prc.PricingService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
 import com.mosbyboys.dishesbecrazy.domain.ord.Location;
@@ -51,6 +53,8 @@ class ORDFacadeTest {
         orderEventService = mock(OrderEventService.class);
         menuService = mock(MenuService.class);
         restaurantService = mock(RestaurantService.class);
+        pricingService = mock(PricingService.class);
+        // Supplies the existing pricing dependency so history tests can run alongside placement guards.
         regFacade = mock(REGFacade.class);
         pricingService = mock(PricingService.class);
         queues = new OrderQueues();
@@ -133,17 +137,36 @@ class ORDFacadeTest {
         verify(orderEventService).save(eq(order.getId()), isNull(), eq("PlacedState"), any(), eq("PLACE"));
     }
 
-    @Test
-    void pausedRestaurantRejectsTheOrderAndNothingIsSaved() {
-        restaurantIsOpen(false);
-        menuHasAvailableItem();
+    @ParameterizedTest
+    @EnumSource(value = RestaurantStatus.class, names = {"PAUSED", "CLOSED"})
+    void unavailableRestaurantRejectsTheOrderAndNothingIsSaved(RestaurantStatus status) {
+        Restaurant restaurant = new Restaurant(restaurantId, OffsetDateTime.now(), "A", "B", "a@b.c", "ab", "hash",
+                "Resto", status, null);
+        when(restaurantService.load(restaurantId)).thenReturn(restaurant);
 
         assertThrows(IllegalArgumentException.class,
                 () -> facade.placeOrder(customer(), restaurantId, List.of(line())));
 
-        verify(orderService, never()).save(any());
+        verifyNoInteractions(orderService, orderEventService);
         assertEquals(0, queues.placed(restaurantId).size());
     }
+    // Covers PAUSED and CLOSED restaurants and verifies rejection creates no order, event, or queue entry.
+
+    @Test
+    void soldOutItemRejectsTheOrderWithoutSavingOrRecordingAnEvent() {
+        restaurantIsOpen(true);
+        MenuItem item = mock(MenuItem.class);
+        when(item.isAvailable()).thenReturn(false);
+        when(item.getName()).thenReturn("Soup");
+        when(menuService.load(menuItemId)).thenReturn(item);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> facade.placeOrder(customer(), restaurantId, List.of(line())));
+
+        verifyNoInteractions(orderService, orderEventService);
+        assertEquals(0, queues.placed(restaurantId).size());
+    }
+    // Confirms the existing sold-out guard rejects placement without persistence or queue side effects.
 
     @Test
     void aRestaurantCannotPlaceAnOrder() {

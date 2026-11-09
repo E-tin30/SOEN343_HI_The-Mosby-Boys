@@ -7,4 +7,9 @@ public class DeliveredState extends OrderState {
     public OrderState cancel() {
         return new CancelledState();
     }
+
+    @Override 
+    public OrderState refund(){
+        return new ReadyState();
+    }
 }
