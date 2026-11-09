@@ -158,7 +158,8 @@ Login and the authenticated current-profile lookup remain available so the opera
 authentication and the service's OPERATOR check. A failure before the
 database commits releases normal access unless an earlier attempt already left recovery incomplete.
 
-Operators can use **Reset demo** on their home page. The button sends authenticated `POST /api/demo/reset` and
+Operators can use the discreet **Reset demo** action to the right of **Log out** in their home-page header.
+The button sends authenticated `POST /api/demo/reset` and
 shows success only after the database and ORD queues are restored. It stays disabled while a request is active;
 a failure displays an error and leaves the button available for retry. Other roles cannot see the control, and
 the backend checks the caller's stored role independently. The request and any error appear in the output console.

@@ -3,7 +3,7 @@ import { useAuth } from "../AuthContext";
 import { loggedFetch, RequestError } from "../api/loggedFetch";
 import { logError } from "../outputLog";
 import Button from "./Button";
-import Heading from "./Heading";
+import "./DemoResetControl.css";
 
 export default function DemoResetControl() {
   const { user, accessToken } = useAuth();
@@ -41,15 +41,13 @@ export default function DemoResetControl() {
   if (user?.role !== "OPERATOR") return null;
 
   return (
-    <section className="home-card card" aria-busy={pending}>
-      <Heading level={3}>Reset demo</Heading>
-      <p className="home-card__text meta">Restore the demo's starting data before another walkthrough.</p>
-      <Button onClick={handleReset} disabled={pending || !accessToken}>
+    <div className="demo-reset" aria-busy={pending}>
+      <Button variant="link" className="demo-reset__button" onClick={handleReset} disabled={pending || !accessToken}>
         {pending ? "Resetting…" : "Reset demo"}
       </Button>
-      {message && <p className="page__status meta" role="status">{message}</p>}
-      {error && <p className="page__status page__status--error" role="alert">{error}</p>}
-    </section>
+      {message && <p className="demo-reset__feedback meta" role="status">{message}</p>}
+      {error && <p className="demo-reset__feedback page__status--error" role="alert">{error}</p>}
+    </div>
   );
 }
 // The backend enforces operator permission independently of this role-specific control.

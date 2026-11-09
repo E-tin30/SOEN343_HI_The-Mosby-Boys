@@ -24,6 +24,8 @@ export default function HomePage() {
         <Button variant="secondary" onClick={handleLogout}>
           Log out
         </Button>
+        {user?.role === "OPERATOR" && <DemoResetControl key={user.id} />}
+        {/* Keep the operator's demo reset beside session actions without occupying a dashboard card. */}
       </AppHeader>
 
       <main className="page__content">
@@ -37,9 +39,6 @@ export default function HomePage() {
             Browse restaurants
           </Button>
         </section>
-
-        {user?.role === "OPERATOR" && <DemoResetControl key={user.id} />}
-        {/* Keep the Reset control on the current operator home until the complete dashboard is integrated. */}
 
         <section className="home-card card">
           <Heading level={3}>Development placeholder</Heading>
