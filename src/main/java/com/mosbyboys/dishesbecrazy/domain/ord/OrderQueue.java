@@ -68,6 +68,11 @@ public abstract class OrderQueue {
         return queue.contains(orderId);
     }
 
+    public synchronized void clear() {
+        queue.clear();
+    }
+    // Clears pending IDs under the same lock used by normal queue operations.
+
     // remove this order, but ONLY if it is first in line. Check and removal share one lock,
     // so two simultaneous requests can't both pass the check.
     public synchronized void dequeueIfFirst(UUID orderId) {
