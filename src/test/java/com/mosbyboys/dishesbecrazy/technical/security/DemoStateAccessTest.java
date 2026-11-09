@@ -44,6 +44,51 @@ class DemoStateAccessTest {
     // An active request prevents Reset from entering; the pending Reset prevents additional requests from joining it.
 
     @Test
+    void timedOutResetReopensRequestsAndAllowsALaterReset() throws Exception {
+        var bounded = new DemoStateAccess(100);
+        try (var worker = Executors.newSingleThreadExecutor()) {
+            try (var existing = bounded.beginRequest()) {
+                var reset = worker.submit(() -> assertThrows(IllegalStateException.class, bounded::beginRestoration));
+
+                var failure = reset.get(2, TimeUnit.SECONDS);
+
+                assertEquals("Reset timed out waiting for active requests. Retry Reset shortly.", failure.getMessage());
+                worker.submit(() -> bounded.beginRequest().close()).get(2, TimeUnit.SECONDS);
+            }
+            try (var retry = bounded.beginRestoration()) {
+                retry.complete();
+            }
+        }
+        assertDoesNotThrow(() -> bounded.beginRequest().close());
+    }
+    // A slow request stays active after timeout, but it no longer causes other requests to receive 503 indefinitely.
+
+    @Test
+    void interruptedResetPreservesInterruptionAndReopensRequests() throws Exception {
+        try (var worker = Executors.newSingleThreadExecutor()) {
+            try (var existing = access.beginRequest()) {
+                var reset = worker.submit(() -> {
+                    Thread.currentThread().interrupt();
+                    try {
+                        var failure = assertThrows(IllegalStateException.class, access::beginRestoration);
+                        assertInstanceOf(InterruptedException.class, failure.getCause());
+                        assertTrue(Thread.currentThread().isInterrupted());
+                    } finally {
+                        Thread.interrupted();
+                    }
+                });
+
+                reset.get(2, TimeUnit.SECONDS);
+                worker.submit(() -> access.beginRequest().close()).get(2, TimeUnit.SECONDS);
+            }
+        }
+        try (var retry = access.beginRestoration()) {
+            retry.complete();
+        }
+    }
+    // Cancellation must release the pending flag without swallowing the thread's interrupt signal.
+
+    @Test
     void requestsCannotEnterWhileRestorationOwnsExclusiveAccess() {
         try (var restoration = access.beginRestoration()) {
             assertThrows(IllegalStateException.class, access::beginRequest);

@@ -123,8 +123,10 @@ fails, the database has already committed and the existing queues are retained: 
 Normal requests stay blocked until a successful retry restores the database and rebuilds the queues again.
 
 `DemoStateAccess` gives normal requests shared access and restoration exclusive access. Reset first marks itself
-pending, refuses new requests, and waits for existing requests to finish before changing the database. The
-`DemoRequestFilter` holds shared access through each synchronous request, including transaction commits and
+pending, refuses new requests, and waits up to five seconds for existing requests to finish before changing the database.
+If access times out or the waiting thread is interrupted, Reset fails before restoration starts and clears its pending flag.
+Normal requests can resume unless an earlier incomplete restoration still requires recovery; the operator can retry Reset.
+The `DemoRequestFilter` holds shared access through each synchronous request, including transaction commits and
 synchronous after-commit callbacks. It runs after authentication/authorization in the existing security chain.
 Blocked requests receive HTTP 503 with `Retry-After: 1`; requests run concurrently when Reset is inactive.
 

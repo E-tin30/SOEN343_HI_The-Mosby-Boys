@@ -1,5 +1,6 @@
 package com.mosbyboys.dishesbecrazy.technical.security;
 
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -10,7 +11,17 @@ import org.springframework.util.Assert;
 public class DemoStateAccess {
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock(true);
     private final AtomicBoolean restoring = new AtomicBoolean();
+    private final long resetWaitMillis;
     private boolean recoveryRequired;
+
+    public DemoStateAccess() {
+        this(5_000);
+    }
+
+    DemoStateAccess(long resetWaitMillis) {
+        Assert.isTrue(resetWaitMillis > 0, "Reset wait must be positive.");
+        this.resetWaitMillis = resetWaitMillis;
+    }
 
     public RequestAccess beginRequest() {
         Assert.state(!restoring.get(), "Demo restoration is in progress. Retry shortly.");
@@ -29,10 +40,21 @@ public class DemoStateAccess {
     public Restoration beginRestoration() {
         Assert.state(lock.getReadHoldCount() == 0, "Reset cannot start inside a normal request's shared access.");
         Assert.state(restoring.compareAndSet(false, true), "Demo restoration is already in progress.");
-        lock.writeLock().lock();
-        return new Restoration();
+        boolean acquired = false;
+        try {
+            acquired = lock.writeLock().tryLock(resetWaitMillis, TimeUnit.MILLISECONDS);
+            Assert.state(acquired, "Reset timed out waiting for active requests. Retry Reset shortly.");
+            return new Restoration();
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Reset was interrupted while waiting for active requests. Retry Reset.", interrupted);
+        } finally {
+            if (!acquired) {
+                restoring.set(false);
+            }
+        }
     }
-    // Mark Reset pending before waiting for current requests to finish, preventing new requests from extending the wait.
+    // Refuse new requests while waiting, but release the pending flag if exclusive access times out or is interrupted.
 
     public interface RequestAccess extends AutoCloseable {
         @Override
