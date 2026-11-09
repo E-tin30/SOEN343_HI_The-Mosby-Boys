@@ -42,7 +42,9 @@ class DemoOrderFixtureTest {
         }
         for (var order : fixtures.orders()) {
             assertEquals("demo_customer", order.customerUsername());
-            assertEquals(0, new BigDecimal("16.00").compareTo(order.subtotal()));
+            boolean building = order.restaurantUsername().equals("demo_restaurant_building");
+            assertEquals(0, new BigDecimal(building ? "17.25" : "14.75").compareTo(order.subtotal()));
+            assertEquals(building ? "Handmade Spinach Ravioli" : "Homemade Chicken Burrito", order.lines().getFirst().menuItemName());
             if (order.state().equals("AcceptedState")) {
                 assertNull(order.courierUsername());
             }
@@ -194,11 +196,11 @@ class DemoOrderFixtureTest {
         var fixtures = load(orders);
 
         assertEquals(0, new BigDecimal("15.00").compareTo(fixtures.orders().getFirst().subtotal()));
-        var chicken = fixtures.menuItems().stream()
+        var menuItem = fixtures.menuItems().stream()
                 .filter(item -> item.id().equals(fixtures.orders().getFirst().lines().getFirst().menuItemId()))
                 .findFirst().orElseThrow();
-        assertEquals(0, new BigDecimal("16.00").compareTo(chicken.price()));
-        assertEquals(10, chicken.stockQuantity());
+        assertEquals(0, new BigDecimal("17.25").compareTo(menuItem.price()));
+        assertEquals(10, menuItem.stockQuantity());
     }
     // Historical totals use purchased prices; loading does not consume the current remaining stock.
 
