@@ -2,7 +2,7 @@
 
 # Dishes Be Crazy
 
-A food-ordering platform for home cooks (SOEN 343, Phase II). Customers browse menus and place orders; restaurants accept or reject them and prepare them in FIFO order. Every command and error appears in the on-screen output console.
+A food-ordering platform where local Montreal home cooks sell their homemade meals (SOEN 343, Phase II). Customers browse their kitchens' menus and place orders; cooks accept or reject them and prepare them in FIFO order. Kitchen accounts use the existing RESTAURANT role. Every command and error appears in the on-screen output console.
 
 **Built this phase:** REG (registration, login, roles) and ORD (menus, orders, order lifecycle, preparation queue), plus a minimal DASH.
 
@@ -55,20 +55,21 @@ Password for all of them: `DEMO_SEED_PASSWORD` from `.env`.
 | Role | Email |
 |---|---|
 | Customer | `customer.demo@example.com` |
-| Restaurant — Dishes Be Crazy Demo | `restaurant.demo@example.com` |
-| Restaurant — Demo Kitchen Building | `restaurant2.demo@example.com` |
-| Restaurant — Demo Kitchen Busy | `restaurant3.demo@example.com` |
+| Home cook — Sam's Family Kitchen | `restaurant.demo@example.com` |
+| Home cook — Robin's Sunday Kitchen | `restaurant2.demo@example.com` |
+| Home cook — Casey's Home Kitchen | `restaurant3.demo@example.com` |
 | Courier | `courier.demo@example.com` |
 | Operator | `operator.demo@example.com` |
 
-The fixtures define three OPEN restaurants, each with three available dishes and one sold-out dessert.
-Their dishes have distinct names and prices so a restaurant mix-up is visible during a walkthrough:
+The fixtures represent three local Montreal home cooks, each with an OPEN kitchen, three available dishes
+and one sold-out dessert. Personal kitchen names, family recipes and small batches reflect the app's home-cooking theme.
+Their dishes have distinct names and prices so a kitchen mix-up is visible during a walkthrough:
 
-| Restaurant | Available dishes | Sold-out dessert |
+| Home kitchen | Available dishes | Sold-out dessert |
 |---|---|---|
-| Dishes Be Crazy Demo | Grandma's Tourtière, Butter Chicken, Pierogi (6) | Pouding Chômeur |
-| Demo Kitchen Building | Mushroom Risotto, Spinach Ravioli, Margherita Flatbread | Tiramisu |
-| Demo Kitchen Busy | Carne Asada Bowl, Chicken Burrito, Black Bean Tacos (3) | Churros |
+| Sam's Family Kitchen | Grandma's Tourtière, Butter Chicken, Pierogi (6) | Pouding Chômeur |
+| Robin's Sunday Kitchen | Sunday Mushroom Risotto, Handmade Spinach Ravioli, Garden Tomato Flatbread | Robin's Tiramisu |
+| Casey's Home Kitchen | Home Braised Beef Bowl, Homemade Chicken Burrito, Black Bean Tacos (3) | Cinnamon Churros |
 
 The order fixture defines nine accepted orders for future preparation queues of 0 / 3 / 6,
 plus delivered, rejected and cancelled customer history: twelve orders, twelve lines and twenty-eight events.
@@ -76,8 +77,8 @@ Refunded history awaits the missing `DeliveredState.refund()` implementation; bi
 With `demo-seed`, startup validates `orders.json` but does not yet insert its orders or events,
 so those queues are not populated by seeding.
 Seeding creates missing records; it does not reset existing data.
-Existing menu rows keep their previous names and prices when seeding is repeated. The revised dishes appear
-on initial population or when the later Reset restoration uses these fixtures.
+Existing profile and menu rows keep their previous kitchen names, dish names and prices when seeding is repeated.
+The revised kitchens and dishes appear on initial population or when the later Reset restoration uses these fixtures.
 
 If they don't exist yet, create the accounts and menus once from `src/main/resources/demo/`:
 
