@@ -111,7 +111,7 @@ so pre-existing orders can change the shared database's queue counts. This is in
 
 ### Database restoration for Reset
 
-`DemoDataRestorer.restore()` is the database step behind the upcoming operator Reset action.
+`DemoDataRestorer.restore()` is the database step behind the operator Reset action.
 It loads and validates the same JSON fixtures, then restores the database in one transaction:
 
 - Restore demo profile fields, OPEN restaurant statuses, courier profile state/location and menu stock/availability.
@@ -153,16 +153,25 @@ The `DemoRequestFilter` holds shared access through each synchronous request, in
 synchronous after-commit callbacks. It runs after authentication/authorization in the existing security chain.
 Blocked requests receive HTTP 503 with `Retry-After: 1`; requests run concurrently when Reset is inactive.
 
-Login and the authenticated current-profile lookup remain available so the operator can recover. The future
+Login and the authenticated current-profile lookup remain available so the operator can recover. The
 `POST /api/demo/reset` route bypasses shared access so its service can acquire exclusive access; it still requires
-authentication and the service's OPERATOR check. No route is registered by that exemption. A failure before the
+authentication and the service's OPERATOR check. A failure before the
 database commits releases normal access unless an earlier attempt already left recovery incomplete.
 
-This is an internal operation: no HTTP endpoint, dashboard button or automatic restoration at startup is enabled.
+Operators can use **Reset demo** on their home page. The button sends authenticated `POST /api/demo/reset` and
+shows success only after the database and ORD queues are restored. It stays disabled while a request is active;
+a failure displays an error and leaves the button available for retry. Other roles cannot see the control, and
+the backend checks the caller's stored role independently. The request and any error appear in the output console.
+Existing Auth identities and the operator session are preserved. Initial demo seeding is required before Reset.
+
+The button currently restores the implemented database/ORD baseline. The control is separate from the home page
+layout so it can be reused in the completed operator dashboard. Other open pages reload restored records when
+refreshed or revisited; the future map integration must refresh its own displayed data after Reset.
+No restoration runs automatically at startup.
 The guard covers synchronous HTTP work in this backend instance. Direct background/service writers and other
 backend processes sharing the database must also be stopped or coordinated; asynchronous callbacks need their
 own participation. The full Reset integration still needs DLV's global dispatch queue, offers, assignments and
-courier-state contract before the dashboard can report Reset success. Current courier profile values follow the
+courier-state contract when those modules are integrated. Current courier profile values follow the
 existing fixtures; no delivery behavior is changed by the request guard.
 
 ## Tests

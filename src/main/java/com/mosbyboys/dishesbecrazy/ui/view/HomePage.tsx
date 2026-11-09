@@ -3,6 +3,7 @@ import { useAuth } from "./AuthContext";
 import AppHeader from "./components/AppHeader";
 import Button from "./components/Button";
 import Heading from "./components/Heading";
+import DemoResetControl from "./components/DemoResetControl";
 import "./styles/HomePage.css";
 
 export default function HomePage() {
@@ -36,6 +37,9 @@ export default function HomePage() {
             Browse restaurants
           </Button>
         </section>
+
+        {user?.role === "OPERATOR" && <DemoResetControl key={user.id} />}
+        {/* Keep the Reset control on the current operator home until the complete dashboard is integrated. */}
 
         <section className="home-card card">
           <Heading level={3}>Development placeholder</Heading>
