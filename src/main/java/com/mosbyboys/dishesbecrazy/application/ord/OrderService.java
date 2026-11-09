@@ -29,6 +29,11 @@ public class OrderService {
     private final OrderRepo orderRepo;
     private final OrderLineItemRepo lineItemRepo;
 
+    @Transactional(readOnly = true)
+    public boolean exists(UUID orderId) {
+        return orderRepo.existsById(orderId);
+    }
+
     @Transactional
     public void save(Order order) {
         Optional<OrderEntity> existing = orderRepo.findById(order.getId());

@@ -28,6 +28,14 @@ public class Order {
     private final BigDecimal subtotal;
 
     public Order(UUID customerId, UUID restaurantId, List<OrderLine> orderLineItems, BigDecimal subtotal){
+        this(UUID.randomUUID(), customerId, restaurantId, orderLineItems, subtotal, Instant.now());
+    }
+
+    public Order(UUID id, UUID customerId, UUID restaurantId, List<OrderLine> orderLineItems,
+                 BigDecimal subtotal, Instant placedAt) {
+        if (id == null || placedAt == null) {
+            throw new IllegalArgumentException("Order ID and placement time are required");
+        }
         if(orderLineItems == null || orderLineItems.isEmpty()){
             throw new IllegalArgumentException("orderLineItems must not be null or empty");
         }
@@ -40,15 +48,16 @@ public class Order {
             throw new IllegalArgumentException("restaurantId must not be null");
         }
 
-        this.id = UUID.randomUUID();
+        this.id = id;
         this.state = new PlacedState();
         this.customerId = customerId;
         this.restaurantId = restaurantId;
         this.courierId = null;
         this.orderLineItems = List.copyOf(orderLineItems);
-        this.placedAt = Instant.now();
+        this.placedAt = placedAt;
         this.subtotal = subtotal;
     }
+    // Checkout retries reuse an established ID/time while normal order creation still generates its own.
 
     //The private Order constructor is for the reconstitute method so it can bypass the final attributes
     private Order(UUID id, OrderState state, UUID customerId, UUID restaurantId, UUID courierId,

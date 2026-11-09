@@ -16,8 +16,11 @@ import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -98,10 +101,25 @@ public class ORDFacade {
 
     @Transactional
     public Order placeOrder(User user, UUID restaurantId, List<OrderLine> orderLineItems) {
+        validatePlacement(user, restaurantId, orderLineItems);
+
+        BigDecimal subtotal = BigDecimal.ZERO;
+        for (OrderLine item : orderLineItems) {
+            subtotal = subtotal.add(item.getLineTotal());
+        }
+
+        Order order = new Order(user.getUserId(), restaurantId, orderLineItems, subtotal);
+        orderService.save(order);
+        orderEventService.save(order.getId(), null, order.getState().toString(), user.getUserId(), "PLACE");
+        queues.placed(restaurantId).enqueue(order.getId());
+        return order;
+    }
+
+    public void validatePlacement(User user, UUID restaurantId, List<OrderLine> orderLineItems) {
         //Check Permission
         permissionPolicy.checkCanPlace(user);
 
-        if (!(user instanceof Customer customer)) {
+        if (!(user instanceof Customer)) {
             throw new PermissionDeniedException("Only a customer can place an order.");
         }
 
@@ -113,22 +131,30 @@ public class ORDFacade {
 
         orderLineItems.forEach(this::checkAgainstMenu);
 
-        BigDecimal subtotal = BigDecimal.ZERO;
-        for (OrderLine item : orderLineItems) {
-            subtotal = subtotal.add(item.getLineTotal());
+    }
+    // Checkout and normal placement share permission, restaurant and item validation.
+
+    public boolean orderExists(UUID id) {
+        return orderService.exists(id);
+    }
+
+    public Order recordCheckoutOrder(UUID id, UUID customerId, UUID restaurantId, List<OrderLine> lines,
+                                     BigDecimal subtotal, Instant placedAt) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive() || orderService.exists(id)) {
+            throw new IllegalStateException("Checkout requires a transaction and an unused order ID.");
         }
-
-        Order order = new Order(customer.getUserId(), restaurantId, orderLineItems, subtotal);
-
+        Order order = new Order(id, customerId, restaurantId, lines, subtotal, placedAt);
         orderService.save(order);
-        // record transition change event
-        orderEventService.save(order.getId(), null, order.getState().toString(),
-                user.getUserId(), "PLACE");
-        // add to placed queue
-        queues.placed(restaurantId).enqueue(order.getId());
-
+        orderEventService.save(id, null, order.getState().toString(), customerId, "PLACE");
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                queues.placed(restaurantId).enqueue(id);
+            }
+        });
         return order;
     }
+    // Called only for a verified checkout; rolled-back orders never enter the in-memory queue.
 
     private void checkAgainstMenu(OrderLine line) {
         MenuItem item = menuService.load(line.getMenuItemId());

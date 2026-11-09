@@ -1,60 +1,57 @@
 package com.mosbyboys.dishesbecrazy.ui.controller;
 
-import com.mosbyboys.dishesbecrazy.application.prc.PRCFacade;
-import com.mosbyboys.dishesbecrazy.domain.ord.OrderLine;
-import com.mosbyboys.dishesbecrazy.domain.prc.PricingBreakdown;
-import com.stripe.StripeClient;
-import com.stripe.model.PaymentIntent;
-import com.stripe.param.PaymentIntentCreateParams;
+import java.util.List;
+import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.List;
-import java.util.Map;
+import com.mosbyboys.dishesbecrazy.application.prc.CheckoutService;
+import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
+import com.mosbyboys.dishesbecrazy.domain.prc.PricingBreakdown;
+import com.mosbyboys.dishesbecrazy.technical.payment.StripePayments;
+
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/payments")
+@RequiredArgsConstructor
 public class PaymentController {
+    private final CheckoutService checkouts;
+    private final REGFacade users;
+    private final StripePayments payments;
 
-    private final StripeClient stripeClient;
-    private final PRCFacade prcFacade;
-
-    public PaymentController(@Value("${stripe.secret-key}") String secretKey, PRCFacade prcFacade) {
-        this.stripeClient = new StripeClient(secretKey);
-        this.prcFacade = prcFacade;
-    }
+    public record CheckoutRequest(UUID checkoutId, UUID restaurantId, List<CheckoutService.Item> items) { }
+    public record Cancellation(UUID orderId) { }
 
     @PostMapping("/create-payment-intent")
-    public Map<String, Object> createPaymentIntent(@RequestBody PlaceOrderRequest request) throws Exception {
-        //get order line items from the frontend
-        List<OrderLine> orderLines = request.items().stream().map(item -> new OrderLine(item.menuItemId(), item.quantity(), item.price(), item.menuItemName())).toList();
-
-        //calculate the amount
-        PricingBreakdown pricingBreakdown = prcFacade.getTotal(orderLines);
-        long total = pricingBreakdown.total().multiply(BigDecimal.valueOf(100)).setScale(0, RoundingMode.HALF_UP).longValue();
-
-        if (total < 50) {
-            throw new IllegalArgumentException("Payment must be at least $0.50 CAD");
-        }
-
-        PaymentIntentCreateParams params = PaymentIntentCreateParams.builder().setAmount(total).setCurrency("cad").addPaymentMethodType("card").build();
-
-        PaymentIntent intent = stripeClient.v1().paymentIntents().create(params);
-
-        return Map.of("clientSecret", intent.getClientSecret());
+    public CheckoutService.Start createPaymentIntent(@AuthenticationPrincipal Jwt jwt,
+                                                      @RequestBody CheckoutRequest request) {
+        return checkouts.start(users.getCurrentUser(UUID.fromString(jwt.getSubject())),
+                request.checkoutId(), request.restaurantId(), request.items());
     }
+    // JWT identity and database menu prices determine the stored checkout and authorized amount.
 
     @PostMapping("/breakdown")
-    public PricingBreakdown getBreakdown(
-            @RequestBody PlaceOrderRequest request) {
-
-        // Convert request items into OrderLine objects
-        List<OrderLine> orderLines = request.items().stream().map(item -> new OrderLine(item.menuItemId(), item.quantity(), item.price(), item.menuItemName())).toList();
-
-        return prcFacade.getTotal(orderLines);
+    public PricingBreakdown getBreakdown(@AuthenticationPrincipal Jwt jwt, @RequestBody CheckoutRequest request) {
+        return checkouts.quote(users.getCurrentUser(UUID.fromString(jwt.getSubject())),
+                request.restaurantId(), request.items());
     }
 
+    @PostMapping("/{checkoutId}/cancel")
+    public Cancellation cancel(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID checkoutId) {
+        var order = checkouts.cancel(checkoutId, UUID.fromString(jwt.getSubject()));
+        return new Cancellation(order == null ? null : order.getId());
+    }
+    // A completed payment returns its order, so the browser cannot discard it and unknowingly charge again.
+
+    @PostMapping("/webhook")
+    public ResponseEntity<Void> webhook(@RequestBody String payload,
+                                        @RequestHeader(value = "Stripe-Signature", required = false) String signature) {
+        payments.verifiedCheckout(payload, signature).ifPresent(checkouts::completeFromWebhook);
+        return ResponseEntity.ok().build();
+    }
+    // Signatures replace JWT authentication only on this callback; completion rechecks Stripe's authoritative state.
 }

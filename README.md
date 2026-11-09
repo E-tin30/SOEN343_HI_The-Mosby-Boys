@@ -31,6 +31,7 @@ SUPABASE_SECRET_KEY=...
 DEMO_SEED_PASSWORD=...
 VITE_STRIPE_PUBLISHABLE_KEY=...
 STRIPE_SECRET_KEY=...
+STRIPE_WEBHOOK_SECRET=...
 ```
 
 ## Run
@@ -47,6 +48,40 @@ npm run dev                   # frontend → http://127.0.0.1:5173
 ```
 
 Open http://127.0.0.1:5173.
+
+## Checkout payments
+
+Before running the payment branch, apply `src/main/resources/db/migration/V1__add_recoverable_checkouts.sql`
+to the chosen development database. Flyway remains disabled, so this SQL file is not applied automatically.
+It adds a `Checkout` table containing the customer, restaurant, frozen server-priced items, total and Stripe reference.
+The backend accesses this table; row-level security prevents direct Data API access without a policy.
+
+Use matching Stripe test keys for the project demonstration. Configure a Stripe webhook for
+`POST /payments/webhook` with `payment_intent.amount_capturable_updated` and `payment_intent.succeeded` events.
+Set its signing secret as `STRIPE_WEBHOOK_SECRET` in `.env`. Checkout creation stays unavailable until this is set.
+For local forwarding, keep the [Stripe CLI listener](https://docs.stripe.com/webhooks#test-webhook) running:
+
+```sh
+stripe listen --forward-to localhost:8080/payments/webhook
+```
+
+Use the signing secret printed by that listener for local testing, then restart the backend.
+The callback verifies the signature and reads the checkout reference; the backend retrieves the current payment
+through its pinned Stripe SDK before taking action, so it does not depend on the listener's event API version.
+
+The browser first creates/reuses a checkout and shows its exact CAD payment total. Pay and Place Order waits
+for card authorization. The backend then checks current availability/pricing, prepares the order, captures payment
+and commits the order. It adds the order to the in-memory queue only after commit.
+Rejected carts release the authorization without charging. Verified callbacks and retries can complete a captured
+payment after a database/network interruption using the stored purchase and the same order ID.
+
+If checkout is interrupted, retry it rather than starting another payment. The browser stores a non-secret attempt ID
+per customer/cart. Back to Cart asks the backend to cancel the attempt; if payment already completed, it opens
+that order instead. `/placeOrder` now accepts `{ "checkoutId": "..." }` and checks the authenticated customer;
+raw cart payloads cannot bypass payment verification.
+
+Future Reset integration must resolve/cancel pending checkout authorizations and include `Checkout` records in its
+agreed restoration boundary. Seeded historical orders do not initiate Stripe payments.
 
 ## Demo accounts
 

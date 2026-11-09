@@ -16,7 +16,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-/* R-REG-02: only POST /register and POST /login are public; every other request needs a valid Supabase JWT.
+/* R-REG-02: customer requests require a valid Supabase JWT; Stripe's callback verifies its own signature.
    Applies to web applications only, so the demo-seed profile can run without a server. */
 @Configuration
 @ConditionalOnWebApplication
@@ -37,7 +37,7 @@ public class SecurityConfig {
 
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
-                    HttpMethod.POST, "/register", "/login"
+                    HttpMethod.POST, "/register", "/login", "/payments/webhook"
                 ).permitAll()
                 .anyRequest().authenticated()
             )

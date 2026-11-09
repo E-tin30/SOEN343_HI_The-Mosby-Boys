@@ -14,8 +14,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.util.Assert;
 
 import com.mosbyboys.dishesbecrazy.application.ord.ORDFacade;
+import com.mosbyboys.dishesbecrazy.application.prc.CheckoutService;
 import com.mosbyboys.dishesbecrazy.application.ord.RestaurantOrderView;
 import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
 import com.mosbyboys.dishesbecrazy.domain.ord.Order;
@@ -34,6 +36,7 @@ public class OrderController {
 
     private final ORDFacade ordFacade;
     private final REGFacade regFacade;
+    private final CheckoutService checkouts;
 
     public record OrderResponse(UUID id, UUID restaurantId, String state, BigDecimal subtotal, List<OrderLine> orderLines) {
         static OrderResponse from(Order o) {
@@ -69,19 +72,17 @@ public class OrderController {
         return ResponseEntity.ok(body);
     }
 
+    public record CompleteCheckoutRequest(UUID checkoutId) { }
+
     @PostMapping("/placeOrder")
     public ResponseEntity<OrderResponse> placeOrder(@AuthenticationPrincipal Jwt jwt,
-                                                    @RequestBody PlaceOrderRequest request) {
-        User user = regFacade.getCurrentUser(UUID.fromString(jwt.getSubject()));
-
-        List<OrderLine> orderLines = request.items().stream()
-                .map(item -> new OrderLine(item.menuItemId(), item.quantity(), item.price(), item.menuItemName()))
-                .toList();
-
-        Order order = ordFacade.placeOrder(user, request.restaurantId(), orderLines);
+                                                    @RequestBody CompleteCheckoutRequest request) {
+        Assert.notNull(request.checkoutId(), "Checkout ID is required.");
+        Order order = checkouts.complete(request.checkoutId(), UUID.fromString(jwt.getSubject()));
 
         return ResponseEntity.status(HttpStatus.CREATED).body(OrderResponse.from(order));
     }
+    // Raw cart payloads cannot bypass payment; a retry returns the order from the same verified checkout.
 
     public record RejectOrderRequest(String reason) {}
 
