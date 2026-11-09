@@ -92,7 +92,7 @@ class DemoOrderFixtureTest {
     }
 
     @Test
-    void refundedHistoryWaitsForTheMissingDomainTransition() throws Exception {
+    void refundedHistoryRequiresTheCorrectDomainTransition() throws Exception {
         var orders = orders();
         var delivered = historical(orders, "DeliveredState");
         delivered.put("state", "RefundedState");
@@ -106,9 +106,10 @@ class DemoOrderFixtureTest {
         refund.put("performedByUsername", "demo_operator");
         events.add(refund);
 
-        assertThrows(IllegalTransitionException.class, () -> load(orders));
+        var failure = assertThrows(IllegalArgumentException.class, () -> load(orders));
+        assertEquals("Event action and new state disagree.", failure.getMessage());
     }
-    // Remove this integration gate when DeliveredState supports refunds, then add the fourth history fixture.
+    // DeliveredState.refund currently returns ReadyState; refunded fixtures require it to return RefundedState.
 
     @Test
     void ordersLinesAndEventsCannotBeChangedAfterLoading() throws Exception {
