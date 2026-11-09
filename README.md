@@ -120,13 +120,25 @@ The service rejects overlapping restoration attempts in this application instanc
 existing transaction, which could otherwise delay the database commit until after queues have already changed.
 If database restoration fails, its writes roll back and queue rebuilding is skipped. If the subsequent queue read
 fails, the database has already committed and the existing queues are retained: the operation throws an error.
-Keep demo commands stopped and retry the operation; the retry restores the database and rebuilds the queues again.
+Normal requests stay blocked until a successful retry restores the database and rebuilds the queues again.
+
+`DemoStateAccess` gives normal requests shared access and restoration exclusive access. Reset first marks itself
+pending, refuses new requests, and waits for existing requests to finish before changing the database. The
+`DemoRequestFilter` holds shared access through each synchronous request, including transaction commits and
+synchronous after-commit callbacks. It runs after authentication/authorization in the existing security chain.
+Blocked requests receive HTTP 503 with `Retry-After: 1`; requests run concurrently when Reset is inactive.
+
+Login and the authenticated current-profile lookup remain available so the operator can recover. The future
+`POST /api/demo/reset` route bypasses shared access so its service can acquire exclusive access; it still requires
+authentication and the service's OPERATOR check. No route is registered by that exemption. A failure before the
+database commits releases normal access unless an earlier attempt already left recovery incomplete.
 
 This is an internal operation: no HTTP endpoint, dashboard button or automatic restoration at startup is enabled.
-It must be called while demo commands are stopped; rejecting another restoration does **not** stop normal order
-commands or dispatch callbacks. The full Reset integration must coordinate those writers and include DLV's global
-dispatch queue, offers and assignments before the dashboard can report Reset success. Current courier profile
-values still follow the existing fixtures; DLV runtime availability needs its module integration.
+The guard covers synchronous HTTP work in this backend instance. Direct background/service writers and other
+backend processes sharing the database must also be stopped or coordinated; asynchronous callbacks need their
+own participation. The full Reset integration still needs DLV's global dispatch queue, offers, assignments and
+courier-state contract before the dashboard can report Reset success. Current courier profile values follow the
+existing fixtures; no delivery behavior is changed by the request guard.
 
 ## Tests
 
@@ -137,5 +149,5 @@ values still follow the existing fixtures; DLV runtime availability needs its mo
 Fixture, seeding and restoration checks use isolated in-memory databases and mocked services:
 
 ```sh
-./mvnw -o -Dtest=ResetServiceTest,ResetServiceIntegrationTest,OrderQueueLoaderTest,OrderQueuesTest,PreparationQueueTest,DemoDataRestorerTest,DemoOrderSeederTest,DemoFixtureLoaderTest,DemoOrderFixtureTest,DemoProfileSeederTests,DemoMenuSeederTest test
+./mvnw -o -Dtest=DemoRequestFilterTest,DemoStateAccessTest,ResetServiceTest,ResetServiceIntegrationTest,OrderQueueLoaderTest,OrderQueuesTest,PreparationQueueTest,DemoDataRestorerTest,DemoOrderSeederTest,DemoFixtureLoaderTest,DemoOrderFixtureTest,DemoProfileSeederTests,DemoMenuSeederTest test
 ```
