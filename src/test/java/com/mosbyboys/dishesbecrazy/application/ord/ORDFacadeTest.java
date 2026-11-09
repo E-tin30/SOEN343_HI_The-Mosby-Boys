@@ -432,13 +432,13 @@ class ORDFacadeTest {
     @Test
     void customerCannotPauseRestaurant() {
         Customer customer = customer();
-        when(regFacade.getCurrentUser(customer.getUserId())).thenReturn(customer);
         Restaurant restaurant = restaurantWithStatus(RestaurantStatus.OPEN);
         when(restaurantService.load(restaurantId)).thenReturn(restaurant);
 
         assertThrows(PermissionDeniedException.class, () -> {
             facade.pauseRestaurant(customer.getUserId(), restaurantId);
         });
+        verify(restaurantService, never()).save(any());
     }
 
     // an operator pauses a CLOSED restaurant: refused by Restaurant, and nothing is saved
@@ -452,6 +452,7 @@ class ORDFacadeTest {
         assertThrows(IllegalStateException.class, () -> {
             facade.pauseRestaurant(op.getUserId(), restaurantId);
         });
+        verify(restaurantService, never()).save(any());
     }
 
     // a restaurant tries to open itself: permission denied, and nothing is saved (Appendix A, R-DASH-01)
@@ -465,6 +466,7 @@ class ORDFacadeTest {
         assertThrows(PermissionDeniedException.class, () -> {
             facade.openRestaurant(owner.getUserId(), restaurantId);
         });
+        verify(restaurantService, never()).save(any());
     }
 
     // an operator opens a PAUSED restaurant: the restaurant that gets saved is OPEN
