@@ -57,6 +57,7 @@ class ORDFacadeTest {
         pricingService = mock(PricingService.class);
         // Supplies the existing pricing dependency so history tests can run alongside placement guards.
         regFacade = mock(REGFacade.class);
+        pricingService = mock(PricingService.class);
         queues = new OrderQueues();
         // same order as the fields in ORDFacade
         facade = new ORDFacade(orderService, orderEventService, new PermissionPolicy(),
@@ -77,6 +78,13 @@ class ORDFacadeTest {
         return new Restaurant(forRestaurant, OffsetDateTime.now(), "A", "B", "a@b.c", "ab", "hash",
                 "Resto", RestaurantStatus.OPEN, null);
     }
+
+    // a restaurant in the given status, for the pause/open tests
+    private Restaurant restaurantWithStatus(RestaurantStatus status) {
+        return new Restaurant(restaurantId, OffsetDateTime.now(), "A", "B", "a@b.c", "ab", "hash",
+                "Resto", status, null);
+    }
+
     
     private Operator operator() {
         return new Operator(UUID.randomUUID(), OffsetDateTime.now(), "A", "B", "a@b.c", "ab", "hash");
@@ -421,5 +429,79 @@ class ORDFacadeTest {
         List<OrderHistoryView> views = facade.getOrderHistory(owner(restaurantId));
 
         assertEquals("A B", views.get(0).customerNames().get(customerId));
+    }
+
+    // pause / open restaurant
+
+    // an operator pauses an OPEN restaurant: the restaurant that gets saved is PAUSED
+    @Test
+    void operatorPausesOpenRestaurant() {
+        Operator op = operator();
+        when(regFacade.getCurrentUser(op.getUserId())).thenReturn(op);
+        Restaurant restaurant = restaurantWithStatus(RestaurantStatus.OPEN);
+        when(restaurantService.load(restaurantId)).thenReturn(restaurant);
+
+        Restaurant result = facade.pauseRestaurant(op.getUserId(), restaurantId);
+
+        // Assert: it was paused and saved
+        assertEquals(RestaurantStatus.PAUSED, result.getStatus());
+        verify(restaurantService).save(restaurant);
+    }
+
+
+    // a customer tries to pause: permission denied, and nothing is saved
+    @Test
+    void customerCannotPauseRestaurant() {
+        Customer customer = customer();
+        Restaurant restaurant = restaurantWithStatus(RestaurantStatus.OPEN);
+        when(restaurantService.load(restaurantId)).thenReturn(restaurant);
+
+        assertThrows(PermissionDeniedException.class, () -> {
+            facade.pauseRestaurant(customer.getUserId(), restaurantId);
+        });
+        verify(restaurantService, never()).save(any());
+    }
+
+    // an operator pauses a CLOSED restaurant: refused by Restaurant, and nothing is saved
+    @Test
+    void operatorCannotPauseClosedRestaurant() {
+        Operator op = operator();
+        when(regFacade.getCurrentUser(op.getUserId())).thenReturn(op);
+        Restaurant restaurant = restaurantWithStatus(RestaurantStatus.CLOSED);
+        when(restaurantService.load(restaurantId)).thenReturn(restaurant);
+
+        assertThrows(IllegalStateException.class, () -> {
+            facade.pauseRestaurant(op.getUserId(), restaurantId);
+        });
+        verify(restaurantService, never()).save(any());
+    }
+
+    // a restaurant tries to open itself: permission denied, and nothing is saved (Appendix A, R-DASH-01)
+    @Test
+    void ownerCannotOpenOwnRestaurant() {
+        Restaurant owner = owner(restaurantId);
+        when(regFacade.getCurrentUser(owner.getUserId())).thenReturn(owner);
+        Restaurant restaurant = restaurantWithStatus(RestaurantStatus.PAUSED);
+        when(restaurantService.load(restaurantId)).thenReturn(restaurant);
+
+        assertThrows(PermissionDeniedException.class, () -> {
+            facade.openRestaurant(owner.getUserId(), restaurantId);
+        });
+        verify(restaurantService, never()).save(any());
+    }
+
+    // an operator opens a PAUSED restaurant: the restaurant that gets saved is OPEN
+    @Test
+    void operatorOpensPausedRestaurant() {
+        Operator op = operator();
+        when(regFacade.getCurrentUser(op.getUserId())).thenReturn(op);
+        Restaurant restaurant = restaurantWithStatus(RestaurantStatus.PAUSED);
+        when(restaurantService.load(restaurantId)).thenReturn(restaurant);
+
+        Restaurant result = facade.openRestaurant(op.getUserId(), restaurantId);
+
+        // Assert: it was opened and saved
+        assertEquals(RestaurantStatus.OPEN, result.getStatus());
+        verify(restaurantService).save(restaurant);
     }
 }

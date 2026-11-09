@@ -31,7 +31,7 @@ class RestaurantTest {
         r.pause();
         assertEquals(RestaurantStatus.PAUSED, r.getStatus());
         assertFalse(r.acceptsOrders());
-        r.reopen();
+        r.open();
         assertTrue(r.acceptsOrders());
     }
 
@@ -65,5 +65,83 @@ class RestaurantTest {
     @Test
     void nullStatusThrows() {
         assertThrows(IllegalArgumentException.class, () -> restaurant(UUID.randomUUID(), "Resto", null));
+    }
+
+    // OPEN → PAUSED
+    @Test
+    void pauseFromOpenPauses() {
+        Restaurant r = restaurant(UUID.randomUUID(), RestaurantStatus.OPEN);
+        r.pause();
+        assertEquals(RestaurantStatus.PAUSED, r.getStatus());
+        assertFalse(r.acceptsOrders());
+    } 
+
+    // OPEN → CLOSED
+    @Test
+    void closeFromOpenCloses() {
+        Restaurant r = restaurant(UUID.randomUUID(), RestaurantStatus.OPEN);
+        r.close();
+        assertEquals(RestaurantStatus.CLOSED, r.getStatus());
+        assertFalse(r.acceptsOrders());
+    } 
+
+    // PAUSED → OPEN
+    @Test
+    void openFromPausedOpens() {
+        Restaurant r = restaurant(UUID.randomUUID(), RestaurantStatus.PAUSED);
+        r.open();
+        assertEquals(RestaurantStatus.OPEN, r.getStatus());
+        assertTrue(r.acceptsOrders());
+    }
+
+    // PAUSED → CLOSED
+    @Test
+    void closeFromPausedCloses() {
+        Restaurant r = restaurant(UUID.randomUUID(), RestaurantStatus.PAUSED);
+        r.close();
+        assertEquals(RestaurantStatus.CLOSED, r.getStatus());
+        assertFalse(r.acceptsOrders());
+    }
+
+    // CLOSED → OPEN
+    @Test    
+    void openFromClosedOpens() {
+        Restaurant r = restaurant(UUID.randomUUID(), RestaurantStatus.CLOSED);
+        r.open();
+        assertEquals(RestaurantStatus.OPEN, r.getStatus());
+        assertTrue(r.acceptsOrders());
+
+    }
+
+    // stays PAUSED
+    @Test
+    void pauseWhenPausedDoesNothing() {
+        Restaurant r = restaurant(UUID.randomUUID(), RestaurantStatus.PAUSED);
+        r.pause();
+        assertEquals(RestaurantStatus.PAUSED, r.getStatus());
+    }
+
+    // stays OPEN
+    @Test     
+    void openWhenOpenDoesNothing() { 
+        Restaurant r = restaurant(UUID.randomUUID(), RestaurantStatus.OPEN);
+        r.open();
+        assertEquals(RestaurantStatus.OPEN, r.getStatus());
+    } 
+
+    // stays CLOSED
+    @Test    
+    void closeWhenClosedDoesNothing() {
+        Restaurant r = restaurant(UUID.randomUUID(), RestaurantStatus.CLOSED);
+        r.close();
+        assertEquals(RestaurantStatus.CLOSED, r.getStatus());
+    }
+
+    // refuses CLOSED → PAUSED
+    @Test 
+    void pauseFromClosedIsRefused() {
+        Restaurant r = restaurant(UUID.randomUUID(), RestaurantStatus.CLOSED);
+        assertThrows(IllegalStateException.class, () -> r.pause());
+        assertEquals(RestaurantStatus.CLOSED, r.getStatus());
     }
 }
