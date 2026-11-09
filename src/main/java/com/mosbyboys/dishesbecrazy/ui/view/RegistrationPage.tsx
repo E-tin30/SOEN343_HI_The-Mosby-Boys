@@ -1,6 +1,7 @@
+import { loggedFetch } from "./api/loggedFetch";
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { log } from "./outputLog";
+import { logError } from "./outputLog";
 import Button from "./components/Button";
 import Heading from "./components/Heading";
 import Input from "./components/Input";
@@ -16,24 +17,21 @@ export default function Register(){
         const data = Object.fromEntries(new FormData(e.currentTarget));
 
         try {
-            log("command", "POST /register");
-            const response = await fetch("http://localhost:8080/register", {
+            const response = await loggedFetch("http://localhost:8080/register", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify(data),
             });
-
-            if (!response.ok) {
-                throw new Error(`${response.status}: ${await response.text()}`);
-            }
+            // Records the registration command/status without logging the submitted personal data or password.
 
             const result = await response.text();
             alert(result);
             navigate("/login");
         } catch (error) {
-            log("error", `POST /register → ${error instanceof Error ? error.message : error}`);
+            logError(error, "Registration failed.");
+            // Covers local failures while the shared helper deduplicates already-reported request errors.
             alert("Registration failed!");
         }
     }

@@ -1,22 +1,16 @@
+import { loggedFetch, readJson } from "../../api/loggedFetch";
 import type { Restaurant, MenuItem } from "../types/menu";
-import { log } from "../../outputLog";
 
 const API = "http://localhost:8080";
 
 async function get<T>(path: string, token: string, signal?: AbortSignal): Promise<T> {
-  log("command", `GET ${path}`);
-  const response = await fetch(API + path, {
+  const response = await loggedFetch(API + path, {
     headers: { Authorization: `Bearer ${token}` },
     signal,
   });
-  // Allows the availability hook to cancel requests that belong to an obsolete selection.
-
-  if (!response.ok) {
-    const message = (await response.text()) || `Request failed (${response.status})`;
-    log("error", `GET ${path} → ${response.status}: ${message}`);
-    throw new Error(message);
-  }
-  return response.json();
+  // Logs menu/restaurant reads through the shared helper and allows obsolete checks to be canceled.
+  return readJson(response);
+  // Reports JSON parsing failures through the same output console as request failures.
 }
 
 export function getRestaurants(token: string, signal?: AbortSignal): Promise<Restaurant[]> {

@@ -18,3 +18,18 @@ export function subscribe(listener: () => void) {
 }
 
 export const getEntries = () => entries;
+
+const reportedErrors = new WeakSet<object>();
+// Tracks reported error objects without keeping them alive indefinitely.
+
+export function logError(error: unknown, description: string) {
+  if (typeof error === "object" && error !== null && "name" in error && error.name === "AbortError") return;
+  // Intentional cancellation of an obsolete request is not a user-facing failure.
+  if (typeof error === "object" && error !== null) {
+    if (reportedErrors.has(error)) return;
+    reportedErrors.add(error);
+  }
+  // Prevents the same failure from being logged again as it passes through several callers.
+  log("error", description);
+  // Uses the existing on-screen log store with a safe description instead of a raw payload.
+}
