@@ -25,6 +25,7 @@ import com.mosbyboys.dishesbecrazy.application.ord.OrderService;
 import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
 import com.mosbyboys.dishesbecrazy.domain.ord.Order;
 import com.mosbyboys.dishesbecrazy.domain.ord.state.OrderStates;
+import com.mosbyboys.dishesbecrazy.technical.security.DemoStateAccess;
 import com.mosbyboys.dishesbecrazy.domain.reg.Role;
 import com.mosbyboys.dishesbecrazy.domain.reg.User;
 
@@ -73,7 +74,7 @@ class ResetServiceIntegrationTest {
                     row.getString("rejection_reason"), row.getBigDecimal("subtotal")));
         });
         queues = new OrderQueues();
-        reset = new ResetService(registration, database, new OrderQueueLoader(orders, queues));
+        reset = new ResetService(registration, database, new OrderQueueLoader(orders, queues), new DemoStateAccess());
     }
     // Restoration and queue rebuilding are real; only caller lookup and the OrderService read boundary use test adapters.
 

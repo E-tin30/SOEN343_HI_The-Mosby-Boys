@@ -14,6 +14,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import com.mosbyboys.dishesbecrazy.application.ord.OrderQueueLoader;
 import com.mosbyboys.dishesbecrazy.application.ord.PermissionDeniedException;
 import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
+import com.mosbyboys.dishesbecrazy.technical.security.DemoStateAccess;
 import com.mosbyboys.dishesbecrazy.domain.reg.Role;
 import com.mosbyboys.dishesbecrazy.domain.reg.User;
 import com.mosbyboys.dishesbecrazy.technical.seed.DemoDataRestorer;
@@ -27,13 +28,15 @@ class ResetServiceTest {
     private DemoDataRestorer database;
     private OrderQueueLoader queues;
     private ResetService reset;
+    private DemoStateAccess access;
 
     @BeforeEach
     void prepareService() {
         registration = mock(REGFacade.class);
         database = mock(DemoDataRestorer.class);
         queues = mock(OrderQueueLoader.class);
-        reset = new ResetService(registration, database, queues);
+        access = new DemoStateAccess();
+        reset = new ResetService(registration, database, queues, access);
         var operator = mock(User.class);
         when(operator.getRole()).thenReturn(Role.OPERATOR);
         when(registration.getCurrentUser(operatorId)).thenReturn(operator);
@@ -58,6 +61,7 @@ class ResetServiceTest {
 
         assertSame(failure, assertThrows(IOException.class, () -> reset.restoreDatabaseAndOrderQueues(operatorId)));
         verifyNoInteractions(queues);
+        assertDoesNotThrow(() -> access.beginRequest().close());
 
         reset.restoreDatabaseAndOrderQueues(operatorId);
 
@@ -72,8 +76,11 @@ class ResetServiceTest {
 
         assertSame(failure, assertThrows(IllegalStateException.class, () -> reset.restoreDatabaseAndOrderQueues(operatorId)));
 
+        assertThrows(IllegalStateException.class, access::beginRequest);
+
         reset.restoreDatabaseAndOrderQueues(operatorId);
 
+        assertDoesNotThrow(() -> access.beginRequest().close());
         verify(database, times(2)).restore();
         verify(queues, times(2)).rebuild();
     }

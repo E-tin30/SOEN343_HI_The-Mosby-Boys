@@ -2,7 +2,6 @@ package com.mosbyboys.dishesbecrazy.application.dash;
 
 import java.io.IOException;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -13,6 +12,7 @@ import com.mosbyboys.dishesbecrazy.application.ord.PermissionDeniedException;
 import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
 import com.mosbyboys.dishesbecrazy.domain.reg.Role;
 import com.mosbyboys.dishesbecrazy.technical.seed.DemoDataRestorer;
+import com.mosbyboys.dishesbecrazy.technical.security.DemoStateAccess;
 
 import lombok.RequiredArgsConstructor;
 
@@ -22,7 +22,7 @@ public class ResetService {
     private final REGFacade registration;
     private final DemoDataRestorer database;
     private final OrderQueueLoader orderQueues;
-    private final AtomicBoolean restoring = new AtomicBoolean();
+    private final DemoStateAccess access;
 
     public void restoreDatabaseAndOrderQueues(UUID operatorId) throws IOException {
         var caller = registration.getCurrentUser(operatorId);
@@ -31,16 +31,15 @@ public class ResetService {
         }
         Assert.state(!TransactionSynchronizationManager.isActualTransactionActive(),
                 "Demo restoration must start outside an existing transaction.");
-        Assert.state(restoring.compareAndSet(false, true), "Demo restoration is already in progress.");
-        // Check the persisted role and reject overlapping restores before changing either database or queues.
+        // Check the persisted role and transaction boundary before requesting exclusive access.
 
-        try {
+        try (var restoration = access.beginRestoration()) {
             database.restore();
+            restoration.databaseRestored();
             orderQueues.rebuild();
-        } finally {
-            restoring.set(false);
+            restoration.complete();
         }
-        // Database restoration commits first. A failed queue rebuild propagates and a retry repeats both steps.
+        // Hold exclusive access through commit and rebuilding; a runtime failure keeps normal requests blocked for retry.
     }
-    // Internal preparation only: callers must stop demo commands; DLV coordination is required before exposing Reset.
+    // Internal preparation only: the request guard must cover writers; DLV integration is required before exposing Reset.
 }
