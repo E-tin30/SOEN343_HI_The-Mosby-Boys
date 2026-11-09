@@ -58,6 +58,7 @@ function createCart(items: Cart["items"] = [{ menuItem: createMenuItem(), quanti
 let cart: Cart;
 let status: string;
 let menu: { id: string; status: string }[];
+let placementError: Response | Error | undefined;
 let fetchMock: ReturnType<typeof vi.fn>;
 const pricing: PricingBreakdown = {
   subtotal: 10,
@@ -75,6 +76,7 @@ beforeEach(() => {
   status = "OPEN";
   menu = [{ id: "item-1", status: "AVAILABLE" }];
   cart = createCart();
+  placementError = undefined;
   mocks.payment.mockReset();
   mocks.clearCart.mockReset();
   vi.stubGlobal("alert", vi.fn());
@@ -83,11 +85,15 @@ beforeEach(() => {
     if (url.endsWith("/menu")) return json(menu);
     if (url.endsWith("/breakdown")) return json(pricing);
     if (url.endsWith("/create-payment-intent")) return json({ clientSecret: "private-secret" });
-    if (url.endsWith("/placeOrder")) return json({ id: "order-1" });
+    if (url.endsWith("/placeOrder")) {
+      if (placementError instanceof Error) throw placementError;
+      return placementError ?? json({ id: "order-1" });
+    }
     throw new Error(`Unexpected URL: ${url}`);
   });
   vi.stubGlobal("fetch", fetchMock);
 });
+
 // Resets fixtures and stubs backend responses so each disabled-button test starts independently.
 
 function renderCart() {
@@ -195,4 +201,37 @@ describe("Place Order availability (R-DASH-04)", () => {
     expect(getRequestsTo("/placeOrder")).toHaveLength(0);
   });
   // Confirms the final recheck stops both placement and the existing payment call when all items just sold out.
+});
+
+describe("Place Order failure feedback", () => {
+  it.each([
+    [400, "Restaurant is not accepting orders"],
+    [409, "Order is not next in line"],
+  ])("shows the backend explanation for an HTTP %s rejection", async (status, message) => {
+    placementError = new Response(message, { status, headers: { "Content-Type": "text/plain" } });
+    renderCart();
+    await enterCheckout();
+    await waitFor(() => expect(getPlaceOrderButton().disabled).toBe(false));
+
+    fireEvent.click(getPlaceOrderButton());
+
+    await screen.findByText(`Error: ${message}`);
+    expect(mocks.clearCart).not.toHaveBeenCalled();
+    expect(window.alert).not.toHaveBeenCalled();
+  });
+  // Customer feedback retains safe domain explanations already supplied by the shared request helper.
+
+  it("keeps generic feedback for a network failure", async () => {
+    placementError = new TypeError("private network diagnostic");
+    renderCart();
+    await enterCheckout();
+    await waitFor(() => expect(getPlaceOrderButton().disabled).toBe(false));
+
+    fireEvent.click(getPlaceOrderButton());
+
+    await screen.findByText("Error: Could not place the order. Please refresh availability and try again.");
+    expect(screen.queryByText("private network diagnostic")).toBeNull();
+    expect(mocks.clearCart).not.toHaveBeenCalled();
+  });
+  // Unexpected failures use the existing fallback instead of exposing arbitrary error messages.
 });
