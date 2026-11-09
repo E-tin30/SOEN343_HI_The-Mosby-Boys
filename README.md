@@ -62,12 +62,22 @@ Password for all of them: `DEMO_SEED_PASSWORD` from `.env`.
 | Operator | `operator.demo@example.com` |
 
 The fixtures define three OPEN restaurants, each with three available dishes and one sold-out dessert.
+Their dishes have distinct names and prices so a restaurant mix-up is visible during a walkthrough:
+
+| Restaurant | Available dishes | Sold-out dessert |
+|---|---|---|
+| Dishes Be Crazy Demo | Grandma's Tourtière, Butter Chicken, Pierogi (6) | Pouding Chômeur |
+| Demo Kitchen Building | Mushroom Risotto, Spinach Ravioli, Margherita Flatbread | Tiramisu |
+| Demo Kitchen Busy | Carne Asada Bowl, Chicken Burrito, Black Bean Tacos (3) | Churros |
+
 The order fixture defines nine accepted orders for future preparation queues of 0 / 3 / 6,
 plus delivered, rejected and cancelled customer history: twelve orders, twelve lines and twenty-eight events.
 Refunded history awaits the missing `DeliveredState.refund()` implementation; billing records remain separate integration work.
 With `demo-seed`, startup validates `orders.json` but does not yet insert its orders or events,
 so those queues are not populated by seeding.
 Seeding creates missing records; it does not reset existing data.
+Existing menu rows keep their previous names and prices when seeding is repeated. The revised dishes appear
+on initial population or when the later Reset restoration uses these fixtures.
 
 If they don't exist yet, create the accounts and menus once from `src/main/resources/demo/`:
 
