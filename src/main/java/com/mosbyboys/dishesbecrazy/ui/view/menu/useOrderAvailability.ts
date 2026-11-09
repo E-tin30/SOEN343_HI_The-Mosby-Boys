@@ -29,7 +29,7 @@ export function useOrderAvailability(cart: Cart | null, token: string | null) {
   const activeRequest = useRef<AbortController | null>(null);
   // Tracks the result's inputs and the request that may still publish a result.
 
-  const refreshAvailability = useCallback(async (): Promise<boolean> => {
+  const refreshAvailability = useCallback(async (background = false): Promise<boolean> => {
     activeRequest.current?.abort();
     const controller = new AbortController();
     activeRequest.current = controller;
@@ -45,8 +45,12 @@ export function useOrderAvailability(cart: Cart | null, token: string | null) {
     };
     // Publishes only current results and returns the decision awaited by Place Order.
 
-    updateAvailability(CHECKING_AVAILABILITY);
-    // Disables placement while the current restaurant and menu data are being checked.
+    setAvailabilitySnapshot((previous) =>
+      background && previous?.cart === cart && previous?.token === token
+        ? previous
+        : { cart, token, value: CHECKING_AVAILABILITY }
+    );
+    // Background refreshes retain the last result; new selections and explicit checks show their loading state.
 
     try {
       if (!cart?.items.length) {
@@ -81,15 +85,15 @@ export function useOrderAvailability(cart: Cart | null, token: string | null) {
       // Applies R-DASH-04 to paused, closed, or no-longer-listed restaurants.
 
       const menu = await getMenu(token, cart.restaurantId, controller.signal);
-      const hasAvailableSelectedItem = cart.items.some(({ menuItem: selectedItem }) =>
+      const allSelectedItemsAvailable = cart.items.every(({ menuItem: selectedItem }) =>
         menu.some((menuItem) => menuItem.id === selectedItem.id && menuItem.status === "AVAILABLE")
       );
-      // One available selected item is enough to avoid the ticket's EVERY-item sold-out restriction.
+      // Every purchased item must remain available before checkout can attempt payment.
 
       return updateAvailability({
-        allowed: hasAvailableSelectedItem,
+        allowed: allSelectedItemsAvailable,
         checking: false,
-        reason: hasAvailableSelectedItem ? "" : "All selected items are sold out or unavailable.",
+        reason: allSelectedItemsAvailable ? "" : "One or more selected items are sold out or unavailable.",
       });
     } catch (error) {
       if (controller.signal.aborted) {
@@ -120,7 +124,7 @@ export function useOrderAvailability(cart: Cart | null, token: string | null) {
         return;
       }
 
-      void refreshAvailability();
+      void refreshAvailability(true);
     };
     // Polling and focus skip an active check, including validation awaited by Place Order.
 
