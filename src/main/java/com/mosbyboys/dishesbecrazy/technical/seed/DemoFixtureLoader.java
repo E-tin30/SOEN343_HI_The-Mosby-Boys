@@ -1,7 +1,6 @@
 package com.mosbyboys.dishesbecrazy.technical.seed;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -12,6 +11,7 @@ import java.util.stream.Collectors;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 
 import com.mosbyboys.dishesbecrazy.domain.ord.MenuItemStatus;
 import com.mosbyboys.dishesbecrazy.domain.ord.RestaurantStatus;
@@ -49,29 +49,21 @@ public class DemoFixtureLoader {
     // Validates both files before a caller can start Auth provisioning or database writes.
 
     private void validateAccounts(Account[] accounts) {
-        if (accounts == null || accounts.length == 0) {
-            throw new IllegalArgumentException("Demo profile configuration has no accounts.");
-        }
+        Assert.isTrue(accounts != null && accounts.length > 0, "Demo profile configuration has no accounts.");
         // Rejects an absent dataset before checking role coverage or individual records.
 
         var roles = EnumSet.noneOf(Role.class);
         var emails = new HashSet<String>();
         var usernames = new HashSet<String>();
         for (Account account : accounts) {
-            if (account == null || account.role() == null) {
-                throw new IllegalArgumentException("Every demo account requires a role.");
-            }
-            if (account.email() == null
-                    || !account.email().toLowerCase(Locale.ROOT).matches("[^\\s@]+\\.demo@example\\.com")
-                    || !emails.add(account.email().toLowerCase(Locale.ROOT))) {
-                throw new IllegalArgumentException("Demo accounts require unique emails ending in .demo@example.com.");
-            }
-            requireText(account.username(), "Demo username");
-            if (!usernames.add(account.username())) {
-                throw new IllegalArgumentException("Demo accounts require unique usernames.");
-            }
-            requireText(account.firstName(), "Demo first name");
-            requireText(account.lastName(), "Demo last name");
+            Assert.isTrue(account != null && account.role() != null, "Every demo account requires a role.");
+            String email = account.email() == null ? null : account.email().toLowerCase(Locale.ROOT);
+            Assert.isTrue(email != null && email.matches("[^\\s@]+\\.demo@example\\.com") && emails.add(email),
+                    "Demo accounts require unique emails ending in .demo@example.com.");
+            Assert.hasText(account.username(), "Demo username is required.");
+            Assert.isTrue(usernames.add(account.username()), "Demo accounts require unique usernames.");
+            Assert.hasText(account.firstName(), "Demo first name is required.");
+            Assert.hasText(account.lastName(), "Demo last name is required.");
             roles.add(account.role());
             // Identities stay unique while several accounts may share the same role.
 
@@ -79,49 +71,35 @@ public class DemoFixtureLoader {
                 validateCoordinates(account);
             }
             switch (account.role()) {
-                case CUSTOMER -> requireText(account.address(), "Customer address");
+                case CUSTOMER -> Assert.hasText(account.address(), "Customer address is required.");
                 case RESTAURANT -> {
-                    requireText(account.restaurantName(), "Restaurant name");
-                    requireText(account.status(), "Restaurant status");
-                    try {
-                        RestaurantStatus.valueOf(account.status());
-                    } catch (IllegalArgumentException exception) {
-                        throw new IllegalArgumentException("Restaurant status must be OPEN, PAUSED or CLOSED.");
-                    }
+                    Assert.hasText(account.restaurantName(), "Restaurant name is required.");
+                    Assert.hasText(account.status(), "Restaurant status is required.");
+                    Assert.isTrue(Arrays.stream(RestaurantStatus.values())
+                                    .anyMatch(status -> status.name().equals(account.status())),
+                            "Restaurant status must be OPEN, PAUSED or CLOSED.");
                 }
-                case COURIER -> requireText(account.state(), "Courier state");
+                case COURIER -> Assert.hasText(account.state(), "Courier state is required.");
                 case OPERATOR -> { }
             }
             // Checks fields consumed by each existing role-specific profile insert.
         }
-        if (roles.size() != Role.values().length) {
-            throw new IllegalArgumentException("Seed configuration requires at least one account of each role.");
-        }
+        Assert.isTrue(roles.size() == Role.values().length,
+                "Seed configuration requires at least one account of each role.");
     }
     // Every role must remain represented in a multi-account demonstration.
 
     private void validateCoordinates(Account account) {
-        if (account.latitude() == null || !Double.isFinite(account.latitude())
-                || account.latitude() < -90 || account.latitude() > 90
-                || account.longitude() == null || !Double.isFinite(account.longitude())
-                || account.longitude() < -180 || account.longitude() > 180) {
-            throw new IllegalArgumentException("Demo " + account.role()
-                    + " profiles require finite latitude (-90..90) and longitude (-180..180).");
-        }
+        Assert.isTrue(account.latitude() != null && Double.isFinite(account.latitude())
+                        && account.latitude() >= -90 && account.latitude() <= 90
+                        && account.longitude() != null && Double.isFinite(account.longitude())
+                        && account.longitude() >= -180 && account.longitude() <= 180,
+                "Demo " + account.role() + " profiles require finite latitude (-90..90) and longitude (-180..180).");
     }
     // Prevents missing locations and invalid map coordinates from reaching profile persistence.
 
-    private void requireText(String value, String field) {
-        if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException(field + " is required.");
-        }
-    }
-    // Gives fixture authors a field-specific error before provisioning or persistence begins.
-
     private void validateMenu(MenuSeed[] items, Account[] accounts) {
-        if (items == null || items.length == 0) {
-            throw new IllegalArgumentException("Menu seed configuration has no items.");
-        }
+        Assert.isTrue(items != null && items.length > 0, "Menu seed configuration has no items.");
         var restaurants = Arrays.stream(accounts)
                 .filter(account -> account.role() == Role.RESTAURANT)
                 .map(Account::username)
@@ -130,32 +108,19 @@ public class DemoFixtureLoader {
 
         var ids = new HashSet<UUID>();
         for (MenuSeed item : items) {
-            if (item == null || item.id() == null || !ids.add(item.id())) {
-                throw new IllegalArgumentException("Menu items require a unique id.");
-            }
-            if (item.restaurantUsername() == null || !restaurants.contains(item.restaurantUsername())) {
-                throw new IllegalArgumentException("Menu item " + item.id()
-                        + " must reference a restaurant account in the demo profiles.");
-            }
-            if (item.name() == null || item.name().isBlank()) {
-                throw new IllegalArgumentException("Menu item " + item.id() + " requires a name.");
-            }
-            if (item.price() == null || item.price().compareTo(BigDecimal.ZERO) <= 0) {
-                throw new IllegalArgumentException("Menu item " + item.name() + " requires a price above 0.");
-            }
-            if (item.stockQuantity() < 0) {
-                throw new IllegalArgumentException("Menu item " + item.name() + " cannot have negative stock.");
-            }
-            if (item.status() == null) {
-                throw new IllegalArgumentException("Menu item " + item.name() + " requires a status.");
-            }
-            if (item.status() == MenuItemStatus.AVAILABLE && item.stockQuantity() == 0) {
-                throw new IllegalArgumentException("Menu item " + item.name() + " is AVAILABLE with no stock.");
-            }
-            if (item.description() == null) {
-                throw new IllegalArgumentException("Menu item " + item.name()
-                        + " requires a description; use an empty string when absent.");
-            }
+            Assert.isTrue(item != null && item.id() != null && ids.add(item.id()), "Menu items require a unique id.");
+            Assert.isTrue(item.restaurantUsername() != null && restaurants.contains(item.restaurantUsername()),
+                    "Menu item " + item.id() + " must reference a restaurant account in the demo profiles.");
+            Assert.isTrue(item.name() != null && !item.name().isBlank(),
+                    "Menu item " + item.id() + " requires a name.");
+            Assert.isTrue(item.price() != null && item.price().signum() > 0,
+                    "Menu item " + item.name() + " requires a price above 0.");
+            Assert.isTrue(item.stockQuantity() >= 0, "Menu item " + item.name() + " cannot have negative stock.");
+            Assert.isTrue(item.status() != null, "Menu item " + item.name() + " requires a status.");
+            Assert.isTrue(item.status() != MenuItemStatus.AVAILABLE || item.stockQuantity() != 0,
+                    "Menu item " + item.name() + " is AVAILABLE with no stock.");
+            Assert.isTrue(item.description() != null,
+                    "Menu item " + item.name() + " requires a description; use an empty string when absent.");
             // Enforces the menu's ordering rules and its existing NOT NULL description column.
         }
     }
