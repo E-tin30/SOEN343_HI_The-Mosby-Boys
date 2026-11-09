@@ -63,7 +63,7 @@ class DemoOrderSeederTest {
     @Test
     void storesTheCompleteOrderLineAndEventSnapshots() throws Exception {
         seeder.run();
-        assertCounts(12, 12, 28);
+        assertCounts(13, 13, 35);
         for (var order : baseline.orders()) {
             var row = jdbc.queryForMap("SELECT * FROM public.\"Order\" WHERE id = ?", order.id());
             assertEquals(users.get(order.customerUsername()), row.get("user_id"));
@@ -109,7 +109,7 @@ class DemoOrderSeederTest {
 
         seeder.run();
 
-        assertCounts(12, 12, 29);
+        assertCounts(13, 13, 36);
         assertEquals("PreparingState", jdbc.queryForObject("SELECT state FROM public.\"Order\" WHERE id = ?", String.class, order.id()));
     }
     // Initial seeding never rewinds a demo already in progress or adds the old history again.

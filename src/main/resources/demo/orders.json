@@ -452,5 +452,81 @@
         "performedByUsername": "demo_customer"
       }
     ]
+  },
+  {
+    "id": "34310000-0000-4000-8000-000000000214",
+    "customerUsername": "demo_customer",
+    "restaurantUsername": "demo_restaurant_building",
+    "state": "RefundedState",
+    "placedAt": "2026-01-14T15:00:00Z",
+    "subtotal": 17.25,
+    "lines": [
+      {
+        "id": "34320000-0000-4000-8000-000000000214",
+        "menuItemId": "34300000-0000-4000-8000-000000000202",
+        "menuItemName": "Handmade Spinach Ravioli",
+        "quantity": 1,
+        "unitPrice": 17.25
+      }
+    ],
+    "events": [
+      {
+        "id": "34330000-0000-4000-8000-000000002141",
+        "action": "PLACE",
+        "previousState": null,
+        "newState": "PlacedState",
+        "createdAt": "2026-01-14T15:00:00Z",
+        "performedByUsername": "demo_customer"
+      },
+      {
+        "id": "34330000-0000-4000-8000-000000002142",
+        "action": "ACCEPT",
+        "previousState": "PlacedState",
+        "newState": "AcceptedState",
+        "createdAt": "2026-01-14T15:01:00Z",
+        "performedByUsername": "demo_restaurant_building"
+      },
+      {
+        "id": "34330000-0000-4000-8000-000000002143",
+        "action": "PREPARING",
+        "previousState": "AcceptedState",
+        "newState": "PreparingState",
+        "createdAt": "2026-01-14T15:05:00Z",
+        "performedByUsername": "demo_restaurant_building"
+      },
+      {
+        "id": "34330000-0000-4000-8000-000000002144",
+        "action": "READY",
+        "previousState": "PreparingState",
+        "newState": "ReadyState",
+        "createdAt": "2026-01-14T15:15:00Z",
+        "performedByUsername": "demo_restaurant_building"
+      },
+      {
+        "id": "34330000-0000-4000-8000-000000002145",
+        "action": "PICKUP",
+        "previousState": "ReadyState",
+        "newState": "PickedUpState",
+        "createdAt": "2026-01-14T15:20:00Z",
+        "performedByUsername": "demo_courier"
+      },
+      {
+        "id": "34330000-0000-4000-8000-000000002146",
+        "action": "DELIVER",
+        "previousState": "PickedUpState",
+        "newState": "DeliveredState",
+        "createdAt": "2026-01-14T15:35:00Z",
+        "performedByUsername": "demo_courier"
+      },
+      {
+        "id": "34330000-0000-4000-8000-000000002147",
+        "action": "REFUND",
+        "previousState": "DeliveredState",
+        "newState": "RefundedState",
+        "createdAt": "2026-01-14T15:36:00Z",
+        "performedByUsername": "demo_operator"
+      }
+    ],
+    "courierUsername": "demo_courier"
   }
 ]
