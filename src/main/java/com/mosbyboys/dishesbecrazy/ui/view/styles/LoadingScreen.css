@@ -1,0 +1,49 @@
+/* Full-page loader shown while the session is being restored. */
+.loading-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-5);
+  min-height: 100vh;
+  padding: var(--space-4);
+  background: var(--cream);
+}
+
+/* The plate logo sits inside a spinning ring. */
+.loading-screen__spinner {
+  --plate-logo-size: 56px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 88px;
+  height: 88px;
+}
+
+.loading-screen__spinner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 3px solid var(--linen);
+  border-top-color: var(--tomato);
+  animation: loading-spin 0.9s linear infinite;
+}
+
+.loading-screen__text {
+  margin: 0;
+  color: var(--cocoa);
+}
+
+@keyframes loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-screen__spinner::before {
+    animation-duration: 2.5s;
+  }
+}
