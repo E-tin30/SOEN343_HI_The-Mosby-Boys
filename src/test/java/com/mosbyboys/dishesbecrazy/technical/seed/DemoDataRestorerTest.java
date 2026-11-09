@@ -238,10 +238,17 @@ class DemoDataRestorerTest {
         assertEquals(1, count("Courier"));
         assertEquals(3, count("Restaurant"));
         assertEquals(12, count("MenuItem"));
-        assertEquals(12, count("Order"));
-        assertEquals(12, count("OrderLineItem"));
-        assertEquals(28, count("Event"));
+        assertEquals(13, count("Order"));
+        assertEquals(13, count("OrderLineItem"));
+        assertEquals(35, count("Event"));
         assertEquals(0, count("Bill"));
+        var refunded = baseline.orders().stream().filter(order -> order.state().equals("RefundedState"))
+                .findFirst().orElseThrow();
+        assertEquals("RefundedState", jdbc.queryForObject("SELECT state FROM public.\"Order\" WHERE id = ?",
+                String.class, refunded.id()));
+        assertEquals(users.get("demo_operator"), jdbc.queryForObject(
+                "SELECT performed_by FROM public.\"Event\" WHERE order_id = ? AND action = 'REFUND'",
+                UUID.class, refunded.id()));
         for (var account : baseline.accounts()) {
             var user = jdbc.queryForMap("SELECT * FROM public.\"User\" WHERE id = ?", users.get(account.username()));
             assertEquals(account.firstName(), user.get("first_name"));

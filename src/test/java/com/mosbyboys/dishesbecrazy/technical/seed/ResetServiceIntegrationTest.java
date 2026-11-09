@@ -105,7 +105,7 @@ class ResetServiceIntegrationTest {
         assertEquals(10, jdbc.queryForObject("SELECT stock_quantity FROM public.\"MenuItem\" WHERE id = ?",
                 Integer.class, progressed.lines().getFirst().menuItemId()));
         assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM public.\"Order\" WHERE id = ?", Integer.class, extraOrder));
-        assertEquals(28, jdbc.queryForObject("SELECT COUNT(*) FROM public.\"Event\"", Integer.class));
+        assertEquals(35, jdbc.queryForObject("SELECT COUNT(*) FROM public.\"Event\"", Integer.class));
         assertEquals(0, retainedPlaced.size());
         assertEquals(0, retainedReady.size());
         assertEquals(0, retainedPreparation.size());
