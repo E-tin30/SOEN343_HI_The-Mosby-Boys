@@ -74,7 +74,8 @@ Password for all of them: `DEMO_SEED_PASSWORD` from `.env`.
 The fixtures define three OPEN restaurants, each with three available dishes and one sold-out dessert.
 The order fixture defines nine accepted orders for preparation queues of 0 / 3 / 6 on a fresh demo dataset,
 plus delivered, rejected and cancelled customer history: twelve orders, twelve lines and twenty-eight events.
-Refunded history awaits a corrected `DeliveredState.refund()` transition to `RefundedState`; billing records remain separate integration work.
+Delivered orders support the operator refund transition to `RefundedState`. Adding a refunded order to the baseline
+and integrating billing records remain separate demo-data work.
 With `demo-seed`, the profile and menu seeders run first, followed by `DemoOrderSeeder`.
 The order seeder resolves usernames to established user IDs and inserts missing orders, purchased-item lines
 and events together in one transaction. Historical lines retain their purchased names/prices and event times;

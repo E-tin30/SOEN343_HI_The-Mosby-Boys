@@ -8,8 +8,9 @@ public class DeliveredState extends OrderState {
         return new CancelledState();
     }
 
-    @Override 
-    public OrderState refund(){
-        return new ReadyState();
+    @Override
+    public OrderState refund() {
+        return new RefundedState();
     }
+    // Refunding a completed delivery ends its lifecycle instead of returning it to pickup readiness.
 }
