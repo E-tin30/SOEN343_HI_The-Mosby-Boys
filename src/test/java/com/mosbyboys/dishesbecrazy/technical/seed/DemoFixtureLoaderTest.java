@@ -14,6 +14,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.ClassPathResource;
 
+import com.mosbyboys.dishesbecrazy.domain.ord.MenuItemStatus;
 import com.mosbyboys.dishesbecrazy.domain.reg.Role;
 
 import tools.jackson.core.JacksonException;
@@ -29,7 +30,7 @@ class DemoFixtureLoaderTest {
     private final DemoFixtureLoader loader = new DemoFixtureLoader(json);
 
     @Test
-    void loadsDemoProfilesAndMenuWithoutExternalServices() throws Exception {
+    void loadsDemoProfilesWithoutExternalServices() throws Exception {
         DemoFixtures fixtures = loader.load();
 
         assertEquals(6, fixtures.accounts().size());
@@ -40,11 +41,30 @@ class DemoFixtureLoaderTest {
                 restaurants.stream().map(DemoFixtures.Account::username).collect(Collectors.toSet()));
         assertTrue(restaurants.stream().allMatch(a -> a.status().equals("OPEN")));
         assertEquals(3, restaurants.stream().map(a -> List.of(a.latitude(), a.longitude())).distinct().count());
-        assertEquals(4, fixtures.menuItems().size());
+    }
+    // Exercises the actual checked-in JSON without provisioning accounts or starting Spring.
+
+    @Test
+    void everyDemoRestaurantHasOrderableAndSoldOutMenuItems() throws Exception {
+        DemoFixtures fixtures = loader.load();
+        var menus = fixtures.menuItems().stream()
+                .collect(Collectors.groupingBy(DemoFixtures.MenuSeed::restaurantUsername));
+        var owners = fixtures.accounts().stream().filter(a -> a.role() == Role.RESTAURANT)
+                .map(DemoFixtures.Account::username).collect(Collectors.toSet());
+
+        assertEquals(12, fixtures.menuItems().size());
+        assertEquals(owners, menus.keySet());
+        for (var menu : menus.values()) {
+            assertEquals(4, menu.size());
+            assertEquals(3, menu.stream().filter(item -> item.status() == MenuItemStatus.AVAILABLE
+                    && item.stockQuantity() > 0).count());
+            assertEquals(1, menu.stream().filter(item -> item.status() == MenuItemStatus.SOLD_OUT
+                    && item.stockQuantity() == 0).count());
+        }
         assertEquals(new BigDecimal("18.50"), fixtures.menuItems().getFirst().price());
         assertEquals("demo_restaurant", fixtures.menuItems().getFirst().restaurantUsername());
     }
-    // Exercises the actual checked-in JSON without provisioning accounts or starting Spring.
+    // Each production menu supports both successful ordering and the sold-out scenario.
 
     @Test
     void allowsThreeRestaurantAccountsWithDistinctMenus() throws Exception {
