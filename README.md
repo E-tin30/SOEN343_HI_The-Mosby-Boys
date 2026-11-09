@@ -108,10 +108,25 @@ referencing an extra demo menu item stop restoration with an error. Any database
 Existing profile/menu creation times are retained; recreated rows receive their database-default creation times.
 Order and event times come from the fixtures. Bills start empty for demo-owned activity; no payment API is called.
 
-This operation is not run automatically at startup and has no HTTP endpoint or button yet. The next integration
-must stop concurrent demo commands, call restoration, rebuild the in-memory order queues and restore DLV/dispatch
-state before reporting Reset success. Current courier profile values follow the existing fixtures; DLV assignments
-and runtime availability still need their module integration.
+### Coordinating database and ORD queue restoration
+
+`ResetService.restoreDatabaseAndOrderQueues(operatorId)` combines database restoration with the ORD queue rebuild.
+It checks the caller's current profile through REG and permits only an OPERATOR. It commits database restoration
+first, then clears and rebuilds each restaurant's placed, preparation and ready queues from the restored records.
+For example, an order prepared during the walkthrough returns to AcceptedState in the database **and** returns
+to its original position in the preparation waiting list. Repeating the operation restores the same 0 / 3 / 6 baseline.
+
+The service rejects overlapping restoration attempts in this application instance. It also rejects calls inside an
+existing transaction, which could otherwise delay the database commit until after queues have already changed.
+If database restoration fails, its writes roll back and queue rebuilding is skipped. If the subsequent queue read
+fails, the database has already committed and the existing queues are retained: the operation throws an error.
+Keep demo commands stopped and retry the operation; the retry restores the database and rebuilds the queues again.
+
+This is an internal operation: no HTTP endpoint, dashboard button or automatic restoration at startup is enabled.
+It must be called while demo commands are stopped; rejecting another restoration does **not** stop normal order
+commands or dispatch callbacks. The full Reset integration must coordinate those writers and include DLV's global
+dispatch queue, offers and assignments before the dashboard can report Reset success. Current courier profile
+values still follow the existing fixtures; DLV runtime availability needs its module integration.
 
 ## Tests
 
@@ -122,5 +137,5 @@ and runtime availability still need their module integration.
 Fixture, seeding and restoration checks use isolated in-memory databases and mocked services:
 
 ```sh
-./mvnw -o -Dtest=DemoDataRestorerTest,DemoOrderSeederTest,DemoFixtureLoaderTest,DemoOrderFixtureTest,DemoProfileSeederTests,DemoMenuSeederTest test
+./mvnw -o -Dtest=ResetServiceTest,ResetServiceIntegrationTest,OrderQueueLoaderTest,OrderQueuesTest,PreparationQueueTest,DemoDataRestorerTest,DemoOrderSeederTest,DemoFixtureLoaderTest,DemoOrderFixtureTest,DemoProfileSeederTests,DemoMenuSeederTest test
 ```
