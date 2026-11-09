@@ -36,5 +36,27 @@
     "lastName": "Demo",
     "username": "demo_operator",
     "role": "OPERATOR"
+  },
+  {
+    "email": "restaurant2.demo@example.com",
+    "firstName": "Robin",
+    "lastName": "Demo",
+    "username": "demo_restaurant_building",
+    "role": "RESTAURANT",
+    "restaurantName": "Demo Kitchen Building",
+    "status": "OPEN",
+    "latitude": 45.5100,
+    "longitude": -73.5700
+  },
+  {
+    "email": "restaurant3.demo@example.com",
+    "firstName": "Casey",
+    "lastName": "Demo",
+    "username": "demo_restaurant_busy",
+    "role": "RESTAURANT",
+    "restaurantName": "Demo Kitchen Busy",
+    "status": "OPEN",
+    "latitude": 45.5250,
+    "longitude": -73.5800
   }
 ]

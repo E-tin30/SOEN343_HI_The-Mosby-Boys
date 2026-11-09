@@ -34,5 +34,77 @@
     "stockQuantity": 0,
     "status": "SOLD_OUT",
     "description": "Maple syrup cake"
+  },
+  {
+    "id": "34300000-0000-4000-8000-000000000201",
+    "restaurantUsername": "demo_restaurant_building",
+    "name": "Grandma's Tourtière",
+    "price": 18.50,
+    "stockQuantity": 6,
+    "status": "AVAILABLE",
+    "description": "Spiced pork pie, family recipe"
+  },
+  {
+    "id": "34300000-0000-4000-8000-000000000202",
+    "restaurantUsername": "demo_restaurant_building",
+    "name": "Butter Chicken",
+    "price": 16.00,
+    "stockQuantity": 10,
+    "status": "AVAILABLE",
+    "description": "With basmati rice"
+  },
+  {
+    "id": "34300000-0000-4000-8000-000000000203",
+    "restaurantUsername": "demo_restaurant_building",
+    "name": "Pierogi (6)",
+    "price": 12.00,
+    "stockQuantity": 15,
+    "status": "AVAILABLE",
+    "description": "Potato and cheese, fried onions"
+  },
+  {
+    "id": "34300000-0000-4000-8000-000000000204",
+    "restaurantUsername": "demo_restaurant_building",
+    "name": "Pouding Chômeur",
+    "price": 7.50,
+    "stockQuantity": 0,
+    "status": "SOLD_OUT",
+    "description": "Maple syrup cake"
+  },
+  {
+    "id": "34300000-0000-4000-8000-000000000301",
+    "restaurantUsername": "demo_restaurant_busy",
+    "name": "Grandma's Tourtière",
+    "price": 18.50,
+    "stockQuantity": 6,
+    "status": "AVAILABLE",
+    "description": "Spiced pork pie, family recipe"
+  },
+  {
+    "id": "34300000-0000-4000-8000-000000000302",
+    "restaurantUsername": "demo_restaurant_busy",
+    "name": "Butter Chicken",
+    "price": 16.00,
+    "stockQuantity": 10,
+    "status": "AVAILABLE",
+    "description": "With basmati rice"
+  },
+  {
+    "id": "34300000-0000-4000-8000-000000000303",
+    "restaurantUsername": "demo_restaurant_busy",
+    "name": "Pierogi (6)",
+    "price": 12.00,
+    "stockQuantity": 15,
+    "status": "AVAILABLE",
+    "description": "Potato and cheese, fried onions"
+  },
+  {
+    "id": "34300000-0000-4000-8000-000000000304",
+    "restaurantUsername": "demo_restaurant_busy",
+    "name": "Pouding Chômeur",
+    "price": 7.50,
+    "stockQuantity": 0,
+    "status": "SOLD_OUT",
+    "description": "Maple syrup cake"
   }
 ]

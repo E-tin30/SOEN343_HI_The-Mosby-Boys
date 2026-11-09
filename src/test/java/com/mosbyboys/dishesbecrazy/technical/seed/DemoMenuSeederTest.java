@@ -39,10 +39,22 @@ class DemoMenuSeederTest {
     // The menu runner also performs full preflight before opening a transaction.
 
     @Test
+    void invalidOrdersPreventMenuLookupsAndWrites() throws Exception {
+        var loader = spy(new DemoFixtureLoader(JsonMapper.builder().build()));
+        doAnswer(invocation -> loader.load(new ClassPathResource("demo/profiles.json"),
+                new ClassPathResource("demo/menu.json"),
+                new ByteArrayResource("[]".getBytes(StandardCharsets.UTF_8)))).when(loader).load();
+        var seeder = new DemoMenuSeeder(jdbc, new TransactionTemplate(manager), loader);
+
+        assertThrows(IllegalArgumentException.class, seeder::run);
+
+        verifyNoInteractions(jdbc, manager);
+    }
+    // A valid catalogue cannot hide invalid orders in the same production baseline.
+
+    @Test
     void insertsEachMenuForItsOwnRestaurantIdentity() throws Exception {
-        var fixtures = new DemoFixtureLoader(JsonMapper.builder().build()).load(
-                new ClassPathResource("demo/fixtures/multiple-profiles.json"),
-                new ClassPathResource("demo/fixtures/multiple-menu.json"));
+        var fixtures = new DemoFixtureLoader(JsonMapper.builder().build()).load();
         var loader = mock(DemoFixtureLoader.class);
         when(loader.load()).thenReturn(fixtures);
         var ids = new HashMap<String, UUID>();
@@ -65,5 +77,5 @@ class DemoMenuSeederTest {
         }
         verify(manager).commit(any());
     }
-    // Distinct menus retain ownership when several profiles share the restaurant role.
+    // All twelve production menu items retain ownership without contacting the shared database.
 }

@@ -28,6 +28,7 @@ import com.mosbyboys.dishesbecrazy.domain.ord.RestaurantStatus;
 import com.mosbyboys.dishesbecrazy.domain.ord.state.AcceptedState;
 import com.mosbyboys.dishesbecrazy.domain.ord.state.IllegalTransitionException;
 import com.mosbyboys.dishesbecrazy.domain.ord.state.PlacedState;
+import com.mosbyboys.dishesbecrazy.domain.ord.state.RefundedState;
 import com.mosbyboys.dishesbecrazy.domain.reg.Courier;
 import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
 import com.mosbyboys.dishesbecrazy.domain.reg.Operator;
@@ -374,6 +375,26 @@ class ORDFacadeTest {
         verify(orderService).findHistoryForCourier(courierId);
         verify(orderService, never()).findHistoryForAll();
     }
+
+    @Test
+    void operatorRefundSavesRefundedStateAndRecordsTheMatchingEvent() {
+        Order order = storedOrder();
+        order.accept();
+        order.startPreparing();
+        order.markReady();
+        order.pickUp();
+        order.deliver();
+        Operator operator = operator();
+        when(regFacade.getCurrentUser(operator.getUserId())).thenReturn(operator);
+
+        facade.refundOrder(operator.getUserId(), order.getId());
+
+        assertInstanceOf(RefundedState.class, order.getState());
+        verify(orderService).save(order);
+        verify(orderEventService).save(order.getId(), "DeliveredState", "RefundedState", operator.getUserId(), "REFUND");
+        assertEquals(0, queues.ready(restaurantId).size());
+    }
+    // Exercise the real permission policy and domain transition; stored state and refund history must agree.
 
     @Test
     void customerHistoryNeverLoadsCustomerNames() {

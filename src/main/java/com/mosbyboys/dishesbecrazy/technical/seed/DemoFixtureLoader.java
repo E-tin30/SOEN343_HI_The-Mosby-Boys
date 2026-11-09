@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -17,6 +18,7 @@ import com.mosbyboys.dishesbecrazy.domain.ord.RestaurantStatus;
 import com.mosbyboys.dishesbecrazy.domain.reg.Role;
 import com.mosbyboys.dishesbecrazy.technical.seed.DemoFixtures.Account;
 import com.mosbyboys.dishesbecrazy.technical.seed.DemoFixtures.MenuSeed;
+import com.mosbyboys.dishesbecrazy.technical.seed.DemoFixtures.OrderSeed;
 
 import lombok.RequiredArgsConstructor;
 import tools.jackson.databind.json.JsonMapper;
@@ -27,7 +29,8 @@ public class DemoFixtureLoader {
     private final JsonMapper json;
 
     public DemoFixtures load() throws IOException {
-        return load(new ClassPathResource("demo/profiles.json"), new ClassPathResource("demo/menu.json"));
+        return load(new ClassPathResource("demo/profiles.json"), new ClassPathResource("demo/menu.json"),
+                new ClassPathResource("demo/orders.json"));
     }
     // Uses the same fixture sources for startup seeding and future restoration.
 
@@ -43,9 +46,20 @@ public class DemoFixtureLoader {
 
         validateAccounts(accounts);
         validateMenu(items, accounts);
-        return new DemoFixtures(Arrays.asList(accounts), Arrays.asList(items));
+        return new DemoFixtures(Arrays.asList(accounts), Arrays.asList(items), List.of());
     }
-    // Validates both files before a caller can start Auth provisioning or database writes.
+    // Catalogue-only loading keeps custom profile/menu fixtures independent of the production orders.
+
+    public DemoFixtures load(Resource profiles, Resource menu, Resource orders) throws IOException {
+        DemoFixtures catalogue = load(profiles, menu);
+        OrderSeed[] entries;
+        try (var input = orders.getInputStream()) {
+            entries = json.readValue(input, OrderSeed[].class);
+        }
+        new DemoOrderFixtureValidator(catalogue).validate(entries);
+        return new DemoFixtures(catalogue.accounts(), catalogue.menuItems(), Arrays.asList(entries));
+    }
+    // Default seeding validates the complete baseline before either runner can contact external services.
 
     private void validateAccounts(Account[] accounts) {
         Assert.isTrue(accounts != null && accounts.length > 0, "Demo profile configuration has no accounts.");
