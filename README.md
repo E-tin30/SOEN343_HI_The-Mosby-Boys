@@ -84,8 +84,34 @@ The seed profile runs without an HTTP server and exits after the runners finish.
 
 Normal startup loads persisted waiting orders into the in-memory queues. Repeating the seed command skips
 existing orders as a unit, preserving changed states and additional history. Other database records are retained,
-so pre-existing orders can change the shared database's queue counts. This is initial population; the later Reset
-feature will restore the agreed starting dataset.
+so pre-existing orders can change the shared database's queue counts. This is initial population.
+
+### Database restoration for Reset
+
+`DemoDataRestorer.restore()` is the database step behind the upcoming operator Reset action.
+It loads and validates the same JSON fixtures, then restores the database in one transaction:
+
+- Restore demo profile fields, OPEN restaurant statuses, courier profile state/location and menu stock/availability.
+- Recreate deleted public profiles and fixture menu items under the existing Auth IDs.
+- Remove orders belonging to a fixture customer **or** fixture restaurant, including their lines, events and bills.
+  Remove other bills owned by those demo customers/restaurants and extra menu items under demo restaurants.
+- Reinsert the twelve fixture orders, twelve lines and twenty-eight events, restoring the persisted
+  preparation counts to 0 / 3 / 6 and the original delivered/rejected/cancelled customer history.
+
+For example: pause a demo restaurant, sell out its menu and progress an accepted order to delivery.
+Restoration reopens that restaurant, restores its stock, and puts that order and its event history back
+to the fixture state. Orders created during the walkthrough disappear. Repeat restoration gives the same baseline.
+
+Existing Auth accounts, passwords and sessions stay unchanged, including the operator login. Missing Auth accounts
+require initial `demo-seed` setup. Unrelated team data is preserved; fixture ID collisions or unrelated orders
+referencing an extra demo menu item stop restoration with an error. Any database failure rolls back the entire step.
+Existing profile/menu creation times are retained; recreated rows receive their database-default creation times.
+Order and event times come from the fixtures. Bills start empty for demo-owned activity; no payment API is called.
+
+This operation is not run automatically at startup and has no HTTP endpoint or button yet. The next integration
+must stop concurrent demo commands, call restoration, rebuild the in-memory order queues and restore DLV/dispatch
+state before reporting Reset success. Current courier profile values follow the existing fixtures; DLV assignments
+and runtime availability still need their module integration.
 
 ## Tests
 
@@ -93,8 +119,8 @@ feature will restore the agreed starting dataset.
 ./mvnw test
 ```
 
-Fixture/order-seeding checks use isolated in-memory databases and mocked services:
+Fixture, seeding and restoration checks use isolated in-memory databases and mocked services:
 
 ```sh
-./mvnw -o -Dtest=DemoOrderSeederTest,DemoFixtureLoaderTest,DemoOrderFixtureTest,DemoProfileSeederTests,DemoMenuSeederTest test
+./mvnw -o -Dtest=DemoDataRestorerTest,DemoOrderSeederTest,DemoFixtureLoaderTest,DemoOrderFixtureTest,DemoProfileSeederTests,DemoMenuSeederTest test
 ```
