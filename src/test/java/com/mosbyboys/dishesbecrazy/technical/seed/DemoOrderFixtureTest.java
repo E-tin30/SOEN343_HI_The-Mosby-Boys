@@ -44,7 +44,7 @@ class DemoOrderFixtureTest {
             assertEquals("demo_customer", order.customerUsername());
             boolean building = order.restaurantUsername().equals("demo_restaurant_building");
             assertEquals(0, new BigDecimal(building ? "17.25" : "14.75").compareTo(order.subtotal()));
-            assertEquals(building ? "Spinach Ravioli" : "Chicken Burrito", order.lines().getFirst().menuItemName());
+            assertEquals(building ? "Handmade Spinach Ravioli" : "Homemade Chicken Burrito", order.lines().getFirst().menuItemName());
             if (order.state().equals("AcceptedState")) {
                 assertNull(order.courierUsername());
             }

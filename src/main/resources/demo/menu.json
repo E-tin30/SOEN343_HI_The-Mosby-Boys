@@ -6,7 +6,7 @@
     "price": 18.50,
     "stockQuantity": 6,
     "status": "AVAILABLE",
-    "description": "Spiced pork pie, family recipe"
+    "description": "A slice of Sam's family pork pie, baked at home in Montreal"
   },
   {
     "id": "34300000-0000-4000-8000-000000000102",
@@ -15,7 +15,7 @@
     "price": 16.00,
     "stockQuantity": 10,
     "status": "AVAILABLE",
-    "description": "With basmati rice"
+    "description": "Sam's homemade butter chicken with basmati rice"
   },
   {
     "id": "34300000-0000-4000-8000-000000000103",
@@ -24,7 +24,7 @@
     "price": 12.00,
     "stockQuantity": 15,
     "status": "AVAILABLE",
-    "description": "Potato and cheese, fried onions"
+    "description": "Six hand-folded potato and cheese dumplings with fried onions"
   },
   {
     "id": "34300000-0000-4000-8000-000000000104",
@@ -33,61 +33,61 @@
     "price": 7.50,
     "stockQuantity": 0,
     "status": "SOLD_OUT",
-    "description": "Maple syrup cake"
+    "description": "A small batch of maple syrup cake from Sam's family recipe"
   },
   {
     "id": "34300000-0000-4000-8000-000000000201",
     "restaurantUsername": "demo_restaurant_building",
-    "name": "Mushroom Risotto",
+    "name": "Sunday Mushroom Risotto",
     "price": 19.25,
     "stockQuantity": 6,
     "status": "AVAILABLE",
-    "description": "Creamy arborio rice with mushrooms and parmesan"
+    "description": "Robin's Sunday rice pot with mushrooms and parmesan"
   },
   {
     "id": "34300000-0000-4000-8000-000000000202",
     "restaurantUsername": "demo_restaurant_building",
-    "name": "Spinach Ravioli",
+    "name": "Handmade Spinach Ravioli",
     "price": 17.25,
     "stockQuantity": 10,
     "status": "AVAILABLE",
-    "description": "Ricotta-filled pasta with spinach and tomato sauce"
+    "description": "Pasta folded by hand in Robin's kitchen with spinach, ricotta and tomato sauce"
   },
   {
     "id": "34300000-0000-4000-8000-000000000203",
     "restaurantUsername": "demo_restaurant_building",
-    "name": "Margherita Flatbread",
+    "name": "Garden Tomato Flatbread",
     "price": 13.25,
     "stockQuantity": 15,
     "status": "AVAILABLE",
-    "description": "Tomato, mozzarella and fresh basil"
+    "description": "Robin's home-baked flatbread with tomato, mozzarella and basil"
   },
   {
     "id": "34300000-0000-4000-8000-000000000204",
     "restaurantUsername": "demo_restaurant_building",
-    "name": "Tiramisu",
+    "name": "Robin's Tiramisu",
     "price": 8.25,
     "stockQuantity": 0,
     "status": "SOLD_OUT",
-    "description": "Coffee-soaked sponge with mascarpone"
+    "description": "A small batch of Robin's coffee and mascarpone dessert"
   },
   {
     "id": "34300000-0000-4000-8000-000000000301",
     "restaurantUsername": "demo_restaurant_busy",
-    "name": "Carne Asada Bowl",
+    "name": "Home Braised Beef Bowl",
     "price": 20.75,
     "stockQuantity": 6,
     "status": "AVAILABLE",
-    "description": "Grilled beef with rice, beans and salsa"
+    "description": "Casey's slow-braised beef with rice, beans and homemade salsa"
   },
   {
     "id": "34300000-0000-4000-8000-000000000302",
     "restaurantUsername": "demo_restaurant_busy",
-    "name": "Chicken Burrito",
+    "name": "Homemade Chicken Burrito",
     "price": 14.75,
     "stockQuantity": 10,
     "status": "AVAILABLE",
-    "description": "Chicken, rice and black beans in a flour tortilla"
+    "description": "A burrito from Casey's kitchen with chicken, rice and black beans"
   },
   {
     "id": "34300000-0000-4000-8000-000000000303",
@@ -96,15 +96,15 @@
     "price": 11.75,
     "stockQuantity": 15,
     "status": "AVAILABLE",
-    "description": "Corn tortillas with black beans, slaw and lime"
+    "description": "Three tacos with Casey's simmered black beans, slaw and lime"
   },
   {
     "id": "34300000-0000-4000-8000-000000000304",
     "restaurantUsername": "demo_restaurant_busy",
-    "name": "Churros",
+    "name": "Cinnamon Churros",
     "price": 6.75,
     "stockQuantity": 0,
     "status": "SOLD_OUT",
-    "description": "Cinnamon sugar pastries with chocolate dip"
+    "description": "A small batch of Casey's cinnamon sugar churros with chocolate dip"
   }
 ]
