@@ -1,3 +1,4 @@
+import { useOrderAvailability } from "./useOrderAvailability";
 import {useEffect, useRef, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {useCart} from "../CartContext";
@@ -36,6 +37,10 @@ export default function CartPage() {
     const [pricingError, setPricingError] = useState("");
 
     const isEmpty = !cart || cart.items.length === 0;
+    const availability = useOrderAvailability(cart, accessToken);
+    const isOrderDisabled = !availability.allowed || placingOrder || isEmpty;
+    const canRetryAvailability = !availability.allowed && !availability.checking;
+    // Applies availability to Place Order and offers retry only after a check has finished.
 
     useEffect(() => {
         if (!cart || cart.items.length === 0 || !accessToken) {
@@ -116,17 +121,29 @@ export default function CartPage() {
         setCheckout(true);
     }
 
+    const handleRetryAvailability = () => {
+        log("command", "Refresh order availability");
+        void availability.refreshAvailability();
+    };
+    // Starts a customer-requested retry; the hook handles lookup errors and updates the disabled state.
+
     const placeOrder = async () => {
-        if (!cart || !accessToken) return;
+        if (!cart || !accessToken || isOrderDisabled) {
+            return;
+        }
+        // Stops placement when the current selection/session is missing or R-DASH-04 blocks the order.
 
         setPlacingOrder(true);
         setOrderError("");
 
-        //call the stripe payment form to submit
-        paymentFormRef.current?.submitPayment();
-
-        //rest of placing order
         try {
+            const canPlaceOrder = await availability.refreshAvailability();
+            if (!canPlaceOrder) {
+                return;
+            }
+            // Rechecks immediately before placement in case availability changed after rendering.
+            paymentFormRef.current?.submitPayment();
+
             log("command", "POST /placeOrder");
             const response = await fetch("http://localhost:8080/placeOrder", {
                 method: "POST",
@@ -160,6 +177,8 @@ export default function CartPage() {
             const message = error instanceof Error ? error.message : "Something went wrong.";
             log("error", `POST /placeOrder: ${message}`);
             setOrderError(message);
+            void availability.refreshAvailability();
+            // Refreshes the disabled state after a possible backend availability rejection.
         } finally {
             setPlacingOrder(false);
         }
@@ -316,6 +335,23 @@ export default function CartPage() {
                                 </p>
                             )}
 
+                            {availability.reason && (
+                                <p id="order-availability" className="page__status" role="status">
+                                    {availability.reason}
+                                </p>
+                            )}
+                            {/* Explains the current Place Order restriction and announces updates accessibly. */}
+                            {canRetryAvailability && (
+                                <Button
+                                    variant="secondary"
+                                    onClick={handleRetryAvailability}
+                                    disabled={placingOrder}
+                                >
+                                    Retry availability
+                                </Button>
+                            )}
+                            {/* Lets the customer rerun a completed blocked/failed check and logs that command. */}
+
                             {orderError && (
                                 <p className="page__status page__status--error" role="alert">
                                     Error: {orderError}
@@ -370,9 +406,10 @@ export default function CartPage() {
                                     }} disabled={placingOrder}>
                                         Back to Cart
                                     </Button>
-                                    <Button onClick={placeOrder} disabled={placingOrder}>
+                                    <Button onClick={placeOrder} disabled={isOrderDisabled} aria-describedby={availability.reason ? "order-availability" : undefined}>
                                         {placingOrder ? "Placing Order…" : "Pay and Place Order"}
                                     </Button>
+                                    {/* Only Place Order receives the availability restriction and its explanatory text. */}
                                 </div>
                             </section>
                         )}
