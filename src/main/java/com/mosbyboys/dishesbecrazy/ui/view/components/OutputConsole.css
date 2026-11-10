@@ -27,7 +27,7 @@
   color: var(--mustard);
 }
 
-/* keep page content from hiding behind the open console */
-body:has(.output-console[open]) {
-  padding-bottom: 25vh;
+/* keep page content from hiding behind the console (height set by OutputConsole.tsx) */
+body {
+  padding-bottom: var(--console-height, 0px);
 }
