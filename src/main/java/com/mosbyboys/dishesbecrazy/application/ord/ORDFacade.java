@@ -12,7 +12,8 @@ import com.mosbyboys.dishesbecrazy.domain.reg.Role;
 import com.mosbyboys.dishesbecrazy.domain.reg.User;
 import com.mosbyboys.dishesbecrazy.domain.ord.MenuItem;
 import com.mosbyboys.dishesbecrazy.domain.ord.OrderStateChanged;
-import org.springframework.context.ApplicationEventPublisher;
+import com.mosbyboys.dishesbecrazy.domain.ord.OrderObserver;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
 import jakarta.transaction.Transactional;
@@ -34,13 +35,21 @@ No per-request data in fields, Spring only makes one of these. (Singleton) */
 public class ORDFacade {
 
     private final OrderService orderService;
-    private final ApplicationEventPublisher eventPublisher;
+    private final List<OrderObserver> subscribers = new CopyOnWriteArrayList<>();
     private final PermissionPolicy permissionPolicy;
     private final OrderQueues queues;
     private final MenuService menuService;
     private final RestaurantService restaurantService;
     private final PricingService  pricingService;
     private final REGFacade regFacade;
+
+    public void subscribe(OrderObserver observer) {
+        subscribers.add(observer);
+    }
+
+    public void unsubscribe(OrderObserver observer) {
+        subscribers.remove(observer);
+    }
 
     @Transactional
     public List<Restaurant> getRestaurants(User user) {
@@ -327,9 +336,16 @@ public class ORDFacade {
         return pricingService.calculateTotal(order.getSubtotal());
     }
 
-    // Tells every observer that an order changed state. The facade doesn't know who is listening.
+    // Builds the event for one transition and hands it to every subscriber.
     private void publishTransition(Order order, String before, UUID performedBy, String action) {
-        eventPublisher.publishEvent(new OrderStateChanged(
+        notifySubscribers(new OrderStateChanged(
                 order.getId(), before, order.getState().toString(), performedBy, action));
+    }
+
+    // The template's notifySubscribers: calls update(context) on each subscriber in turn.
+    private void notifySubscribers(OrderStateChanged event) {
+        for (OrderObserver subscriber : subscribers) {
+            subscriber.update(event);
+        }
     }
 }
