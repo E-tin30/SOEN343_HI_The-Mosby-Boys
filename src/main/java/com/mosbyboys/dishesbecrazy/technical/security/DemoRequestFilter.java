@@ -24,7 +24,7 @@ public class DemoRequestFilter extends OncePerRequestFilter {
             default -> false;
         };
     }
-    // Login/profile loading remain available for recovery. Reset needs exclusive, rather than shared, access.
+    // Login/profile loading remain available for recovery. The Reset endpoint acquires exclusive access in its service.
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)

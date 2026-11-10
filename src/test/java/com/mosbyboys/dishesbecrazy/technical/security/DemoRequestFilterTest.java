@@ -91,7 +91,7 @@ class DemoRequestFilterTest {
     }
 
     @Test
-    void recoveryBlocksNormalRequestsButAllowsLoginAndAccessToTheFutureResetRoute() throws Exception {
+    void recoveryBlocksNormalRequestsButExemptsLoginAndTheResetPath() throws Exception {
         try (var restoration = access.beginRestoration()) {
             restoration.databaseRestored();
         }
@@ -111,7 +111,7 @@ class DemoRequestFilterTest {
         }
         mvc.perform(post("/placeOrder").with(jwt())).andExpect(status().isOk());
     }
-    // No production Reset endpoint exists yet; authenticated POST reaches the normal 404 instead of being blocked by recovery.
+    // This filter-only context has no Reset controller; its 404 proves exemption. Controller tests cover the real route.
 
     @Test
     void accessIsHeldThroughSynchronousAfterCommitCallbacks() throws Exception {

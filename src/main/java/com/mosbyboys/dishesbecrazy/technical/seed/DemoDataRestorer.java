@@ -38,7 +38,7 @@ public class DemoDataRestorer {
             }
         });
     }
-    // The future Reset coordinator calls this database step while demo commands are stopped, then rebuilds runtime state.
+    // The Reset coordinator holds exclusive request access through this database step and subsequent queue rebuilding.
 
     private MapSqlParameterSource scope(DemoFixtures baseline, Map<String, UUID> users) {
         return new MapSqlParameterSource()

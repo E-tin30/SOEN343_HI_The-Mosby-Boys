@@ -41,5 +41,5 @@ public class ResetService {
         }
         // Hold exclusive access through commit and rebuilding; a runtime failure keeps normal requests blocked for retry.
     }
-    // Internal preparation only: the request guard must cover writers; DLV integration is required before exposing Reset.
+    // Restores the current database/ORD baseline; extend this coordination when delivery runtime state is integrated.
 }
