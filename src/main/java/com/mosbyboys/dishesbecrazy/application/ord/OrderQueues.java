@@ -9,6 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.stereotype.Component;
 
+import com.mosbyboys.dishesbecrazy.domain.ord.OrderQueue;
 import com.mosbyboys.dishesbecrazy.domain.ord.PlacedQueue;
 import com.mosbyboys.dishesbecrazy.domain.ord.PreparationQueue;
 import com.mosbyboys.dishesbecrazy.domain.ord.ReadyQueue;
@@ -39,6 +40,16 @@ public class OrderQueues {
     public ReadyQueue ready(UUID restaurantId) {
         return ready.computeIfAbsent(require(restaurantId), ReadyQueue::new);
     }
+
+    public void clear() {
+        placed.values().forEach(OrderQueue::clear);
+        preparation.values().forEach(OrderQueue::clear);
+        ready.values().forEach(OrderQueue::clear);
+        placed.clear();
+        preparation.clear();
+        ready.clear();
+    }
+    // Clears retained queue references as well as registry entries; callers must pause order changes first.
 
     // helper method to check restaurant id is not null
     private static UUID require(UUID restaurantId) {

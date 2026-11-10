@@ -1,8 +1,10 @@
+import { useOrderAvailability } from "./useOrderAvailability";
+import { loggedFetch, readJson, RequestError } from "../api/loggedFetch";
 import {useEffect, useRef, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {useCart} from "../CartContext";
 import {useAuth} from "../AuthContext";
-import {log} from "../outputLog";
+import {log, logError} from "../outputLog";
 import AppHeader from "../components/AppHeader";
 import Button from "../components/Button";
 import Heading from "../components/Heading";
@@ -31,11 +33,16 @@ export default function CartPage() {
     const [placingOrder, setPlacingOrder] = useState(false);
     const [orderError, setOrderError] = useState("");
     const [checkout, setCheckout] = useState(false);
-    const [clientSecret, setClientSecret] = useState();
+    const [clientSecret, setClientSecret] = useState<string>();
+    // Types the checkout value returned by the shared JSON reader without changing its use.
     const [pricing, setPricing] = useState<PricingBreakdown | null>(null);
     const [pricingError, setPricingError] = useState("");
 
     const isEmpty = !cart || cart.items.length === 0;
+    const availability = useOrderAvailability(cart, accessToken);
+    const isOrderDisabled = !availability.allowed || placingOrder || isEmpty;
+    const canRetryAvailability = !availability.allowed && !availability.checking;
+    // Applies availability to Place Order and offers retry only after a check has finished.
 
     useEffect(() => {
         if (!cart || cart.items.length === 0 || !accessToken) {
@@ -43,11 +50,14 @@ export default function CartPage() {
             return;
         }
 
+        setPricing(null);
+        setPricingError("");
+        // Clears the previous pricing display before loading the current selection.
         const controller = new AbortController();
 
         const fetchPricing = async () => {
             try {
-                const response = await fetch(
+                const response = await loggedFetch(
                     "http://localhost:8080/payments/breakdown",
                     {
                         method: "POST",
@@ -66,18 +76,18 @@ export default function CartPage() {
                     }
                 );
 
-                if (!response.ok) {
-                    throw new Error("Failed to retrieve pricing breakdown.");
-                }
-
-                const data: PricingBreakdown = await response.json();
-
+                const data = await readJson<PricingBreakdown>(response);
+                // Routes pricing request and JSON errors through the existing application console.
+                if (controller.signal.aborted) return;
+                // Prevents an obsolete pricing response from updating the current cart display.
                 setPricing(data);
                 setPricingError("");
             } catch (error) {
-                if (error instanceof Error && error.name !== "AbortError") {
-                    setPricingError(error.message);
+                if (!controller.signal.aborted) {
+                    logError(error, "Could not load the pricing breakdown.");
+                    setPricingError("Could not load the pricing breakdown.");
                 }
+                // Shows/logs genuine pricing failures while ignoring deliberate request cancellation.
             }
         };
 
@@ -89,46 +99,56 @@ export default function CartPage() {
 
     const proceedToCheckout = async () => {
         if (!cart || !accessToken) return;
-
-        const response = await fetch(
-            "http://localhost:8080/payments/create-payment-intent",
-            {
+        setOrderError("");
+        log("command", "Continue to checkout");
+        // Records the local checkout action; availability does not add a restriction to this step.
+        try {
+            const response = await loggedFetch("http://localhost:8080/payments/create-payment-intent", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${accessToken}`,
-                },
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
                 body: JSON.stringify({
                     userId: user?.id,
                     restaurantId: cart.restaurantId,
-                    items: cart.items.map((item) => ({
-                        menuItemId: item.menuItem.id,
-                        quantity: item.quantity,
-                        price: item.menuItem.price,
-                    })),
+                    items: cart.items.map((item) => ({ menuItemId: item.menuItem.id, quantity: item.quantity, price: item.menuItem.price })),
                 }),
-            }
-        );
+            });
+            const data = await readJson<{ clientSecret: string }>(response);
+            setClientSecret(data.clientSecret);
+            setCheckout(true);
+            // Keeps the existing checkout flow while logging payment-intent request and parsing failures.
+        } catch (error) {
+            logError(error, "Could not start checkout.");
+            setOrderError("Could not start checkout. Please try again.");
+            // Exposes checkout errors in the page and console without printing the client secret.
+        }
+    };
 
-        const data = await response.json();
-
-        setClientSecret(data.clientSecret);
-        setCheckout(true);
-    }
+    const handleRetryAvailability = () => {
+        log("command", "Refresh order availability");
+        void availability.refreshAvailability();
+    };
+    // Starts a customer-requested retry; the hook handles lookup errors and updates the disabled state.
 
     const placeOrder = async () => {
-        if (!cart || !accessToken) return;
+        if (!cart || !accessToken || isOrderDisabled) {
+            return;
+        }
+        // Stops placement when the current selection/session is missing or R-DASH-04 blocks the order.
 
         setPlacingOrder(true);
         setOrderError("");
 
-        //call the stripe payment form to submit
-        paymentFormRef.current?.submitPayment();
-
-        //rest of placing order
+        log("command", "Pay and place order");
+        // Records the user action separately from its subsequent backend request.
         try {
-            log("command", "POST /placeOrder");
-            const response = await fetch("http://localhost:8080/placeOrder", {
+            const canPlaceOrder = await availability.refreshAvailability();
+            if (!canPlaceOrder) {
+                return;
+            }
+            // Rechecks immediately before placement in case availability changed after rendering.
+            paymentFormRef.current?.submitPayment();
+
+            const response = await loggedFetch("http://localhost:8080/placeOrder", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -146,20 +166,19 @@ export default function CartPage() {
                 }),
             });
 
-            if (!response.ok) {
-                throw new Error(await response.text() || "Failed to place order.");
-            }
-
+            const order = await readJson<{ id: string }>(response);
+            // Uses the shared parser so an unreadable order confirmation is also logged.
             clearCart();
             alert("Order placed successfully!");
-
-            //wait for backend before redirecting
-            const order = await response.json();
             navigate(`/order-summary/${order.id}`);
         } catch (error) {
-            const message = error instanceof Error ? error.message : "Something went wrong.";
-            log("error", `POST /placeOrder: ${message}`);
-            setOrderError(message);
+            logError(error, "Could not place the order.");
+            setOrderError(error instanceof RequestError
+                ? error.message
+                : "Could not place the order. Please refresh availability and try again.");
+            // Shows the request helper's safe explanation while retaining generic feedback for unexpected failures.
+            void availability.refreshAvailability();
+            // Reports placement failure and refreshes the disabled state after a possible backend rejection.
         } finally {
             setPlacingOrder(false);
         }
@@ -316,6 +335,23 @@ export default function CartPage() {
                                 </p>
                             )}
 
+                            {availability.reason && (
+                                <p id="order-availability" className="page__status" role="status">
+                                    {availability.reason}
+                                </p>
+                            )}
+                            {/* Explains the current Place Order restriction and announces updates accessibly. */}
+                            {canRetryAvailability && (
+                                <Button
+                                    variant="secondary"
+                                    onClick={handleRetryAvailability}
+                                    disabled={placingOrder}
+                                >
+                                    Retry availability
+                                </Button>
+                            )}
+                            {/* Lets the customer rerun a completed blocked/failed check and logs that command. */}
+
                             {orderError && (
                                 <p className="page__status page__status--error" role="alert">
                                     Error: {orderError}
@@ -365,14 +401,17 @@ export default function CartPage() {
 
                                 <div className="cart-summary__actions">
                                     <Button variant="secondary" onClick={() => {
+                                        log("command", "Back to cart");
+                                        // Records this local action while preserving the existing return-to-cart flow.
                                         setCheckout(false);
                                         setClientSecret(undefined);
                                     }} disabled={placingOrder}>
                                         Back to Cart
                                     </Button>
-                                    <Button onClick={placeOrder} disabled={placingOrder}>
+                                    <Button onClick={placeOrder} disabled={isOrderDisabled} aria-describedby={availability.reason ? "order-availability" : undefined}>
                                         {placingOrder ? "Placing Order…" : "Pay and Place Order"}
                                     </Button>
+                                    {/* Only Place Order receives the availability restriction and its explanatory text. */}
                                 </div>
                             </section>
                         )}

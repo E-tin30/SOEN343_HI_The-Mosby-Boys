@@ -100,7 +100,9 @@ createRoot(document.getElementById("root")!).render(
                     <Route
                         path="/order-summary/:orderId"
                         element={
-                            <OrderSummaryPage />
+                            <ProtectedRoute allowedRoles={["CUSTOMER"]}>
+                                <OrderSummaryPage />
+                            </ProtectedRoute>
                         }
                     />
                     <Route
