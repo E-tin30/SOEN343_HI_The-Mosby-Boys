@@ -121,11 +121,10 @@ export default function RestaurantOrdersPage() {
         <Button variant="secondary" onClick={() => navigate("/restaurant/home")}>
           Back to home
         </Button>
+        <RestaurantStatusControl variant="header" />
       </AppHeader>
 
       <main className="orders-board">
-        <RestaurantStatusControl />
-
         {error && (
           <p className="page__status page__status--error" role="alert">
             Error: {error}

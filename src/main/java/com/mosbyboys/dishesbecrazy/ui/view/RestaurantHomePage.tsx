@@ -41,10 +41,7 @@ export default function RestaurantHomePage() {
           </Button>
         </section>
 
-        <RestaurantStatusControl
-          className="home-card card"
-          onRestaurant={(r) => setRestaurantName(r.name)}
-        />
+        <RestaurantStatusControl onRestaurant={(r) => setRestaurantName(r.name)} />
 
         <section className="home-card card">
           <Heading level={3}>Development placeholder</Heading>
