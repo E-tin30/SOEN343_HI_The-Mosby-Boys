@@ -393,7 +393,7 @@ class ORDFacadeTest {
 
         assertInstanceOf(RefundedState.class, order.getState());
         verify(orderService).save(order);
-        verify(orderEventService).save(order.getId(), "DeliveredState", "RefundedState", operator.getUserId(), "REFUND");
+        verify(subscriber).update(new OrderStateChanged(order.getId(), "DeliveredState", "RefundedState", operator.getUserId(), "REFUND"));
         assertEquals(0, queues.ready(restaurantId).size());
     }
     // Exercise the real permission policy and domain transition; stored state and refund history must agree.
@@ -433,7 +433,7 @@ class ORDFacadeTest {
         assertEquals("A B", views.get(0).customerNames().get(customerId));
     }
 
-        @Test
+    @Test
     void everySubscriberIsNotifiedOfATransition() {
         OrderObserver second = mock(OrderObserver.class);
         facade.subscribe(second);
@@ -456,7 +456,6 @@ class ORDFacadeTest {
 
         verifyNoInteractions(subscriber);
     }
-}
     // pause / open restaurant
 
     // an operator pauses an OPEN restaurant: the restaurant that gets saved is PAUSED
