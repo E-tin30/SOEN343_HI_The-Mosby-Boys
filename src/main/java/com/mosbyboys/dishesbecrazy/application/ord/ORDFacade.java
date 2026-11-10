@@ -348,4 +348,25 @@ public class ORDFacade {
             subscriber.update(event);
         }
     }
+    
+    @Transactional
+    public Restaurant openRestaurant(UUID userId, UUID restaurantId) {
+        Restaurant restaurant = restaurantService.load(restaurantId);
+        User user = regFacade.getCurrentUser(userId);
+        permissionPolicy.checkCanOpen(user, restaurant);
+        restaurant.open();
+        restaurantService.save(restaurant);
+        return restaurant;
+    }
+
+    @Transactional
+    public Restaurant pauseRestaurant(UUID userId, UUID restaurantId) {
+        Restaurant restaurant = restaurantService.load(restaurantId);
+        User user = regFacade.getCurrentUser(userId);
+        permissionPolicy.checkCanPause(user, restaurant);
+        restaurant.pause();
+        restaurantService.save(restaurant);
+        return restaurant;
+    }
+
 }

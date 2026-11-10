@@ -36,10 +36,13 @@ public class Restaurant extends User {
     }
 
     public void pause() {
+        if (this.status == RestaurantStatus.CLOSED) {
+            throw new IllegalStateException("Cannot pause a closed restaurant.");
+        }
         this.status = RestaurantStatus.PAUSED;
     }
 
-    public void reopen() {
+    public void open() {
         this.status = RestaurantStatus.OPEN;
     }
 
