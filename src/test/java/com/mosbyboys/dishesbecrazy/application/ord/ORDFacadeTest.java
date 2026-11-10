@@ -3,7 +3,6 @@ package com.mosbyboys.dishesbecrazy.application.ord;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.*;
 
 import java.math.BigDecimal;
@@ -32,11 +31,13 @@ import com.mosbyboys.dishesbecrazy.domain.ord.state.RefundedState;
 import com.mosbyboys.dishesbecrazy.domain.reg.Courier;
 import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
 import com.mosbyboys.dishesbecrazy.domain.reg.Operator;
+import com.mosbyboys.dishesbecrazy.domain.ord.OrderObserver;
+import com.mosbyboys.dishesbecrazy.domain.ord.OrderStateChanged;
 
 class ORDFacadeTest {
 
     private OrderService orderService;
-    private OrderEventService orderEventService;
+    private OrderObserver subscriber;
     private MenuService menuService;
     private RestaurantService restaurantService;
     private PricingService pricingService;
@@ -51,7 +52,7 @@ class ORDFacadeTest {
     @BeforeEach
     void setUp() {
         orderService = mock(OrderService.class);
-        orderEventService = mock(OrderEventService.class);
+        subscriber = mock(OrderObserver.class);
         menuService = mock(MenuService.class);
         restaurantService = mock(RestaurantService.class);
         pricingService = mock(PricingService.class);
@@ -60,8 +61,9 @@ class ORDFacadeTest {
         pricingService = mock(PricingService.class);
         queues = new OrderQueues();
         // same order as the fields in ORDFacade
-        facade = new ORDFacade(orderService, orderEventService, new PermissionPolicy(),
-                queues, menuService, restaurantService, pricingService, regFacade);
+        facade = new ORDFacade(orderService, new PermissionPolicy(),
+                        queues, menuService, restaurantService, pricingService, regFacade);
+        facade.subscribe(subscriber);
         // The facade looks the caller up through REGFacade, so tell the mock who each id is.
         when(regFacade.getCurrentUser(customerId)).thenReturn(customer());
         when(regFacade.getCurrentUser(restaurantId)).thenReturn(owner(restaurantId));
@@ -135,7 +137,7 @@ class ORDFacadeTest {
         assertEquals(customerId, order.getCustomerId());
         assertTrue(queues.placed(restaurantId).contains(order.getId()));
         verify(orderService).save(order);
-        verify(orderEventService).save(eq(order.getId()), isNull(), eq("PlacedState"), any(), eq("PLACE"));
+        verify(subscriber).update(new OrderStateChanged(order.getId(), null, "PlacedState", customerId, "PLACE"));
     }
 
     @ParameterizedTest
@@ -148,7 +150,7 @@ class ORDFacadeTest {
         assertThrows(IllegalArgumentException.class,
                 () -> facade.placeOrder(customer(), restaurantId, List.of(line())));
 
-        verifyNoInteractions(orderService, orderEventService);
+        verifyNoInteractions(orderService, subscriber);
         assertEquals(0, queues.placed(restaurantId).size());
     }
     // Covers PAUSED and CLOSED restaurants and verifies rejection creates no order, event, or queue entry.
@@ -164,7 +166,7 @@ class ORDFacadeTest {
         assertThrows(IllegalArgumentException.class,
                 () -> facade.placeOrder(customer(), restaurantId, List.of(line())));
 
-        verifyNoInteractions(orderService, orderEventService);
+        verifyNoInteractions(orderService, subscriber);
         assertEquals(0, queues.placed(restaurantId).size());
     }
     // Confirms the existing sold-out guard rejects placement without persistence or queue side effects.
@@ -189,7 +191,7 @@ class ORDFacadeTest {
         assertInstanceOf(AcceptedState.class, order.getState());
         assertFalse(queues.placed(restaurantId).contains(order.getId()));
         assertTrue(queues.preparation(restaurantId).contains(order.getId()));
-        verify(orderEventService).save(eq(order.getId()), eq("PlacedState"), eq("AcceptedState"), any(), eq("ACCEPT"));
+        verify(subscriber).update(new OrderStateChanged(order.getId(), "PlacedState", "AcceptedState", restaurantId, "ACCEPT"));
     }
 
     @Test
@@ -391,7 +393,7 @@ class ORDFacadeTest {
 
         assertInstanceOf(RefundedState.class, order.getState());
         verify(orderService).save(order);
-        verify(orderEventService).save(order.getId(), "DeliveredState", "RefundedState", operator.getUserId(), "REFUND");
+        verify(subscriber).update(new OrderStateChanged(order.getId(), "DeliveredState", "RefundedState", operator.getUserId(), "REFUND"));
         assertEquals(0, queues.ready(restaurantId).size());
     }
     // Exercise the real permission policy and domain transition; stored state and refund history must agree.
@@ -431,6 +433,29 @@ class ORDFacadeTest {
         assertEquals("A B", views.get(0).customerNames().get(customerId));
     }
 
+    @Test
+    void everySubscriberIsNotifiedOfATransition() {
+        OrderObserver second = mock(OrderObserver.class);
+        facade.subscribe(second);
+        Order order = storedOrder();
+        queues.placed(restaurantId).enqueue(order.getId());
+
+        facade.acceptOrder(restaurantId, order.getId());
+
+        verify(subscriber).update(any(OrderStateChanged.class));
+        verify(second).update(any(OrderStateChanged.class));
+    }
+
+    @Test
+    void anUnsubscribedObserverIsNoLongerNotified() {
+        facade.unsubscribe(subscriber);
+        Order order = storedOrder();
+        queues.placed(restaurantId).enqueue(order.getId());
+
+        facade.acceptOrder(restaurantId, order.getId());
+
+        verifyNoInteractions(subscriber);
+    }
     // pause / open restaurant
 
     // an operator pauses an OPEN restaurant: the restaurant that gets saved is PAUSED
