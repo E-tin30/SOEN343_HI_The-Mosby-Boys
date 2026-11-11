@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.mosbyboys.dishesbecrazy.domain.ord.Location;
+import com.mosbyboys.dishesbecrazy.domain.reg.CourierState;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -85,8 +86,8 @@ public class UserRepo{
                 id, restaurantName, lat, lon);
             case "COURIER" -> jdbcTemplate.update(
                 "INSERT INTO public.\"Courier\" (user_id, created_at, state, latitude, longitude) "
-            + "VALUES (?, CURRENT_TIMESTAMP, 'OFFLINE', ?, ?)",
-                id, lat, lon);
+            + "VALUES (?, CURRENT_TIMESTAMP, ?, ?, ?)",
+                id, CourierState.OFFLINE.name(), lat, lon);
             default -> { }
         }
     }

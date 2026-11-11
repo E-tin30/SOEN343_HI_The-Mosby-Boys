@@ -180,6 +180,16 @@ class DemoFixtureLoaderTest {
     // Queue congestion is not an additional restaurant status.
 
     @ParameterizedTest
+    @ValueSource(strings = {"ON-DUTY", "Offline", "idle"})
+    void rejectsUnknownCourierState(String state) throws Exception {
+        var profiles = profiles();
+        account(profiles, Role.COURIER).put("state", state);
+
+        assertThrows(IllegalArgumentException.class, () -> load(profiles, menu()));
+    }
+    // Courier state is read back as an exact CourierState name, so fixtures must match it exactly.
+
+    @ParameterizedTest
     @CsvSource({"CUSTOMER,latitude", "CUSTOMER,longitude", "RESTAURANT,latitude",
             "RESTAURANT,longitude", "COURIER,latitude", "COURIER,longitude"})
     void requiresBothCoordinatesForLocatedProfiles(Role role, String field) throws Exception {

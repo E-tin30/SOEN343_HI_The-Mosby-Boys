@@ -15,6 +15,7 @@ import com.mosbyboys.dishesbecrazy.domain.reg.User;
 import com.mosbyboys.dishesbecrazy.domain.reg.Role;
 import com.mosbyboys.dishesbecrazy.technical.repository.UserRepo.LoginTokens;
 import com.mosbyboys.dishesbecrazy.technical.repository.UserRepo.UserProfile;
+import com.mosbyboys.dishesbecrazy.domain.reg.CourierState;
 
 @Service
 @RequiredArgsConstructor
@@ -59,7 +60,7 @@ public class REGFacade {
             case COURIER -> jdbcTemplate.queryForObject(
                     "SELECT state FROM \"Courier\" WHERE user_id = ?",
                     (rs, i) -> b
-                            .state(rs.getString("state")),
+                            .state(CourierState.valueOf(rs.getString("state"))),
                     userId);
             case RESTAURANT -> jdbcTemplate.queryForObject(
                     "SELECT name, status FROM \"Restaurant\" WHERE user_id = ?",

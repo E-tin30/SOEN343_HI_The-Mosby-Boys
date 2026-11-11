@@ -14,7 +14,7 @@ CREATE TABLE public."Customer" (
 CREATE TABLE public."Courier" (
     user_id uuid PRIMARY KEY REFERENCES public."User"(id) ON DELETE CASCADE,
     created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    state varchar NOT NULL DEFAULT '', latitude double precision NOT NULL, longitude double precision NOT NULL
+    state varchar NOT NULL DEFAULT 'OFFLINE', latitude double precision NOT NULL, longitude double precision NOT NULL
 );
 CREATE TABLE public."Restaurant" (
     user_id uuid PRIMARY KEY REFERENCES public."User"(id) ON DELETE CASCADE,

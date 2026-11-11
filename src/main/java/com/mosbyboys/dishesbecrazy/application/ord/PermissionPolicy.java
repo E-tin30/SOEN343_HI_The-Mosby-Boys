@@ -8,6 +8,7 @@ import com.mosbyboys.dishesbecrazy.domain.ord.state.DeliveredState;
 import com.mosbyboys.dishesbecrazy.domain.ord.state.PlacedState;
 import com.mosbyboys.dishesbecrazy.domain.reg.User;
 import com.mosbyboys.dishesbecrazy.domain.reg.Courier;
+import com.mosbyboys.dishesbecrazy.domain.reg.CourierState;
 import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
 import com.mosbyboys.dishesbecrazy.domain.reg.Role;
 
@@ -88,7 +89,7 @@ public class PermissionPolicy {
         if (!courier.getUserId().equals(order.getCourierId())) {
             throw new PermissionDeniedException("This order was not offered to you.");
         }
-        if (!"idle".equalsIgnoreCase(courier.getState())) {
+        if (courier.getState() != CourierState.IDLE) {
             throw new PermissionDeniedException("There is no pending offer for you on this order.");
         }
     }
@@ -107,7 +108,7 @@ public class PermissionPolicy {
         if (!courier.getUserId().equals(order.getCourierId())) {
             throw new PermissionDeniedException("Only the courier assigned to this order can change it.");
         }
-        if (!"assigned".equalsIgnoreCase(courier.getState()) && !"carrying".equalsIgnoreCase(courier.getState())) {
+        if (courier.getState() != CourierState.ASSIGNED && courier.getState() != CourierState.CARRYING) {
             throw new PermissionDeniedException("You have not accepted this order, or you are not on duty.");
         }
     }

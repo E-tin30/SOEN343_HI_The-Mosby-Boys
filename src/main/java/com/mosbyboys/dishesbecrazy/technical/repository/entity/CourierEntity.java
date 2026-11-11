@@ -7,6 +7,8 @@ import lombok.Setter;
 
 import java.util.UUID;
 
+import com.mosbyboys.dishesbecrazy.domain.reg.CourierState;
+
 @Entity
 @Table(name = "\"Courier\"")
 @Getter
@@ -18,8 +20,9 @@ public class CourierEntity {
     @Column(name = "user_id")
     private UUID id;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "state")
-    private String state;
+    private CourierState state;
 
     @Column(name = "latitude")
     private Double latitude;

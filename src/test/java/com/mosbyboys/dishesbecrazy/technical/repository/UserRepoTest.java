@@ -23,7 +23,7 @@ class UserRepoTest {
 
         verify(jdbc).update(
                 "INSERT INTO public.\"Courier\" (user_id, created_at, state, latitude, longitude) "
-                        + "VALUES (?, CURRENT_TIMESTAMP, 'OFFLINE', ?, ?)",
-                userId, 45.5, -73.6);
+                        + "VALUES (?, CURRENT_TIMESTAMP, ?, ?, ?)",
+                userId, "OFFLINE", 45.5, -73.6);
     }
 }
