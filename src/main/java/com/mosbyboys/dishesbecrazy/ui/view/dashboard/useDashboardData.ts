@@ -26,7 +26,11 @@ async function fetchDashboard<T>(path: string, token: string): Promise<T> {
     return response.json();
 }
 
-// Restaurants and online couriers for the map. Pass enabled = false to skip loading them.
+// How often the map data is re-fetched so markers and queues stay live.
+const REFRESH_INTERVAL_MS = 5000;
+
+// Restaurants and online couriers for the map, refreshed every few seconds.
+// Pass enabled = false to skip loading them.
 export function useDashboardData(enabled = true) {
     const { accessToken } = useAuth();
     const [restaurants, setRestaurants] = useState<RestaurantDashboardData[]>([]);
@@ -35,21 +39,45 @@ export function useDashboardData(enabled = true) {
 
     useEffect(() => {
         if (!accessToken || !enabled) return;
-        setError(null);
+        // Ignore responses that arrive after the effect is torn down (unmount, token change, disabled).
+        let cancelled = false;
 
-        fetchDashboard<RestaurantDashboardData[]>("restaurants", accessToken)
-            .then(setRestaurants)
-            .catch((e) => {
-                console.error("Error loading restaurants:", e);
-                setError("Couldn't load restaurants.");
-            });
+        const load = async () => {
+            const [restaurantsResult, couriersResult] = await Promise.allSettled([
+                fetchDashboard<RestaurantDashboardData[]>("restaurants", accessToken),
+                fetchDashboard<CourierData[]>("couriers", accessToken),
+            ]);
+            if (cancelled) return;
 
-        fetchDashboard<CourierData[]>("couriers", accessToken)
-            .then(setCouriers)
-            .catch((e) => {
-                console.error("Error loading couriers:", e);
-                setError("Couldn't load couriers.");
-            });
+            if (restaurantsResult.status === "fulfilled") setRestaurants(restaurantsResult.value);
+            else console.error("Error loading restaurants:", restaurantsResult.reason);
+
+            if (couriersResult.status === "fulfilled") setCouriers(couriersResult.value);
+            else console.error("Error loading couriers:", couriersResult.reason);
+
+            // Keep the last good data on screen; just flag that the latest refresh failed.
+            if (restaurantsResult.status === "rejected") setError("Couldn't load restaurants.");
+            else if (couriersResult.status === "rejected") setError("Couldn't load couriers.");
+            else setError(null);
+        };
+
+        load();
+        const interval = setInterval(() => {
+            // Skip refreshes while the tab is in the background.
+            if (document.visibilityState === "visible") load();
+        }, REFRESH_INTERVAL_MS);
+
+        // Catch up straight away when the user comes back to the tab.
+        const onVisibilityChange = () => {
+            if (document.visibilityState === "visible") load();
+        };
+        document.addEventListener("visibilitychange", onVisibilityChange);
+
+        return () => {
+            cancelled = true;
+            clearInterval(interval);
+            document.removeEventListener("visibilitychange", onVisibilityChange);
+        };
     }, [accessToken, enabled]);
 
     return { restaurants, couriers, error };

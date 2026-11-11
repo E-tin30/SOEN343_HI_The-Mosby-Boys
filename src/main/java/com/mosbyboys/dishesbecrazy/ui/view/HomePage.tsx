@@ -14,7 +14,6 @@ import "./styles/Dashboard.css";
 // Statuses for an order that hasn't reached the customer yet.
 const IN_PROGRESS: HistoryStatus[] = ["PLACED", "ACCEPTED", "PREPARING", "READY", "PICKEDUP"];
 import DemoResetControl from "./components/DemoResetControl";
-import "./styles/HomePage.css";
 
 export default function HomePage() {
   const navigate = useNavigate();

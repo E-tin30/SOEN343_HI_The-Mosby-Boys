@@ -15,8 +15,7 @@ export async function getRestaurantOrders(token: string): Promise<RestaurantOrde
 
 // The action endpoints reply 204 with no body, so there is nothing to parse on success.
 export async function post(path: string, token: string, body?: unknown): Promise<void> {
-  log("command", `POST ${path}`);
-  const response = await fetch(API + path, {
+  await loggedFetch(API + path, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,

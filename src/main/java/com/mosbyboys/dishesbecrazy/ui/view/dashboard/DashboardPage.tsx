@@ -17,9 +17,12 @@ export default function DashboardPage() {
     const { user } = useAuth();
     const { restaurants, couriers, error } = useDashboardData();
     const [showLabels, setShowLabels] = useState(true);
-    // The restaurant shown in the side panel; stays until another marker is picked or the panel is closed.
-    const [selected, setSelected] = useState<RestaurantDashboardData | null>(null);
-    const close = () => setSelected(null);
+    
+    // Track the id, not the object, so the panel shows fresh data after each refresh.
+    const [selectedId, setSelectedId] = useState<string | null>(null);
+    const selected = restaurants.find((r) => r.id === selectedId) ?? null;
+    const setSelected = (restaurant: RestaurantDashboardData) => setSelectedId(restaurant.id);
+    const close = () => setSelectedId(null);
     const sortedRestaurants = [...restaurants].sort((a, b) => a.name.localeCompare(b.name));
 
     return (
