@@ -13,7 +13,7 @@ import com.mosbyboys.dishesbecrazy.domain.ord.Location;
 class UserRepoTest {
 
     @Test
-    void courierIsInsertedWithItsCoordinatesAndOffDutyState() {
+    void courierIsInsertedWithItsCoordinatesAndOfflineState() {
         JdbcTemplate jdbc = mock(JdbcTemplate.class);
         UserRepo repo = new UserRepo(jdbc, "https://example.invalid", "test-key");
         UUID userId = UUID.randomUUID();
@@ -23,7 +23,7 @@ class UserRepoTest {
 
         verify(jdbc).update(
                 "INSERT INTO public.\"Courier\" (user_id, created_at, state, latitude, longitude) "
-                        + "VALUES (?, CURRENT_TIMESTAMP, 'OFF_DUTY', ?, ?)",
+                        + "VALUES (?, CURRENT_TIMESTAMP, 'OFFLINE', ?, ?)",
                 userId, 45.5, -73.6);
     }
 }

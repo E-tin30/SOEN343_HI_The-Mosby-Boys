@@ -101,7 +101,7 @@
   transform: rotate(45deg);
 }
 
-/* Unknown state (e.g. an old OFF_DUTY row): plain neutral dot rather than an unstyled box. */
+/* Fallback for any unexpected state: plain neutral dot rather than an unstyled box. */
 .courier-marker:not(.courier-marker--idle):not(.courier-marker--assigned):not(.courier-marker--carrying) {
   background: var(--cocoa);
   border-radius: 50%;

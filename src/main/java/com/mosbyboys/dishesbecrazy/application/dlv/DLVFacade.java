@@ -30,7 +30,7 @@ public class DLVFacade {
     }
 
     @Transactional
-    public void goOnDuty(UUID courierId) {
+    public void goOnline(UUID courierId) {
         courierService.markIdle(courierId);
 
         eventPublisher.publishEvent(new DispatchRequestEvent());

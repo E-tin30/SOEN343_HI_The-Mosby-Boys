@@ -47,12 +47,12 @@ class UserFactoryTests {
     @Test
     void createsCourierWithItsProfile() {
         var location = new Location(45.5017, -73.5673);
-        var data = sharedData().state("OFF_DUTY").location(location).build();
+        var data = sharedData().state("OFFLINE").location(location).build();
 
         var courier = assertInstanceOf(Courier.class, factory.createUser(Role.COURIER, data));
 
         assertSharedFields(courier, Role.COURIER);
-        assertEquals("OFF_DUTY", courier.getState());
+        assertEquals("OFFLINE", courier.getState());
         assertSame(location, courier.getLocation());
     }
 

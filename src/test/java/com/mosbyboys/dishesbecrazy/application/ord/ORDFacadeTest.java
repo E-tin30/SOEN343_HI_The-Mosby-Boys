@@ -370,7 +370,7 @@ class ORDFacadeTest {
     void courierHistoryOnlyAsksForTheirOwnCarriedOrders() {
         UUID courierId = UUID.randomUUID();
         Courier courier = new Courier(courierId, OffsetDateTime.now(), "A", "B", "a@b.c", "ab", "hash",
-                "OFF_DUTY", new Location(45.5, -73.6));
+                "OFFLINE", new Location(45.5, -73.6));
         when(orderService.findHistoryForCourier(courierId)).thenReturn(List.of());
 
         facade.getOrderHistory(courier);

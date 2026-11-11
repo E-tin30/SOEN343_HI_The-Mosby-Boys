@@ -64,17 +64,17 @@ public class CourierController {
         return ResponseEntity.ok(new PendingOfferResponse(order.getId(),order.getRestaurantId()));
     }
 
-    //Courier goes on duty (OFFLINE -> IDLE).
-    @PostMapping("/on-duty")
-    public ResponseEntity<Void> goOnDuty(@AuthenticationPrincipal Jwt jwt) {
+    //Courier goes online (OFFLINE -> IDLE).
+    @PostMapping("/online")
+    public ResponseEntity<Void> goOnline(@AuthenticationPrincipal Jwt jwt) {
         UUID courierId = getCourierId(jwt);
-        dlvFacade.goOnDuty(courierId);
+        dlvFacade.goOnline(courierId);
 
         return ResponseEntity.noContent().build();
     }
 
     //Courier goes offline, implicitly rejecting any pending offer.     
-    @PostMapping("/off-duty")
+    @PostMapping("/offline")
     public ResponseEntity<Void> goOffline(@AuthenticationPrincipal Jwt jwt) {
         UUID courierId = getCourierId(jwt);
         dlvFacade.goOffline(courierId);

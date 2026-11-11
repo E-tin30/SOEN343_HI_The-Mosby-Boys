@@ -41,12 +41,12 @@ export async function getCurrentOrders(token: string): Promise<HistoryOrder[]> {
   return (await get<HistoryOrder[]>("/api/orders/courier/current", token)) ?? [];
 }
 
-export function goOnDuty(token: string): Promise<void> {
-  return post("/api/courier/on-duty", token);
+export function goOnline(token: string): Promise<void> {
+  return post("/api/courier/online", token);
 }
 
-export function goOffDuty(token: string): Promise<void> {
-  return post("/api/courier/off-duty", token);
+export function goOffline(token: string): Promise<void> {
+  return post("/api/courier/offline", token);
 }
 
 export function acceptOffer(token: string, orderId: string): Promise<void> {

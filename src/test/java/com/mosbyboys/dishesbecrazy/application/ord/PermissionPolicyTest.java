@@ -39,7 +39,7 @@ public class PermissionPolicyTest {
 
     private Courier courier() {
         return new Courier(UUID.randomUUID(), OffsetDateTime.now(), "A", "B", "a@b.c", "ab", "hash",
-                "OFF_DUTY", new Location(45.5, -73.6));
+                "OFFLINE", new Location(45.5, -73.6));
     }
 
     private Order orderFor(UUID customerId, UUID restaurantId) {

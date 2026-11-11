@@ -14,8 +14,8 @@ import {
   getCourierState,
   getCurrentOrders,
   getPendingOffer,
-  goOffDuty,
-  goOnDuty,
+  goOffline,
+  goOnline,
   pickUpOrder,
   type CourierState,
 } from "./orders/api/courierApi";
@@ -124,10 +124,10 @@ export default function CourierHomePage() {
             Start driving to receive delivery offers.
           </p>
           <div className="intro-card__actions">
-            <Button onClick={run(goOnDuty)} disabled={courierState !== "OFFLINE" || busy}>
+            <Button onClick={run(goOnline)} disabled={courierState !== "OFFLINE" || busy}>
               Start Driving
             </Button>
-            <Button variant="secondary" onClick={run(goOffDuty)} disabled={!canEndDriving}>
+            <Button variant="secondary" onClick={run(goOffline)} disabled={!canEndDriving}>
               End Driving
             </Button>
             {courierState && (

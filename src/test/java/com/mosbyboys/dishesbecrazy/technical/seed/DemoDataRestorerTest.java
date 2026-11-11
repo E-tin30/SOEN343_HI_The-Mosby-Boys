@@ -291,7 +291,7 @@ class DemoDataRestorerTest {
                     SELECT COUNT(*) FROM public."Order" WHERE restaurant_id = ? AND state = 'AcceptedState'
                     """, Integer.class, users.get(entry.getKey())));
         }
-        assertEquals("OFF_DUTY", jdbc.queryForObject("SELECT state FROM public.\"Courier\"", String.class));
+        assertEquals("OFFLINE", jdbc.queryForObject("SELECT state FROM public.\"Courier\"", String.class));
     }
 
     private UUID unrelatedOrder() {
