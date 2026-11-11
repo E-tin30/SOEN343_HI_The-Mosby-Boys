@@ -2,7 +2,7 @@
 
 # Dishes Be Crazy
 
-A food-ordering platform for home cooks (SOEN 343, Phase II). Customers browse menus and place orders; restaurants accept or reject them and prepare them in FIFO order. Every command and error appears in the on-screen output console.
+A food-ordering platform where local Montreal home cooks sell their homemade meals (SOEN 343, Phase II). Customers browse their kitchens' menus and place orders; cooks accept or reject them and prepare them in FIFO order. Kitchen accounts use the existing RESTAURANT role. Every command and error appears in the on-screen output console.
 
 **Built this phase:** REG (registration, login, roles) and ORD (menus, orders, order lifecycle, preparation queue), plus a minimal DASH.
 
@@ -65,14 +65,22 @@ Password for all of them: `DEMO_SEED_PASSWORD` from `.env`.
 | Role | Email |
 |---|---|
 | Customer | `customer.demo@example.com` |
-| Restaurant | `restaurant.demo@example.com` |
+| Home cook - Sam's Family Kitchen | `restaurant.demo@example.com` |
+| Home cook - Robin's Sunday Kitchen | `restaurant2.demo@example.com` |
+| Home cook - Casey's Home Kitchen | `restaurant3.demo@example.com` |
 | Courier | `courier.demo@example.com` |
 | Operator | `operator.demo@example.com` |
 
-If they don't exist yet, create them (and the demo restaurant's menu) once from `src/main/resources/demo/`:
+Run initial setup from `src/main/resources/demo/` using the database configured in `.env`:
 
 ```sh
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=demo-seed
+```
+
+The seed profile runs without an HTTP server and exits after the runners finish. Then start the backend normally:
+
+```sh
+./mvnw spring-boot:run
 ```
 
 ## Tests
@@ -81,4 +89,10 @@ If they don't exist yet, create them (and the demo restaurant's menu) once from 
 npm test                      # mocked frontend tests
 npm run build                 # TypeScript and production build
 ./mvnw test
+```
+
+Fixture, seeding and restoration checks use isolated in-memory databases and mocked services:
+
+```sh
+./mvnw -o -Dtest=DemoRequestFilterTest,DemoStateAccessTest,ResetServiceTest,ResetServiceIntegrationTest,OrderQueueLoaderTest,OrderQueuesTest,PreparationQueueTest,DemoDataRestorerTest,DemoOrderSeederTest,DemoFixtureLoaderTest,DemoOrderFixtureTest,DemoProfileSeederTests,DemoMenuSeederTest test
 ```

@@ -20,15 +20,15 @@ export class RequestError extends Error {
 }
 // Retains the HTTP status and user-facing explanation for the calling page.
 
-async function readOrderErrorMessage(response: Response, path: string): Promise<string | undefined> {
-  const isOrderRequest = path === "/placeOrder" || path.startsWith("/api/orders/");
+async function readActionErrorMessage(response: Response, path: string): Promise<string | undefined> {
+  const isKnownAction = path === "/placeOrder" || path.startsWith("/api/orders/") || path === "/api/demo/reset";
   const isDomainError = [400, 403, 404, 409].includes(response.status);
   const isPlainText = response.headers.get("Content-Type")?.startsWith("text/plain");
 
-  if (!isOrderRequest || !isDomainError || !isPlainText) {
+  if (!isKnownAction || !isDomainError || !isPlainText) {
     return undefined;
   }
-  // ApiExceptionHandler returns plain-text order validation reasons; other endpoints/payloads use fallback feedback.
+  // ApiExceptionHandler supplies concise order/Reset reasons; other endpoints and payloads use fallback feedback.
 
   try {
     const message = (await response.text()).trim();
@@ -53,7 +53,7 @@ export async function loggedFetch(url: string, options?: RequestInit): Promise<R
   try {
     const response = await fetch(url, options);
     if (!response.ok) {
-      const message = await readOrderErrorMessage(response, path);
+      const message = await readActionErrorMessage(response, path);
       throw new RequestError(response.status, message);
     }
     // Treats unsuccessful responses as failures and retains known order-validation feedback for the page.

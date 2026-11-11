@@ -2,6 +2,7 @@ package com.mosbyboys.dishesbecrazy.technical.seed;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -13,6 +14,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.ClassPathResource;
 
+import com.mosbyboys.dishesbecrazy.domain.ord.MenuItemStatus;
 import com.mosbyboys.dishesbecrazy.domain.reg.Role;
 
 import tools.jackson.core.JacksonException;
@@ -28,17 +30,41 @@ class DemoFixtureLoaderTest {
     private final DemoFixtureLoader loader = new DemoFixtureLoader(json);
 
     @Test
-    void loadsExistingProfilesAndMenuWithoutExternalServices() throws Exception {
+    void loadsDemoProfilesWithoutExternalServices() throws Exception {
         DemoFixtures fixtures = loader.load();
 
-        assertEquals(4, fixtures.accounts().size());
+        assertEquals(6, fixtures.accounts().size());
         assertEquals(Role.CUSTOMER, fixtures.accounts().getFirst().role());
         assertEquals("demo_customer", fixtures.accounts().getFirst().username());
-        assertEquals(4, fixtures.menuItems().size());
+        var restaurants = fixtures.accounts().stream().filter(a -> a.role() == Role.RESTAURANT).toList();
+        assertEquals(Set.of("demo_restaurant", "demo_restaurant_building", "demo_restaurant_busy"),
+                restaurants.stream().map(DemoFixtures.Account::username).collect(Collectors.toSet()));
+        assertTrue(restaurants.stream().allMatch(a -> a.status().equals("OPEN")));
+        assertEquals(3, restaurants.stream().map(a -> List.of(a.latitude(), a.longitude())).distinct().count());
+    }
+    // Exercises the actual checked-in JSON without provisioning accounts or starting Spring.
+
+    @Test
+    void everyDemoRestaurantHasOrderableAndSoldOutMenuItems() throws Exception {
+        DemoFixtures fixtures = loader.load();
+        var menus = fixtures.menuItems().stream()
+                .collect(Collectors.groupingBy(DemoFixtures.MenuSeed::restaurantUsername));
+        var owners = fixtures.accounts().stream().filter(a -> a.role() == Role.RESTAURANT)
+                .map(DemoFixtures.Account::username).collect(Collectors.toSet());
+
+        assertEquals(12, fixtures.menuItems().size());
+        assertEquals(owners, menus.keySet());
+        for (var menu : menus.values()) {
+            assertEquals(4, menu.size());
+            assertEquals(3, menu.stream().filter(item -> item.status() == MenuItemStatus.AVAILABLE
+                    && item.stockQuantity() > 0).count());
+            assertEquals(1, menu.stream().filter(item -> item.status() == MenuItemStatus.SOLD_OUT
+                    && item.stockQuantity() == 0).count());
+        }
         assertEquals(new BigDecimal("18.50"), fixtures.menuItems().getFirst().price());
         assertEquals("demo_restaurant", fixtures.menuItems().getFirst().restaurantUsername());
     }
-    // Exercises the actual checked-in JSON without provisioning accounts or starting Spring.
+    // Each production menu supports both successful ordering and the sold-out scenario.
 
     @Test
     void allowsThreeRestaurantAccountsWithDistinctMenus() throws Exception {
@@ -56,6 +82,7 @@ class DemoFixtureLoaderTest {
     @EnumSource(Role.class)
     void allowsAnotherDistinctAccountForEachRole(Role role) throws Exception {
         var profiles = profiles();
+        long originalCount = profiles.valueStream().filter(a -> a.get("role").asString().equals(role.name())).count();
         var extra = account(profiles, role).deepCopy();
         extra.put("email", "another-" + role.name().toLowerCase(java.util.Locale.ROOT) + ".demo@example.com");
         extra.put("username", "another_" + role.name().toLowerCase(java.util.Locale.ROOT));
@@ -63,7 +90,7 @@ class DemoFixtureLoaderTest {
 
         var fixtures = load(profiles, menu());
 
-        assertEquals(2, fixtures.accounts().stream().filter(a -> a.role() == role).count());
+        assertEquals(originalCount + 1, fixtures.accounts().stream().filter(a -> a.role() == role).count());
     }
     // Repeated roles are supported for customers, couriers and operators as well as restaurants.
 
@@ -180,7 +207,7 @@ class DemoFixtureLoaderTest {
         account(profiles, Role.CUSTOMER).put("latitude", -90).put("longitude", 180);
         account(profiles, Role.RESTAURANT).put("latitude", 90).put("longitude", -180);
 
-        assertEquals(4, load(profiles, menu()).accounts().size());
+        assertEquals(profiles.size(), load(profiles, menu()).accounts().size());
     }
     // Boundary coordinates are legal; operator fixtures do not require unused location fields.
 
