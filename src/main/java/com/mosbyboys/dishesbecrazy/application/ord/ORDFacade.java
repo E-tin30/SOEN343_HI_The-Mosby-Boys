@@ -11,7 +11,7 @@ import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
 import com.mosbyboys.dishesbecrazy.domain.reg.Role;
 import com.mosbyboys.dishesbecrazy.domain.reg.User;
 import com.mosbyboys.dishesbecrazy.domain.ord.MenuItem;
-import com.mosbyboys.dishesbecrazy.application.events.OrderReadyEvent;
+import com.mosbyboys.dishesbecrazy.application.dlv.events.OrderReadyEvent;
 
 import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
 import jakarta.transaction.Transactional;
@@ -206,6 +206,7 @@ public class ORDFacade {
         queues.placed(restaurantId).remove(orderId);
         queues.preparation(restaurantId).remove(orderId);
         queues.ready(restaurantId).remove(orderId);
+        queues.removeGlobalReady(orderId);
     }
 
     @Transactional

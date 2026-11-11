@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.mosbyboys.dishesbecrazy.application.events.DispatchRequestEvent;
+import com.mosbyboys.dishesbecrazy.application.dlv.events.DispatchRequestEvent;
 import com.mosbyboys.dishesbecrazy.application.dlv.DispatchService;
 import com.mosbyboys.dishesbecrazy.domain.ord.Order;
 import com.mosbyboys.dishesbecrazy.application.ord.ORDFacade;

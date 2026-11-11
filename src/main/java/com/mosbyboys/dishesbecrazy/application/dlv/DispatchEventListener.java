@@ -1,7 +1,7 @@
 package com.mosbyboys.dishesbecrazy.application.dlv;
 
-import com.mosbyboys.dishesbecrazy.application.events.OrderReadyEvent;
-import com.mosbyboys.dishesbecrazy.application.events.DispatchRequestEvent;
+import com.mosbyboys.dishesbecrazy.application.dlv.events.OrderReadyEvent;
+import com.mosbyboys.dishesbecrazy.application.dlv.events.DispatchRequestEvent;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

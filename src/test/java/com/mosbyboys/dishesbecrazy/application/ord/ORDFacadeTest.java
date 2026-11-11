@@ -17,6 +17,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.springframework.context.ApplicationEventPublisher;
 
 import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
 import com.mosbyboys.dishesbecrazy.domain.ord.Location;
@@ -43,6 +44,7 @@ class ORDFacadeTest {
     private REGFacade regFacade;
     private OrderQueues queues;
     private ORDFacade facade;
+    private ApplicationEventPublisher eventPublisher;
 
     private final UUID restaurantId = UUID.randomUUID();
     private final UUID customerId = UUID.randomUUID();
@@ -59,9 +61,10 @@ class ORDFacadeTest {
         regFacade = mock(REGFacade.class);
         pricingService = mock(PricingService.class);
         queues = new OrderQueues();
+        eventPublisher = mock(ApplicationEventPublisher.class);
         // same order as the fields in ORDFacade
         facade = new ORDFacade(orderService, orderEventService, new PermissionPolicy(),
-                queues, menuService, restaurantService, pricingService, regFacade);
+                queues, menuService, restaurantService, pricingService, regFacade, eventPublisher);
         // The facade looks the caller up through REGFacade, so tell the mock who each id is.
         when(regFacade.getCurrentUser(customerId)).thenReturn(customer());
         when(regFacade.getCurrentUser(restaurantId)).thenReturn(owner(restaurantId));
