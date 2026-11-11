@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import com.mosbyboys.dishesbecrazy.application.ord.OrderQueues;
 import com.mosbyboys.dishesbecrazy.application.ord.OrderService;
 import com.mosbyboys.dishesbecrazy.domain.ord.Order;
+import com.mosbyboys.dishesbecrazy.domain.reg.CourierState;
 
 import lombok.RequiredArgsConstructor;
 
@@ -30,19 +31,17 @@ public class DispatchQueueLoader implements CommandLineRunner {
     @Override
     public void run(String... args) {
         // State of every courier who is on duty; anyone missing is OFFLINE
-        Map<UUID, String> onlineStates = courierService.getOnlineCouriers().stream()
+        Map<UUID, CourierState> onlineStates = courierService.getOnlineCouriers().stream()
             .collect(Collectors.toMap(CourierData::id, CourierData::state));
 
         List<Order> readyOrders = orderService.findInStates(List.of("ReadyState"));
         for (Order order : readyOrders) {
             if (order.getCourierId() != null) {
-                String state = onlineStates.getOrDefault(order.getCourierId(), "OFFLINE");
-                // Accepted: the courier is heading to the restaurant, so it is no longer waiting
-                if ("ASSIGNED".equalsIgnoreCase(state) || "CARRYING".equalsIgnoreCase(state)) {
+                CourierState state = onlineStates.getOrDefault(order.getCourierId(), CourierState.OFFLINE);
+                if (state == CourierState.ASSIGNED || state == CourierState.CARRYING) {
                     continue;
                 }
-                // The courier went offline with the offer still open: take it back
-                if (!"IDLE".equalsIgnoreCase(state)) {
+                if (state != CourierState.IDLE) {
                     order.clearCourierOffer(order.getCourierId());
                     orderService.save(order);
                 }

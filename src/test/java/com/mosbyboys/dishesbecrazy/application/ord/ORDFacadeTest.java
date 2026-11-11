@@ -31,6 +31,7 @@ import com.mosbyboys.dishesbecrazy.domain.ord.state.IllegalTransitionException;
 import com.mosbyboys.dishesbecrazy.domain.ord.state.PlacedState;
 import com.mosbyboys.dishesbecrazy.domain.ord.state.RefundedState;
 import com.mosbyboys.dishesbecrazy.domain.reg.Courier;
+import com.mosbyboys.dishesbecrazy.domain.reg.CourierState;
 import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
 import com.mosbyboys.dishesbecrazy.domain.reg.Operator;
 
@@ -370,7 +371,7 @@ class ORDFacadeTest {
     void courierHistoryOnlyAsksForTheirOwnCarriedOrders() {
         UUID courierId = UUID.randomUUID();
         Courier courier = new Courier(courierId, OffsetDateTime.now(), "A", "B", "a@b.c", "ab", "hash",
-                "OFFLINE", new Location(45.5, -73.6));
+                CourierState.OFFLINE, new Location(45.5, -73.6));
         when(orderService.findHistoryForCourier(courierId)).thenReturn(List.of());
 
         facade.getOrderHistory(courier);

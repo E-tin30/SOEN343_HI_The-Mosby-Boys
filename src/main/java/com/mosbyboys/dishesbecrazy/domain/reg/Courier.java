@@ -7,14 +7,14 @@ import com.mosbyboys.dishesbecrazy.domain.ord.Location;
 
 import lombok.Getter;
 
-// Courier state stays text, matching Supabase; location is lat/long; userId is also Courier's primary key (user_id).
+// location is lat/long; userId is also Courier's primary key (user_id).
 @Getter
 public final class Courier extends User {
-    private final String state;
+    private final CourierState state;
     private final Location location;
 
     public Courier(UUID userId, OffsetDateTime createdAt, String firstName, String lastName, String email,
-                    String username, String hashedPassword, String state, Location location) {
+                    String username, String hashedPassword, CourierState state, Location location) {
         // The subclass fixes one role; callers cannot supply a conflicting role.
         super(userId, createdAt, firstName, lastName, email, username, hashedPassword, Role.COURIER);
         this.state = state;

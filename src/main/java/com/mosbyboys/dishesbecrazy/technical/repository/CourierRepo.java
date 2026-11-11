@@ -1,5 +1,6 @@
 package com.mosbyboys.dishesbecrazy.technical.repository;
 
+import com.mosbyboys.dishesbecrazy.domain.reg.CourierState;
 import com.mosbyboys.dishesbecrazy.technical.repository.entity.CourierEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -8,7 +9,7 @@ import java.util.UUID;
 
 public interface CourierRepo extends JpaRepository<CourierEntity, UUID> {
     
-    List<CourierEntity> findByStateNot(String state);
-    
-    List<CourierEntity> findByState(String state);
+    List<CourierEntity> findByStateNot(CourierState state);
+
+    List<CourierEntity> findByState(CourierState state);
 }

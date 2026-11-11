@@ -7,7 +7,7 @@ import com.mosbyboys.dishesbecrazy.technical.repository.entity.CourierEntity;
 import com.mosbyboys.dishesbecrazy.technical.repository.entity.CustomerEntity;
 import com.mosbyboys.dishesbecrazy.technical.repository.entity.OrderEntity;
 import com.mosbyboys.dishesbecrazy.domain.ord.Location;
-
+import com.mosbyboys.dishesbecrazy.domain.reg.CourierState;
 
 import lombok.RequiredArgsConstructor;
 
@@ -29,11 +29,11 @@ public class CourierService {
     private final JdbcTemplate jdbcTemplate;
 
     public List<CourierData> getOnlineCouriers() {
-        return courierRepo.findByStateNot("OFFLINE").stream().map(this::toCourierData).toList();
+        return courierRepo.findByStateNot(CourierState.OFFLINE).stream().map(this::toCourierData).toList();
     }
     
     public List<CourierData> getIdleCouriers() {
-        return courierRepo.findByState("IDLE").stream().map(this::toCourierData).toList();
+        return courierRepo.findByState(CourierState.IDLE).stream().map(this::toCourierData).toList();
     }
 
     private CourierData toCourierData(CourierEntity courier) {
@@ -48,14 +48,11 @@ public class CourierService {
             .orElseThrow(() -> new IllegalArgumentException("Courier not found: " + courierId)
             );
 
-        String state = courier.getState();
-
-        if (!"OFFLINE".equalsIgnoreCase(state)
-                && !"CARRYING".equalsIgnoreCase(state)) {
+        CourierState state = courier.getState();
+        if (state != CourierState.OFFLINE && state != CourierState.CARRYING) {
             throw new IllegalStateException("Courier must be OFFLINE or CARRYING to become IDLE");
         }
-
-        courier.setState("IDLE");
+        courier.setState(CourierState.IDLE);
         courierRepo.save(courier);
     }
 
@@ -67,11 +64,11 @@ public class CourierService {
         CourierEntity courier = courierRepo.findById(courierId)
             .orElseThrow(() -> new IllegalArgumentException("Courier not found: " + courierId));
 
-        if (!"IDLE".equalsIgnoreCase(courier.getState())) {
+        if (courier.getState() != CourierState.IDLE) {
             throw new IllegalStateException("Courier must be IDLE to accept an offer");
         }
 
-        courier.setState("ASSIGNED");
+        courier.setState(CourierState.ASSIGNED);
         courierRepo.save(courier);
     }
 
@@ -83,11 +80,11 @@ public class CourierService {
         CourierEntity courier = courierRepo.findById(courierId)
             .orElseThrow(() -> new IllegalArgumentException("Courier not found: " + courierId));
 
-        if (!"ASSIGNED".equalsIgnoreCase(courier.getState())) {
+        if (courier.getState() != CourierState.ASSIGNED) {
             throw new IllegalStateException("Courier must be ASSIGNED to pick up an order");
         }
 
-        courier.setState("CARRYING");
+        courier.setState(CourierState.CARRYING);
         courierRepo.save(courier);
     }
 
@@ -101,13 +98,13 @@ public class CourierService {
                 "Courier not found: " + courierId
             ));
 
-        if (!"IDLE".equalsIgnoreCase(courier.getState())) {
+        if (courier.getState() != CourierState.IDLE) {
             throw new IllegalStateException(
                 "Only IDLE couriers can go OFFLINE"
             );
         }
 
-        courier.setState("OFFLINE");
+        courier.setState(CourierState.OFFLINE);
         courierRepo.save(courier);
     }
 
