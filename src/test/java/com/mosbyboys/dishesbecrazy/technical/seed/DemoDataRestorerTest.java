@@ -63,9 +63,8 @@ class DemoDataRestorerTest {
 
         assertBaseline();
         assertEquals(auth, jdbc.queryForList("SELECT * FROM auth.users ORDER BY id"));
-        assertEquals(users.get("demo_operator"), jdbc.queryForObject(
-                "SELECT id FROM public.\"User\" WHERE username = 'demo_operator'", UUID.class));
     }
+    // Auth identities remain available; the application records return to the fixture starting point.
 
     @Test
     void rewindsChangedProfilesStockOrdersAndHistory() throws Exception {
@@ -86,15 +85,12 @@ class DemoDataRestorerTest {
                 """, users.get("demo_courier"));
         jdbc.update("UPDATE public.\"OrderLineItem\" SET quantity = 2, unit_price = 99, menu_item_name = 'Changed'");
         jdbc.update("UPDATE public.\"Event\" SET action = 'Changed', new_state = 'Changed', created_at = CURRENT_TIMESTAMP");
-        jdbc.update("""
-                INSERT INTO public."Event" (id, order_id, action, new_state) VALUES (?, ?, 'PREPARING', 'PreparingState')
-                """, UUID.randomUUID(), baseline.orders().getFirst().id());
 
         restorer.restore();
 
         assertEquals(expected, snapshot());
     }
-    // Auth email, rather than mutable public usernames, locates every original identity during restoration.
+    // Restore the complete configured data, including stored event times and cleared workflow timestamps.
 
     @ParameterizedTest
     @EnumSource(Role.class)
@@ -109,7 +105,6 @@ class DemoDataRestorerTest {
         assertEquals(users.get(account.username()), jdbc.queryForObject(
                 "SELECT id FROM public.\"User\" WHERE username = ?", UUID.class, account.username()));
     }
-    // Deleting a restaurant cascades through its menus/orders; deleting a courier also removes assigned historical orders.
 
     @Test
     void recreatesDeletedMenuAndRoleSpecificRows() throws Exception {
@@ -124,106 +119,90 @@ class DemoDataRestorerTest {
     }
 
     @Test
-    void removesDemoActivityOnEitherSideOfTheOwnershipBoundaryAndPreservesUnrelatedData() throws Exception {
+    void removesEveryonesExtraProfilesMenusOrdersEventsAndBills() throws Exception {
         restorer.restore();
-        UUID outsideOrder = unrelatedOrder();
         var expected = snapshot();
-        UUID customerOrder = addOrder(users.get("demo_customer"), outsideRestaurant, outsideMenu);
-        UUID restaurantOrder = addOrder(outsideCustomer, users.get("demo_restaurant"), baseline.menuItems().getFirst().id());
+        UUID outsideOrder = unrelatedOrder();
+        for (String state : List.of("IDLE", "ASSIGNED", "CARRYING")) {
+            UUID courier = addCourier("outside_" + state.toLowerCase(), state);
+            giveToCourier(addOrder(outsideCustomer, outsideRestaurant, outsideMenu), "ReadyState", courier);
+        }
+        addUser("outside_operator", "OPERATOR");
         UUID extraMenu = addMenu(users.get("demo_restaurant"));
-        addOrder(users.get("demo_customer"), users.get("demo_restaurant"), extraMenu);
-        jdbc.update("INSERT INTO public.\"Bill\" (id, order_id) VALUES (?, ?)", UUID.randomUUID(), customerOrder);
-        jdbc.update("INSERT INTO public.\"Bill\" (id, order_id) VALUES (?, ?)", UUID.randomUUID(), restaurantOrder);
+        addOrder(outsideCustomer, outsideRestaurant, extraMenu);
+        addOrder(users.get("demo_customer"), outsideRestaurant, outsideMenu);
+        addOrder(outsideCustomer, users.get("demo_restaurant"), baseline.menuItems().getFirst().id());
         jdbc.update("INSERT INTO public.\"Bill\" (id, user_id) VALUES (?, ?)", UUID.randomUUID(), users.get("demo_customer"));
+        var auth = jdbc.queryForList("SELECT * FROM auth.users ORDER BY id");
 
         restorer.restore();
 
         assertEquals(expected, snapshot());
-        assertEquals(outsideOrder, jdbc.queryForObject("SELECT id FROM public.\"Order\" WHERE id = ?", UUID.class, outsideOrder));
+        assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM public.\"Order\" WHERE id = ?", Integer.class, outsideOrder));
+        assertEquals(auth, jdbc.queryForList("SELECT * FROM auth.users ORDER BY id"));
+        assertBaseline();
     }
-    // Demo customer orders at other restaurants and other customers' orders at demo restaurants are both reset.
-
-    @Test
-    void releasesCouriersOnDeletedDemoOrdersAndLeavesOtherDeliveriesAlone() throws Exception {
-        restorer.restore();
-        unrelatedOrder();
-        UUID demoMenu = baseline.menuItems().getFirst().id();
-        UUID heading = addCourier("outside_heading", "ASSIGNED");
-        UUID carrying = addCourier("outside_carrying", "CARRYING");
-        UUID busyElsewhere = addCourier("outside_busy", "CARRYING");
-        giveToCourier(addOrder(outsideCustomer, users.get("demo_restaurant"), demoMenu), "ReadyState", heading);
-        giveToCourier(addOrder(users.get("demo_customer"), outsideRestaurant, outsideMenu), "PickedUpState", carrying);
-        giveToCourier(addOrder(outsideCustomer, users.get("demo_restaurant"), demoMenu), "DeliveredState", busyElsewhere);
-        giveToCourier(addOrder(outsideCustomer, outsideRestaurant, outsideMenu), "PickedUpState", busyElsewhere);
-
-        restorer.restore();
-
-        assertEquals("OFFLINE", courierState(heading));
-        assertEquals("OFFLINE", courierState(carrying));
-        assertEquals("CARRYING", courierState(busyElsewhere));
-    }
-    // Deleting a demo order must not leave its courier ASSIGNED/CARRYING with nothing to deliver; a past demo delivery doesn't count.
+    // Every workflow record is reset regardless of who created it; only fixture application profiles and menus remain.
 
     @ParameterizedTest
     @CsvSource({"ReadyState, IDLE", "ReadyState, ASSIGNED", "PickedUpState, CARRYING"})
-    void refusesResetWhileADemoCourierHoldsAnUnrelatedDelivery(String orderState, String courierState) throws Exception {
+    void resetsActiveDeliveriesRegardlessOfTheirCustomerAndRestaurant(String orderState, String courierState) throws Exception {
         restorer.restore();
+        var expected = snapshot();
         UUID order = unrelatedOrder();
         UUID courier = users.get("demo_courier");
         giveToCourier(order, orderState, courier);
-        jdbc.update("UPDATE public.\"Courier\" SET state = ? WHERE user_id = ?", courierState, courier);
-        var expected = snapshot();
-
-        var error = assertThrows(IllegalStateException.class, restorer::restore);
-
-        assertEquals("A demo courier has an active order outside the demo. Finish that delivery before Reset.", error.getMessage());
-        assertEquals(expected, snapshot());
-
-        giveToCourier(order, "DeliveredState", courier);
-        jdbc.update("UPDATE public.\"Courier\" SET state = 'IDLE' WHERE user_id = ?", courier);
-        var completed = jdbc.queryForMap("SELECT * FROM public.\"Order\" WHERE id = ?", order);
+        jdbc.update("UPDATE public.\"Courier\" SET state = ?, latitude = 0, longitude = 0 WHERE user_id = ?", courierState, courier);
 
         restorer.restore();
 
-        assertEquals(completed, jdbc.queryForMap("SELECT * FROM public.\"Order\" WHERE id = ?", order));
-        assertEquals("OFFLINE", courierState(courier));
+        assertEquals(expected, snapshot());
     }
-    // Reject before any rows change, including a pending offer; retry is safe once the unrelated delivery is finished.
+    // Pending offers, accepted deliveries and carrying all return to the same initial state without an ownership refusal.
 
     @ParameterizedTest
     @ValueSource(strings = {"DeliveredState", "RefundedState", "CancelledState", "RejectedState"})
-    void unrelatedHistoryDoesNotPreventRestoringADemoCourier(String orderState) throws Exception {
+    void clearsOtherAccountsTerminalHistory(String orderState) throws Exception {
         restorer.restore();
-        UUID order = unrelatedOrder();
-        UUID courier = users.get("demo_courier");
-        giveToCourier(order, orderState, courier);
         var expected = snapshot();
+        UUID order = unrelatedOrder();
+        giveToCourier(order, orderState, users.get("demo_courier"));
 
         restorer.restore();
 
         assertEquals(expected, snapshot());
     }
-    // Historical courier references do not represent a delivery in progress and must not block Reset.
 
-    @ParameterizedTest
-    @ValueSource(booleans = {true, false})
-    void aDemoCourierCanStillBeResetWithAnActiveDemoDelivery(boolean demoCustomer) throws Exception {
+    @Test
+    void restoresFixtureOwnershipEvenWhenIdsHaveBeenMovedToOtherAccounts() throws Exception {
         restorer.restore();
-        unrelatedOrder();
-        UUID courier = users.get("demo_courier");
-        UUID order = demoCustomer
-                ? addOrder(users.get("demo_customer"), outsideRestaurant, outsideMenu)
-                : addOrder(outsideCustomer, users.get("demo_restaurant"), baseline.menuItems().getFirst().id());
-        giveToCourier(order, "PickedUpState", courier);
-        jdbc.update("UPDATE public.\"Courier\" SET state = 'CARRYING' WHERE user_id = ?", courier);
+        var expected = snapshot();
+        UUID outsideOrder = unrelatedOrder();
+        jdbc.update("UPDATE public.\"MenuItem\" SET restaurant_id = ? WHERE id = ?",
+                outsideRestaurant, baseline.menuItems().getFirst().id());
+        jdbc.update("UPDATE public.\"Order\" SET user_id = ?, restaurant_id = ? WHERE id = ?",
+                outsideCustomer, outsideRestaurant, baseline.orders().getFirst().id());
+        jdbc.update("UPDATE public.\"Event\" SET order_id = ? WHERE id = ?",
+                outsideOrder, baseline.orders().getLast().events().getLast().id());
 
         restorer.restore();
 
-        assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM public.\"Order\" WHERE id = ?", Integer.class, order));
-        assertEquals("OFFLINE", courierState(courier));
-        assertEquals(14, count("Order"));
+        assertEquals(expected, snapshot());
     }
-    // Either a fixture customer or a fixture restaurant makes the delivery part of the demo restoration scope.
+    // Global restoration repairs fixture IDs instead of preserving another account's reassignment of those records.
+
+    @Test
+    void repairsAChangedFixtureRoleAndRemovesItsExtraSubtype() throws Exception {
+        restorer.restore();
+        var expected = snapshot();
+        UUID customer = users.get("demo_customer");
+        jdbc.update("UPDATE public.\"User\" SET role = 'COURIER' WHERE id = ?", customer);
+        jdbc.update("INSERT INTO public.\"Courier\" (user_id, state, latitude, longitude) VALUES (?, 'IDLE', 0, 0)", customer);
+
+        restorer.restore();
+
+        assertEquals(expected, snapshot());
+    }
 
     @Test
     void repeatedRestorationLeavesTheSameBaseline() throws Exception {
@@ -260,61 +239,21 @@ class DemoDataRestorerTest {
     }
 
     @Test
-    void refusesToClaimAnUnrelatedRestaurantsMenuId() throws Exception {
+    void lateFixtureInsertFailureRollsBackTheWholeGlobalReset() throws Exception {
         restorer.restore();
         unrelatedOrder();
-        jdbc.update("UPDATE public.\"MenuItem\" SET restaurant_id = ? WHERE id = ?", outsideRestaurant, baseline.menuItems().getFirst().id());
-        var expected = snapshot();
-
-        assertThrows(IllegalStateException.class, restorer::restore);
-
-        assertEquals(expected, snapshot());
-    }
-
-    @Test
-    void refusesToClaimAnUnrelatedOrderId() throws Exception {
-        restorer.restore();
-        unrelatedOrder();
-        jdbc.update("UPDATE public.\"Order\" SET user_id = ?, restaurant_id = ? WHERE id = ?",
-                outsideCustomer, outsideRestaurant, baseline.orders().getFirst().id());
-        var expected = snapshot();
-
-        assertThrows(IllegalStateException.class, restorer::restore);
-
-        assertEquals(expected, snapshot());
-    }
-
-    @Test
-    void protectsUnrelatedOrderLinesFromMenuDeletionCascades() throws Exception {
-        restorer.restore();
-        unrelatedOrder();
-        UUID extraMenu = addMenu(users.get("demo_restaurant"));
-        addOrder(outsideCustomer, outsideRestaurant, extraMenu);
-        var expected = snapshot();
-
-        assertThrows(IllegalStateException.class, restorer::restore);
-
-        assertEquals(expected, snapshot());
-    }
-
-    @Test
-    void lateHistoryCollisionRollsBackDeletedActivityAndRestoredCatalogue() throws Exception {
-        restorer.restore();
-        UUID outsideOrder = unrelatedOrder();
         var last = baseline.orders().getLast().events().getLast();
-        jdbc.update("UPDATE public.\"Event\" SET order_id = ? WHERE id = ?", outsideOrder, last.id());
+        jdbc.update("DELETE FROM public.\"Event\" WHERE id = ?", last.id());
+        jdbc.execute("ALTER TABLE public.\"Event\" ADD CONSTRAINT reject_last_fixture_event CHECK (id <> '" + last.id() + "')");
         jdbc.update("UPDATE public.\"Restaurant\" SET status = 'PAUSED' WHERE user_id = ?", users.get("demo_restaurant"));
         jdbc.update("UPDATE public.\"MenuItem\" SET stock_quantity = 0 WHERE id = ?", baseline.menuItems().getFirst().id());
-        UUID extraMenu = addMenu(users.get("demo_restaurant"));
-        UUID extraOrder = addOrder(users.get("demo_customer"), users.get("demo_restaurant"), extraMenu);
-        jdbc.update("INSERT INTO public.\"Bill\" (id, order_id) VALUES (?, ?)", UUID.randomUUID(), extraOrder);
         var expected = snapshot();
 
         assertThrows(DataAccessException.class, restorer::restore);
 
         assertEquals(expected, snapshot());
     }
-    // A final event insert fails after deletes and rewrites; the real transaction must undo all of those earlier changes.
+    // A real H2 constraint fails at the final history insert; all earlier global deletes and profile/menu changes must roll back.
 
     private void assertBaseline() {
         assertEquals(6, count("User"));
@@ -407,10 +346,6 @@ class DemoDataRestorerTest {
         jdbc.update("UPDATE public.\"Order\" SET state = ?, courier_id = ? WHERE id = ?", state, courier, order);
     }
 
-    private String courierState(UUID courier) {
-        return jdbc.queryForObject("SELECT state FROM public.\"Courier\" WHERE user_id = ?", String.class, courier);
-    }
-
     private UUID addMenu(UUID restaurant) {
         UUID id = UUID.randomUUID();
         jdbc.update("""
@@ -445,5 +380,5 @@ class DemoDataRestorerTest {
         }
         return rows;
     }
-    // Comparing full persisted rows catches stale children, extra bills and unintended changes to unrelated records.
+    // Comparing full persisted rows catches stale children, extra bills and differences from the complete starting state.
 }

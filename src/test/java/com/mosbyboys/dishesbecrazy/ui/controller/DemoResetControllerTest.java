@@ -122,24 +122,4 @@ class DemoResetControllerTest {
         verifyNoInteractions(queues);
         assertDoesNotThrow(() -> access.beginRequest().close());
     }
-
-    @Test
-    void unrelatedCourierDeliveryReturnsAnActionableConflictAndAllowsRetry() throws Exception {
-        String reason = "A demo courier has an active order outside the demo. Finish that delivery before Reset.";
-        doThrow(new IllegalStateException(reason)).doNothing().when(database).restore();
-
-        mvc.perform(post("/api/demo/reset").with(jwt().jwt(token -> token.subject(operatorId.toString()))))
-                .andExpect(status().isConflict()).andExpect(content().string(reason));
-
-        verifyNoInteractions(queues, dispatchQueue);
-        assertDoesNotThrow(() -> access.beginRequest().close());
-
-        mvc.perform(post("/api/demo/reset").with(jwt().jwt(token -> token.subject(operatorId.toString()))))
-                .andExpect(status().isNoContent());
-
-        verify(database, times(2)).restore();
-        verify(queues).rebuild();
-        verify(dispatchQueue).rebuild();
-    }
-    // A refused preflight must leave normal access open so the unrelated delivery can finish before another Reset.
 }
