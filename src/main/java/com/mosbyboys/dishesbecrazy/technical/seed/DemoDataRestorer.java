@@ -1,6 +1,7 @@
 package com.mosbyboys.dishesbecrazy.technical.seed;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.Assert;
 
+import com.mosbyboys.dishesbecrazy.domain.reg.CourierState;
 import com.mosbyboys.dishesbecrazy.domain.reg.Role;
 
 import lombok.RequiredArgsConstructor;
@@ -82,6 +84,7 @@ public class DemoDataRestorer {
                 """, scope);
         if (!ids.isEmpty()) {
             scope.addValue("orders", ids);
+            releaseCouriers(sql, ids);
             sql.update("DELETE FROM public.\"Bill\" WHERE order_id IN (:orders)", scope);
             sql.update("DELETE FROM public.\"Event\" WHERE order_id IN (:orders)", scope);
             sql.update("DELETE FROM public.\"OrderLineItem\" WHERE order_id IN (:orders)", scope);
@@ -92,4 +95,18 @@ public class DemoDataRestorer {
                 """, scope);
     }
     // Remove current demo history and dependent bills before menus; all failures roll back the complete database step.
+
+    private void releaseCouriers(NamedParameterJdbcTemplate sql, List<UUID> orderIds) {
+        sql.update("""
+                UPDATE public."Courier" SET state = :offline
+                WHERE state IN (:busy) AND user_id IN (
+                    SELECT courier_id FROM public."Order" WHERE id IN (:orders) AND state IN (:current))
+                """, new MapSqlParameterSource()
+                        .addValue("orders", orderIds)
+                        .addValue("offline", CourierState.OFFLINE.name())
+                        .addValue("busy", List.of(CourierState.ASSIGNED.name(), CourierState.CARRYING.name()))
+                        .addValue("current", List.of("ReadyState", "PickedUpState")));
+    }
+    // A courier who accepted or is carrying a demo order would be stuck ASSIGNED/CARRYING once it is deleted,
+    // so they go OFFLINE like the demo courier and press Start Driving to get offers again. Past deliveries don't count.
 }

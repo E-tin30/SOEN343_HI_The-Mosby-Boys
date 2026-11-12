@@ -1,5 +1,6 @@
 package com.mosbyboys.dishesbecrazy.application.dlv;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -30,10 +31,17 @@ public class DispatchQueueLoader implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+        rebuild();
+        dispatchService.dispatchWaitingOrders();
+    }
+
+    // Replaces the global ready queue with the READY orders no courier has accepted, oldest first.
+    public void rebuild() {
         // State of every courier who is on duty; anyone missing is OFFLINE
         Map<UUID, CourierState> onlineStates = courierService.getOnlineCouriers().stream()
             .collect(Collectors.toMap(CourierData::id, CourierData::state));
 
+        List<UUID> waiting = new ArrayList<>();
         List<Order> readyOrders = orderService.findInStates(List.of("ReadyState"));
         for (Order order : readyOrders) {
             if (order.getCourierId() != null) {
@@ -46,8 +54,9 @@ public class DispatchQueueLoader implements CommandLineRunner {
                     orderService.save(order);
                 }
             }
-            queues.enqueueGlobalReady(order.getId());
+            waiting.add(order.getId());
         }
-        dispatchService.dispatchWaitingOrders();
+        // Swap only after every read succeeded, so a failed read leaves the current queue intact
+        queues.replaceGlobalReady(waiting);
     }
 }

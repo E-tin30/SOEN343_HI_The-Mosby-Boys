@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
+import com.mosbyboys.dishesbecrazy.application.dlv.DispatchQueueLoader;
 import com.mosbyboys.dishesbecrazy.application.ord.OrderQueueLoader;
 import com.mosbyboys.dishesbecrazy.application.ord.PermissionDeniedException;
 import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
@@ -27,6 +28,7 @@ class ResetServiceTest {
     private REGFacade registration;
     private DemoDataRestorer database;
     private OrderQueueLoader queues;
+    private DispatchQueueLoader dispatchQueue;
     private ResetService reset;
     private DemoStateAccess access;
 
@@ -35,8 +37,9 @@ class ResetServiceTest {
         registration = mock(REGFacade.class);
         database = mock(DemoDataRestorer.class);
         queues = mock(OrderQueueLoader.class);
+        dispatchQueue = mock(DispatchQueueLoader.class);
         access = new DemoStateAccess();
-        reset = new ResetService(registration, database, queues, access);
+        reset = new ResetService(registration, database, queues, dispatchQueue, access);
         var operator = mock(User.class);
         when(operator.getRole()).thenReturn(Role.OPERATOR);
         when(registration.getCurrentUser(operatorId)).thenReturn(operator);
@@ -51,7 +54,17 @@ class ResetServiceTest {
 
         assertThrows(PermissionDeniedException.class, () -> reset.restoreDatabaseAndOrderQueues(operatorId));
 
-        verifyNoInteractions(database, queues);
+        verifyNoInteractions(database, queues, dispatchQueue);
+    }
+
+    @Test
+    void rebuildsTheDispatchQueueAfterTheOrderQueues() throws Exception {
+        reset.restoreDatabaseAndOrderQueues(operatorId);
+
+        var order = inOrder(database, queues, dispatchQueue);
+        order.verify(database).restore();
+        order.verify(queues).rebuild();
+        order.verify(dispatchQueue).rebuild();
     }
 
     @Test
@@ -60,7 +73,7 @@ class ResetServiceTest {
         doThrow(failure).doNothing().when(database).restore();
 
         assertSame(failure, assertThrows(IOException.class, () -> reset.restoreDatabaseAndOrderQueues(operatorId)));
-        verifyNoInteractions(queues);
+        verifyNoInteractions(queues, dispatchQueue);
         assertDoesNotThrow(() -> access.beginRequest().close());
 
         reset.restoreDatabaseAndOrderQueues(operatorId);

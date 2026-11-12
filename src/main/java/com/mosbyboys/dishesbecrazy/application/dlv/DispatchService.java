@@ -5,6 +5,7 @@ import com.mosbyboys.dishesbecrazy.application.ord.OrderService;
 import com.mosbyboys.dishesbecrazy.domain.ord.Order;
 import com.mosbyboys.dishesbecrazy.domain.ord.Restaurant;
 import com.mosbyboys.dishesbecrazy.domain.ord.Location;
+import com.mosbyboys.dishesbecrazy.domain.ord.state.ReadyState;
 import com.mosbyboys.dishesbecrazy.application.ord.RestaurantService;
 
 
@@ -76,6 +77,12 @@ public class DispatchService {
         for (UUID orderId : queues.globalReadySnapshot()) {
 
             Order order = orderService.load(orderId);
+
+            // Drop orders that are no longer READY (e.g. cancelled) so they can't block the rest of the queue
+            if (!(order.getState() instanceof ReadyState)) {
+                queues.removeGlobalReady(orderId);
+                continue;
+            }
 
             // Skip orders already offered or assigned
             if (order.getCourierId() != null) {

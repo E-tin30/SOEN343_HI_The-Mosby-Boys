@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.Assert;
 
+import com.mosbyboys.dishesbecrazy.application.dlv.DispatchQueueLoader;
 import com.mosbyboys.dishesbecrazy.application.ord.OrderQueueLoader;
 import com.mosbyboys.dishesbecrazy.application.ord.PermissionDeniedException;
 import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
@@ -22,6 +23,7 @@ public class ResetService {
     private final REGFacade registration;
     private final DemoDataRestorer database;
     private final OrderQueueLoader orderQueues;
+    private final DispatchQueueLoader dispatchQueue;
     private final DemoStateAccess access;
 
     public void restoreDatabaseAndOrderQueues(UUID operatorId) throws IOException {
@@ -37,9 +39,10 @@ public class ResetService {
             database.restore();
             restoration.databaseRestored();
             orderQueues.rebuild();
+            dispatchQueue.rebuild();
             restoration.complete();
         }
         // Hold exclusive access through commit and rebuilding; a runtime failure keeps normal requests blocked for retry.
     }
-    // Restores the current database/ORD baseline; extend this coordination when delivery runtime state is integrated.
+    // Restores the database baseline, the ORD queues and the global ready queue that dispatch reads.
 }

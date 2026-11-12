@@ -19,6 +19,9 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.mosbyboys.dishesbecrazy.application.dash.ResetService;
+import com.mosbyboys.dishesbecrazy.application.dlv.CourierService;
+import com.mosbyboys.dishesbecrazy.application.dlv.DispatchQueueLoader;
+import com.mosbyboys.dishesbecrazy.application.dlv.DispatchService;
 import com.mosbyboys.dishesbecrazy.application.ord.OrderQueueLoader;
 import com.mosbyboys.dishesbecrazy.application.ord.OrderQueues;
 import com.mosbyboys.dishesbecrazy.application.ord.OrderService;
@@ -74,7 +77,9 @@ class ResetServiceIntegrationTest {
                     row.getString("rejection_reason"), row.getBigDecimal("subtotal")));
         });
         queues = new OrderQueues();
-        reset = new ResetService(registration, database, new OrderQueueLoader(orders, queues), new DemoStateAccess());
+        // No courier is online, so every READY order goes back in the global ready queue.
+        var dispatchQueue = new DispatchQueueLoader(orders, queues, mock(CourierService.class), mock(DispatchService.class));
+        reset = new ResetService(registration, database, new OrderQueueLoader(orders, queues), dispatchQueue, new DemoStateAccess());
     }
     // Restoration and queue rebuilding are real; only caller lookup and the OrderService read boundary use test adapters.
 
@@ -152,6 +157,20 @@ class ResetServiceIntegrationTest {
                 String.class, users.get("demo_restaurant_building")));
         assertBaselineQueues();
     }
+
+    @Test
+    void restorationReplacesTheGlobalReadyQueueWithTheBaselinesReadyOrders() throws Exception {
+        restore();
+        UUID deletedByReset = UUID.randomUUID();
+        queues.enqueueGlobalReady(deletedByReset);
+
+        restore();
+
+        List<UUID> baselineReady = jdbc.queryForList(
+                "SELECT id FROM public.\"Order\" WHERE state = 'ReadyState' ORDER BY created_at ASC", UUID.class);
+        assertEquals(baselineReady, queues.globalReadySnapshot());
+    }
+    // An ID left over from before Reset would make the next dispatch fail to load its order.
 
     private void restore() throws Exception {
         reset.restoreDatabaseAndOrderQueues(users.get("demo_operator"));

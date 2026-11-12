@@ -80,4 +80,10 @@ public class OrderQueues {
     public synchronized boolean removeGlobalReady(UUID orderId) {
         return globalReady.remove(orderId);
     }
+
+    // Swaps in a rebuilt global ready queue in one step so dispatch never sees it half-built
+    public synchronized void replaceGlobalReady(List<UUID> orderIds) {
+        globalReady.clear();
+        globalReady.addAll(orderIds);
+    }
 }
