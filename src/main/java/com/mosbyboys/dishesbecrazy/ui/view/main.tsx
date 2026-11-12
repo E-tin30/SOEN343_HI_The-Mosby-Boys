@@ -50,11 +50,15 @@ createRoot(document.getElementById("root")!).render(
                             </ProtectedRoute>
                         }
                     />
-                    <Route
+                                        <Route
                         path="/courier/home"
                         element={
                             <ProtectedRoute allowedRoles={["COURIER"]}>
                                 <CourierHomePage/>
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
                         path="/operator/home"
                         element={
                             <ProtectedRoute allowedRoles={["OPERATOR"]}>
