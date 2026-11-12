@@ -77,6 +77,7 @@ export default function AddMenuItemPage() {
                 throw new Error("Failed to add menu item.");
             }
 
+            alert("Menu item added successfully!");
             navigate("/home");
         } catch (err: unknown) {
             setError(
