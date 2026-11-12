@@ -266,6 +266,7 @@ class ORDFacadeTest {
 
     @Test
     void anyIncomingOrderCanBeRejected() {
+        menuHasAvailableItem();
         Order first = storedOrder();
         Order second = storedOrder();
         queues.placed(restaurantId).enqueue(first.getId());
@@ -295,6 +296,7 @@ class ORDFacadeTest {
 
     @Test
     void rejectingRemovesTheOrderFromThePlacedQueue() {
+        menuHasAvailableItem();
         Order order = storedOrder();
         queues.placed(restaurantId).enqueue(order.getId());
 
@@ -398,6 +400,7 @@ class ORDFacadeTest {
 
     @Test
     void cancellingRemovesTheOrderFromWhicheverQueueHoldsIt() {
+        menuHasAvailableItem();
         Order order = acceptedAndQueued(); // waiting in preparation
         Operator operator = operator();
         when(regFacade.getCurrentUser(operator.getUserId())).thenReturn(operator);
@@ -581,5 +584,59 @@ class ORDFacadeTest {
         // Assert: it was opened and saved
         assertEquals(RestaurantStatus.OPEN, result.getStatus());
         verify(restaurantService).save(restaurant);
+    }
+
+    @Test
+    void rejectingAnOrderGivesItsStockBack() {
+        MenuItem item = realItem(3);
+        Order order = storedOrder(); // one unit of the item
+        queues.placed(restaurantId).enqueue(order.getId());
+
+        facade.rejectOrder(restaurantId, order.getId(), "Out of ingredients");
+
+        assertEquals(4, item.getStockQuantity());
+        verify(menuService).save(item);
+    }
+
+    @Test
+    void cancellingBeforePickupGivesTheStockBack() {
+        MenuItem item = realItem(3);
+        Order order = acceptedAndQueued();
+        Operator operator = operator();
+        when(regFacade.getCurrentUser(operator.getUserId())).thenReturn(operator);
+
+        facade.cancelOrder(operator.getUserId(), order.getId());
+
+        assertEquals(4, item.getStockQuantity());
+    }
+
+    @Test
+    void cancellingAfterPickupDoesNotGiveStockBack() {
+        MenuItem item = realItem(3);
+        Order order = storedOrder();
+        order.accept();
+        order.startPreparing();
+        order.markReady();
+        order.pickUp();
+        Operator operator = operator();
+        when(regFacade.getCurrentUser(operator.getUserId())).thenReturn(operator);
+
+        facade.cancelOrder(operator.getUserId(), order.getId());
+
+        assertEquals(3, item.getStockQuantity());
+        verify(menuService, never()).save(any());
+    }
+
+    @Test
+    void givingStockBackReopensAnItemThatSoldOut() {
+        MenuItem item = realItem(1);
+        item.decreaseStock(1); // sold out
+        Order order = storedOrder();
+        queues.placed(restaurantId).enqueue(order.getId());
+
+        facade.rejectOrder(restaurantId, order.getId(), "Out of ingredients");
+
+        assertEquals(1, item.getStockQuantity());
+        assertEquals(MenuItemStatus.AVAILABLE, item.getStatus());
     }
 }

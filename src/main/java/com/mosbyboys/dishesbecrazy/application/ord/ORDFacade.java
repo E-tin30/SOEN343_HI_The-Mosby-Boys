@@ -25,6 +25,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -198,6 +199,7 @@ public class ORDFacade {
         orderService.save(order);
         // record transition change event
         publishTransition(order, before, user.getUserId(), "REJECT");
+        restoreStock(order);
         // remove from placed queue
         queues.placed(order.getRestaurantId()).remove(orderId);
     }
@@ -213,6 +215,10 @@ public class ORDFacade {
 
         orderService.save(order);
         publishTransition(order, before, user.getUserId(), "CANCEL");
+        // food that already left with the courier isn't coming back
+        if (!before.equals("PickedUpState") && !before.equals("DeliveredState")) {
+            restoreStock(order);
+        }
         // the order could be in any line. Remove returns false where it isn't
         UUID restaurantId = order.getRestaurantId();
         queues.placed(restaurantId).remove(orderId);
@@ -400,6 +406,19 @@ public class ORDFacade {
         MenuItem item = menuService.load(line.getMenuItemId());
         item.decreaseStock(line.getQuantity());
         menuService.save(item);
+    }
+
+    // Puts an order's quantities back on the menu stock (order was rejected or cancelled before the food left).
+    private void restoreStock(Order order) {
+        for (OrderLine line : order.getOrderLineItems()) {
+            try {
+                MenuItem item = menuService.load(line.getMenuItemId());
+                item.increaseStock(line.getQuantity());
+                menuService.save(item);
+            } catch (NoSuchElementException e) {
+                // the item was removed from the menu; there is no stock to give back
+            }
+        }
     }
 
 }

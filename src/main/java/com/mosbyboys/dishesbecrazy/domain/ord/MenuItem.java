@@ -81,4 +81,16 @@ public class MenuItem {
             this.status = MenuItemStatus.SOLD_OUT;
         }
     }
+
+    public void increaseStock(int quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Quantity must be greater than 0");
+        }
+        boolean wasEmpty = stockQuantity == 0;
+        this.stockQuantity += quantity;
+        // only reopen an item that sold out by running dry; a restaurant's manual SOLD_OUT with stock left stays as it is
+        if (wasEmpty) {
+            this.status = MenuItemStatus.AVAILABLE;
+        }
+    }
 }
