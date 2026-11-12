@@ -9,6 +9,7 @@ import com.mosbyboys.dishesbecrazy.application.dlv.events.DispatchRequestEvent;
 import com.mosbyboys.dishesbecrazy.application.dlv.DispatchService;
 import com.mosbyboys.dishesbecrazy.domain.ord.Order;
 import com.mosbyboys.dishesbecrazy.application.ord.ORDFacade;
+import com.mosbyboys.dishesbecrazy.domain.reg.CourierState;
 
 import java.util.List;
 import java.util.UUID;
@@ -23,6 +24,10 @@ public class DLVFacade {
 
     public List<CourierData> getOnlineCouriers() {
         return courierService.getOnlineCouriers();
+    }
+
+    public CourierState getCourierState(UUID courierId) {
+        return courierService.getState(courierId);
     }
 
     public Order getPendingOffer(UUID courierId) {

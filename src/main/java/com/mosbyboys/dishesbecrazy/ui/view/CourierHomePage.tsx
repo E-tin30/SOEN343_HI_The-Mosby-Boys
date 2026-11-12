@@ -55,7 +55,7 @@ export default function CourierHomePage() {
   const refresh = useCallback(async () => {
     if (!accessToken || !user) return;
     const [state, pending, current] = await Promise.all([
-      getCourierState(accessToken, user.id),
+      getCourierState(accessToken),
       getPendingOffer(accessToken),
       getCurrentOrders(accessToken),
     ]);

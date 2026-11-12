@@ -13,6 +13,7 @@ import com.mosbyboys.dishesbecrazy.application.dlv.DLVFacade;
 import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
 
 import com.mosbyboys.dishesbecrazy.domain.ord.Order;
+import com.mosbyboys.dishesbecrazy.domain.reg.CourierState;
 import com.mosbyboys.dishesbecrazy.domain.reg.Role;
 
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,10 @@ public class CourierController {
 
     }
 
+    public record CourierStateResponse(CourierState state) {
+
+    }
+
     private UUID getCourierId(Jwt jwt) {
         UUID userId = UUID.fromString(jwt.getSubject());
 
@@ -40,6 +45,14 @@ public class CourierController {
         }
 
         return userId;
+    }
+
+    //The logged-in courier's own state (OFFLINE, IDLE, ASSIGNED or CARRYING).
+    @GetMapping("/state")
+    public ResponseEntity<CourierStateResponse> getState(@AuthenticationPrincipal Jwt jwt) {
+        UUID courierId = getCourierId(jwt);
+
+        return ResponseEntity.ok(new CourierStateResponse(dlvFacade.getCourierState(courierId)));
     }
 
     @GetMapping("/offers/pending")

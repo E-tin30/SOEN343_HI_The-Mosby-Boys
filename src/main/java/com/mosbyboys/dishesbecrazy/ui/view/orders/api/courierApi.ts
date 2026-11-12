@@ -26,10 +26,11 @@ async function get<T>(path: string, token: string): Promise<T | null> {
   return response.status === 204 ? null : response.json();
 }
 
-// The dashboard lists every courier who isn't offline, so a courier missing from it is OFFLINE.
-export async function getCourierState(token: string, courierId: string): Promise<CourierState> {
-  const online = await get<{ id: string; state: CourierState }[]>("/api/dashboard/couriers", token);
-  return online?.find((c) => c.id === courierId)?.state ?? "OFFLINE";
+// The logged-in courier's own state
+export async function getCourierState(token: string): Promise<CourierState> {
+  const response = await get<{ state: CourierState }>("/api/courier/state", token);
+  if (!response) throw new Error("Courier state was missing from the response");
+  return response.state;
 }
 
 export function getPendingOffer(token: string): Promise<PendingOffer | null> {

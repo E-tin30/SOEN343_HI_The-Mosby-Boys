@@ -36,6 +36,12 @@ public class CourierService {
         return courierRepo.findByState(CourierState.IDLE).stream().map(this::toCourierData).toList();
     }
 
+    public CourierState getState(UUID courierId) {
+        return courierRepo.findById(courierId)
+            .orElseThrow(() -> new IllegalArgumentException("Courier not found: " + courierId))
+            .getState();
+    }
+
     private CourierData toCourierData(CourierEntity courier) {
         return new CourierData(courier.getId(), courier.getState(),courier.getLatitude(),courier.getLongitude());
     }
