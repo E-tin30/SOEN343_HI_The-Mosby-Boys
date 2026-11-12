@@ -39,15 +39,18 @@ export function useDashboardData(enabled = true) {
 
     // false once the effect is cleaned up, so late responses get ignored
     const active = useRef(false);
+    // bumped on every load(), so an older poll can't overwrite a newer refresh()
+    const seq = useRef(0);
 
     // outside the effect so we can also return it as refresh()
     const load = useCallback(async () => {
         if (!accessToken || !enabled) return;
+        const id = ++seq.current;
         const [restaurantsResult, couriersResult] = await Promise.allSettled([
             fetchDashboard<RestaurantDashboardData[]>("restaurants", accessToken),
             fetchDashboard<CourierData[]>("couriers", accessToken),
         ]);
-        if (!active.current) return;
+        if (!active.current || id !== seq.current) return;
         if (restaurantsResult.status === "fulfilled") setRestaurants(restaurantsResult.value);
         else console.error("Error loading restaurants:", restaurantsResult.reason);
         if (couriersResult.status === "fulfilled") setCouriers(couriersResult.value);
