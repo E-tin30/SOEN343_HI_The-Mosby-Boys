@@ -12,6 +12,9 @@ import com.mosbyboys.dishesbecrazy.domain.reg.Role;
 import com.mosbyboys.dishesbecrazy.domain.reg.User;
 import com.mosbyboys.dishesbecrazy.domain.ord.MenuItem;
 import com.mosbyboys.dishesbecrazy.application.dlv.events.OrderReadyEvent;
+import com.mosbyboys.dishesbecrazy.domain.ord.OrderStateChanged;
+import com.mosbyboys.dishesbecrazy.domain.ord.OrderObserver;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
 import jakarta.transaction.Transactional;
@@ -34,7 +37,7 @@ No per-request data in fields, Spring only makes one of these. (Singleton) */
 public class ORDFacade {
 
     private final OrderService orderService;
-    private final OrderEventService orderEventService;
+    private final List<OrderObserver> subscribers = new CopyOnWriteArrayList<>();
     private final PermissionPolicy permissionPolicy;
     private final OrderQueues queues;
     private final MenuService menuService;
@@ -42,6 +45,14 @@ public class ORDFacade {
     private final PricingService  pricingService;
     private final REGFacade regFacade;
     private final ApplicationEventPublisher eventPublisher;
+
+    public void subscribe(OrderObserver observer) {
+        subscribers.add(observer);
+    }
+
+    public void unsubscribe(OrderObserver observer) {
+        subscribers.remove(observer);
+    }
 
     @Transactional
     public List<Restaurant> getRestaurants(User user) {
@@ -125,8 +136,7 @@ public class ORDFacade {
 
         orderService.save(order);
         // record transition change event
-        orderEventService.save(order.getId(), null, order.getState().toString(),
-                user.getUserId(), "PLACE");
+        publishTransition(order, null, user.getUserId(), "PLACE");
         // add to placed queue
         queues.placed(restaurantId).enqueue(order.getId());
 
@@ -168,7 +178,7 @@ public class ORDFacade {
 
         orderService.save(order);
         // record transition change event
-        orderEventService.save(orderId, before, order.getState().toString(), user.getUserId(), "ACCEPT");
+        publishTransition(order, before, user.getUserId(), "ACCEPT");
         // placed queue -> preparation queue (FIFO)
         line.dequeueIfFirst(orderId);
         queues.preparation(order.getRestaurantId()).enqueue(orderId);
@@ -185,7 +195,7 @@ public class ORDFacade {
 
         orderService.save(order);
         // record transition change event
-        orderEventService.save(orderId, before, order.getState().toString(), user.getUserId(), "REJECT");
+        publishTransition(order, before, user.getUserId(), "REJECT");
         // remove from placed queue
         queues.placed(order.getRestaurantId()).remove(orderId);
     }
@@ -200,7 +210,7 @@ public class ORDFacade {
         order.cancel();
 
         orderService.save(order);
-        orderEventService.save(orderId, before, order.getState().toString(), user.getUserId(), "CANCEL");
+        publishTransition(order, before, user.getUserId(), "CANCEL");
         // the order could be in any line. Remove returns false where it isn't
         UUID restaurantId = order.getRestaurantId();
         queues.placed(restaurantId).remove(orderId);
@@ -226,7 +236,7 @@ public class ORDFacade {
         order.startPreparing();
 
         orderService.save(order);
-        orderEventService.save(orderId, before, order.getState().toString(), user.getUserId(), "PREPARING");
+        publishTransition(order, before, user.getUserId(), "PREPARING");
         // get next in line (FIFO)
         line.dequeueIfFirst(orderId);
     }
@@ -241,8 +251,8 @@ public class ORDFacade {
         order.markReady();
 
         orderService.save(order);
-        orderEventService.save(orderId, before, order.getState().toString(), user.getUserId(), "READY");
-        
+        publishTransition(order, before, user.getUserId(), "READY");
+
         //Enqueue the order in both the individual restaurant queue and global ready queue
         queues.ready(order.getRestaurantId()).enqueue(orderId);
         queues.enqueueGlobalReady(orderId);
@@ -261,7 +271,7 @@ public class ORDFacade {
         order.pickUp();
 
         orderService.save(order);
-        orderEventService.save(orderId, before, order.getState().toString(), user.getUserId(), "PICKUP");
+        publishTransition(order, before, user.getUserId(), "PICKUP");
     }
 
     @Transactional
@@ -274,7 +284,7 @@ public class ORDFacade {
         order.deliver();
 
         orderService.save(order);
-        orderEventService.save(orderId, before, order.getState().toString(), user.getUserId(), "DELIVER");
+        publishTransition(order, before, user.getUserId(), "DELIVER");
     }
 
     @Transactional
@@ -287,7 +297,7 @@ public class ORDFacade {
         order.refund();
 
         orderService.save(order);
-        orderEventService.save(orderId, before, order.getState().toString(), user.getUserId(), "REFUND");
+        publishTransition(order, before, user.getUserId(), "REFUND");
     }
 
     // Order history, scoped by the caller's role, newest first.
@@ -349,6 +359,19 @@ public class ORDFacade {
             return null;
         }
         return pricingService.calculateTotal(order.getSubtotal());
+    }
+
+    // Builds the event for one transition and hands it to every subscriber.
+    private void publishTransition(Order order, String before, UUID performedBy, String action) {
+        notifySubscribers(new OrderStateChanged(
+                order.getId(), before, order.getState().toString(), performedBy, action));
+    }
+
+    // The template's notifySubscribers: calls update(context) on each subscriber in turn.
+    private void notifySubscribers(OrderStateChanged event) {
+        for (OrderObserver subscriber : subscribers) {
+            subscriber.update(event);
+        }
     }
     
     @Transactional
