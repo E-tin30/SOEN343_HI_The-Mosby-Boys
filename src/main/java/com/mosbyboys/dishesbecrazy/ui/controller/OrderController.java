@@ -144,6 +144,16 @@ public class OrderController {
         }
     }
 
+    // The logged-in courier's offered, accepted and in-progress orders, in the same shape as history.
+    @GetMapping("/api/orders/courier/current")
+    public ResponseEntity<List<OrderHistoryResponse>> getCourierCurrentOrders(@AuthenticationPrincipal Jwt jwt) {
+        User user = regFacade.getCurrentUser(UUID.fromString(jwt.getSubject()));
+        List<OrderHistoryResponse> body = ordFacade.getCourierCurrentOrders(user).stream()
+                .map(OrderHistoryResponse::from)
+                .toList();
+        return ResponseEntity.ok(body);
+    }
+
     // The logged-in user's order history. What they see depends on their role (R-PRC-04).
     @GetMapping("/api/orders/history")
     public ResponseEntity<List<OrderHistoryResponse>> getOrderHistory(@AuthenticationPrincipal Jwt jwt) {

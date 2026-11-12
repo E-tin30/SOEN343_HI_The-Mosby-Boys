@@ -10,6 +10,12 @@ const auth: { user: CurrentUser | null; accessToken: string | null; logout: () =
   user: null, accessToken: "private-reset-token", logout: vi.fn(),
 };
 vi.mock("../../main/java/com/mosbyboys/dishesbecrazy/ui/view/AuthContext", () => ({ useAuth: () => auth }));
+vi.mock("../../main/java/com/mosbyboys/dishesbecrazy/ui/view/CartContext", () => ({ useCart: () => ({ itemCount: 0 }) }));
+// HomePage loads order history on mount; stub it so the only fetch calls are the Reset button's.
+vi.mock("../../main/java/com/mosbyboys/dishesbecrazy/ui/view/orders/api/ordersApi", async (importOriginal) => ({
+  ...(await importOriginal<object>()),
+  getOrderHistory: () => Promise.resolve([]),
+}));
 
 beforeEach(() => {
   auth.user = { id: "operator", firstName: "Pat", lastName: "Demo", username: "demo_operator", role: "OPERATOR" };

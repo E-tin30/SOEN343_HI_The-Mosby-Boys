@@ -16,6 +16,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.springframework.context.ApplicationEventPublisher;
 
 import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
 import com.mosbyboys.dishesbecrazy.domain.ord.Location;
@@ -29,6 +30,7 @@ import com.mosbyboys.dishesbecrazy.domain.ord.state.IllegalTransitionException;
 import com.mosbyboys.dishesbecrazy.domain.ord.state.PlacedState;
 import com.mosbyboys.dishesbecrazy.domain.ord.state.RefundedState;
 import com.mosbyboys.dishesbecrazy.domain.reg.Courier;
+import com.mosbyboys.dishesbecrazy.domain.reg.CourierState;
 import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
 import com.mosbyboys.dishesbecrazy.domain.reg.Operator;
 import com.mosbyboys.dishesbecrazy.domain.ord.OrderObserver;
@@ -44,6 +46,7 @@ class ORDFacadeTest {
     private REGFacade regFacade;
     private OrderQueues queues;
     private ORDFacade facade;
+    private ApplicationEventPublisher eventPublisher;
 
     private final UUID restaurantId = UUID.randomUUID();
     private final UUID customerId = UUID.randomUUID();
@@ -60,9 +63,10 @@ class ORDFacadeTest {
         regFacade = mock(REGFacade.class);
         pricingService = mock(PricingService.class);
         queues = new OrderQueues();
+        eventPublisher = mock(ApplicationEventPublisher.class);
         // same order as the fields in ORDFacade
         facade = new ORDFacade(orderService, new PermissionPolicy(),
-                        queues, menuService, restaurantService, pricingService, regFacade);
+                queues, menuService, restaurantService, pricingService, regFacade, eventPublisher);
         facade.subscribe(subscriber);
         // The facade looks the caller up through REGFacade, so tell the mock who each id is.
         when(regFacade.getCurrentUser(customerId)).thenReturn(customer());
@@ -369,7 +373,7 @@ class ORDFacadeTest {
     void courierHistoryOnlyAsksForTheirOwnCarriedOrders() {
         UUID courierId = UUID.randomUUID();
         Courier courier = new Courier(courierId, OffsetDateTime.now(), "A", "B", "a@b.c", "ab", "hash",
-                "OFF_DUTY", new Location(45.5, -73.6));
+                CourierState.OFFLINE, new Location(45.5, -73.6));
         when(orderService.findHistoryForCourier(courierId)).thenReturn(List.of());
 
         facade.getOrderHistory(courier);

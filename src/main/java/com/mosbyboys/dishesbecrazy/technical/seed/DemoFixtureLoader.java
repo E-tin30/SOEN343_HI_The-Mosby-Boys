@@ -15,6 +15,7 @@ import org.springframework.util.Assert;
 
 import com.mosbyboys.dishesbecrazy.domain.ord.MenuItemStatus;
 import com.mosbyboys.dishesbecrazy.domain.ord.RestaurantStatus;
+import com.mosbyboys.dishesbecrazy.domain.reg.CourierState;
 import com.mosbyboys.dishesbecrazy.domain.reg.Role;
 import com.mosbyboys.dishesbecrazy.technical.seed.DemoFixtures.Account;
 import com.mosbyboys.dishesbecrazy.technical.seed.DemoFixtures.MenuSeed;
@@ -92,7 +93,12 @@ public class DemoFixtureLoader {
                                     .anyMatch(status -> status.name().equals(account.status())),
                             "Restaurant status must be OPEN, PAUSED or CLOSED.");
                 }
-                case COURIER -> Assert.hasText(account.state(), "Courier state is required.");
+                case COURIER -> {
+                    Assert.hasText(account.state(), "Courier state is required.");
+                    Assert.isTrue(Arrays.stream(CourierState.values())
+                                    .anyMatch(state -> state.name().equals(account.state())),
+                            "Courier state must be OFFLINE, IDLE, ASSIGNED or CARRYING.");
+                }
                 case OPERATOR -> { }
             }
             // Checks fields consumed by each existing role-specific profile insert.

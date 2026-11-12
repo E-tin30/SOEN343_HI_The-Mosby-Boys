@@ -14,7 +14,7 @@ export async function getRestaurantOrders(token: string): Promise<RestaurantOrde
 // Queue reads now share command, HTTP, network, and JSON error logging.
 
 // The action endpoints reply 204 with no body, so there is nothing to parse on success.
-async function post(path: string, token: string, body?: unknown): Promise<void> {
+export async function post(path: string, token: string, body?: unknown): Promise<void> {
   await loggedFetch(API + path, {
     method: "POST",
     headers: {

@@ -14,6 +14,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.mosbyboys.dishesbecrazy.application.dash.ResetService;
+import com.mosbyboys.dishesbecrazy.application.dlv.DispatchQueueLoader;
 import com.mosbyboys.dishesbecrazy.application.ord.OrderQueueLoader;
 import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
 import com.mosbyboys.dishesbecrazy.domain.reg.Role;
@@ -36,6 +37,7 @@ class DemoResetControllerTest {
     @MockitoBean REGFacade registration;
     @MockitoBean DemoDataRestorer database;
     @MockitoBean OrderQueueLoader queues;
+    @MockitoBean DispatchQueueLoader dispatchQueue;
     @MockitoBean JwtDecoder decoder;
     private final UUID operatorId = UUID.randomUUID();
 

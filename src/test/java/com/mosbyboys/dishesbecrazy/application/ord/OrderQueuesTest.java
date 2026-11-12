@@ -69,4 +69,17 @@ class OrderQueuesTest {
         }
     }
     // Dropping registry entries alone would leave stale IDs in previously obtained queue objects.
+
+    @Test
+    void replacingTheGlobalReadyQueueDropsStaleIdsAndKeepsTheNewOrder() {
+        OrderQueues queues = new OrderQueues();
+        UUID stale = UUID.randomUUID();
+        UUID first = UUID.randomUUID();
+        UUID second = UUID.randomUUID();
+        queues.enqueueGlobalReady(stale);
+
+        queues.replaceGlobalReady(List.of(first, second));
+
+        assertEquals(List.of(first, second), queues.globalReadySnapshot());
+    }
 }

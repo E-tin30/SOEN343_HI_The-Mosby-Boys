@@ -40,6 +40,20 @@ export type HistoryOrder = {
   rejectionReason: string | null;
 };
 
+// What the home dashboards show for an order in progress.
+export type ActiveOrderSummary = {
+  id: string;
+  restaurantName: string;
+  status: HistoryStatus;
+  lines: OrderLine[];
+  total: number | null;
+};
+
+// A courier's current delivery: waiting at the restaurant (READY) or on the way to the customer (PICKEDUP).
+export type ActiveDelivery = ActiveOrderSummary & {
+  status: Extract<HistoryStatus, "READY" | "PICKEDUP">;
+};
+
 export type OrderResponse = {
   id: string;
   restaurantId: string;

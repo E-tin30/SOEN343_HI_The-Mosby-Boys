@@ -14,6 +14,7 @@ import LoginPage from "./LoginPage";
 import RegistrationPage from "./RegistrationPage";
 import HomePage from "./HomePage";
 import RestaurantHomePage from "./RestaurantHomePage";
+import CourierHomePage from "./CourierHomePage";
 import RestaurantOrdersPage from "./orders/RestaurantOrdersPage";
 import OrderHistoryPage from "./orders/OrderHistoryPage";
 import RestaurantsPage from "./menu/RestaurantsPage";
@@ -21,6 +22,7 @@ import MenuPage from "./menu/MenuPage";
 import {CartProvider} from "./CartContext";
 import CartPage from "./menu/CartPage";
 import OrderSummaryPage from "./orders/OrderSummaryPage";
+import DashboardPage from "./dashboard/DashboardPage";
 import OperatorHomePage from "./OperatorHomePage";
 
 createRoot(document.getElementById("root")!).render(
@@ -35,7 +37,7 @@ createRoot(document.getElementById("root")!).render(
                     <Route
                         path="/home"
                         element={
-                            <ProtectedRoute allowedRoles={["CUSTOMER", "COURIER"]}>
+                            <ProtectedRoute allowedRoles={["CUSTOMER"]}>
                                 <HomePage/>
                             </ProtectedRoute>
                         }
@@ -45,6 +47,14 @@ createRoot(document.getElementById("root")!).render(
                         element={
                             <ProtectedRoute allowedRoles={["RESTAURANT"]}>
                                 <RestaurantHomePage/>
+                            </ProtectedRoute>
+                        }
+                    />
+                                        <Route
+                        path="/courier/home"
+                        element={
+                            <ProtectedRoute allowedRoles={["COURIER"]}>
+                                <CourierHomePage/>
                             </ProtectedRoute>
                         }
                     />
@@ -101,6 +111,21 @@ createRoot(document.getElementById("root")!).render(
                         element={
                             <ProtectedRoute allowedRoles={["CUSTOMER"]}>
                                 <OrderSummaryPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/dashboard"
+                        element={
+                            <ProtectedRoute
+                                allowedRoles={[
+                                    "CUSTOMER",
+                                    "RESTAURANT",
+                                    "COURIER",
+                                    "OPERATOR"
+                                ]}
+                            >
+                                <DashboardPage />
                             </ProtectedRoute>
                         }
                     />

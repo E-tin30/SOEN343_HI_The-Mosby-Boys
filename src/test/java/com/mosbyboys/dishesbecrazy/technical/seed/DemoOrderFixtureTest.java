@@ -64,7 +64,7 @@ class DemoOrderFixtureTest {
         assertEquals("demo_courier", delivered.courierUsername());
         assertEquals(java.util.List.of("PLACE", "ACCEPT", "PREPARING", "READY", "PICKUP", "DELIVER"),
                 delivered.events().stream().map(DemoFixtures.EventSeed::action).toList());
-        assertEquals("OFF_DUTY", fixtures.accounts().stream().filter(a -> a.username().equals("demo_courier"))
+        assertEquals("OFFLINE", fixtures.accounts().stream().filter(a -> a.username().equals("demo_courier"))
                 .findFirst().orElseThrow().state());
     }
     // A past delivery references its courier without changing the courier's current state.

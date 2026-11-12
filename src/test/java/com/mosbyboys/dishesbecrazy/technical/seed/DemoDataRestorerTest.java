@@ -142,6 +142,27 @@ class DemoDataRestorerTest {
     // Demo customer orders at other restaurants and other customers' orders at demo restaurants are both reset.
 
     @Test
+    void releasesCouriersOnDeletedDemoOrdersAndLeavesOtherDeliveriesAlone() throws Exception {
+        restorer.restore();
+        unrelatedOrder();
+        UUID demoMenu = baseline.menuItems().getFirst().id();
+        UUID heading = addCourier("outside_heading", "ASSIGNED");
+        UUID carrying = addCourier("outside_carrying", "CARRYING");
+        UUID busyElsewhere = addCourier("outside_busy", "CARRYING");
+        giveToCourier(addOrder(outsideCustomer, users.get("demo_restaurant"), demoMenu), "ReadyState", heading);
+        giveToCourier(addOrder(users.get("demo_customer"), outsideRestaurant, outsideMenu), "PickedUpState", carrying);
+        giveToCourier(addOrder(outsideCustomer, users.get("demo_restaurant"), demoMenu), "DeliveredState", busyElsewhere);
+        giveToCourier(addOrder(outsideCustomer, outsideRestaurant, outsideMenu), "PickedUpState", busyElsewhere);
+
+        restorer.restore();
+
+        assertEquals("OFFLINE", courierState(heading));
+        assertEquals("OFFLINE", courierState(carrying));
+        assertEquals("CARRYING", courierState(busyElsewhere));
+    }
+    // Deleting a demo order must not leave its courier ASSIGNED/CARRYING with nothing to deliver; a past demo delivery doesn't count.
+
+    @Test
     void repeatedRestorationLeavesTheSameBaseline() throws Exception {
         restorer.restore();
         var expected = snapshot();
@@ -291,7 +312,7 @@ class DemoDataRestorerTest {
                     SELECT COUNT(*) FROM public."Order" WHERE restaurant_id = ? AND state = 'AcceptedState'
                     """, Integer.class, users.get(entry.getKey())));
         }
-        assertEquals("OFF_DUTY", jdbc.queryForObject("SELECT state FROM public.\"Courier\"", String.class));
+        assertEquals("OFFLINE", jdbc.queryForObject("SELECT state FROM public.\"Courier\"", String.class));
     }
 
     private UUID unrelatedOrder() {
@@ -311,6 +332,20 @@ class DemoDataRestorerTest {
         jdbc.update("INSERT INTO auth.users (id, email) VALUES (?, ?)", id, username + "@example.com");
         jdbc.update("INSERT INTO public.\"User\" (id, username, role) VALUES (?, ?, ?)", id, username, role);
         return id;
+    }
+
+    private UUID addCourier(String username, String state) {
+        UUID id = addUser(username, "COURIER");
+        jdbc.update("INSERT INTO public.\"Courier\" (user_id, state, latitude, longitude) VALUES (?, ?, 45.5, -73.6)", id, state);
+        return id;
+    }
+
+    private void giveToCourier(UUID order, String state, UUID courier) {
+        jdbc.update("UPDATE public.\"Order\" SET state = ?, courier_id = ? WHERE id = ?", state, courier, order);
+    }
+
+    private String courierState(UUID courier) {
+        return jdbc.queryForObject("SELECT state FROM public.\"Courier\" WHERE user_id = ?", String.class, courier);
     }
 
     private UUID addMenu(UUID restaurant) {

@@ -11,6 +11,7 @@ import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
 import com.mosbyboys.dishesbecrazy.domain.reg.Role;
 import com.mosbyboys.dishesbecrazy.domain.reg.User;
 import com.mosbyboys.dishesbecrazy.domain.ord.MenuItem;
+import com.mosbyboys.dishesbecrazy.application.dlv.events.OrderReadyEvent;
 import com.mosbyboys.dishesbecrazy.domain.ord.OrderStateChanged;
 import com.mosbyboys.dishesbecrazy.domain.ord.OrderObserver;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -19,6 +20,7 @@ import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -42,6 +44,7 @@ public class ORDFacade {
     private final RestaurantService restaurantService;
     private final PricingService  pricingService;
     private final REGFacade regFacade;
+    private final ApplicationEventPublisher eventPublisher;
 
     public void subscribe(OrderObserver observer) {
         subscribers.add(observer);
@@ -213,6 +216,7 @@ public class ORDFacade {
         queues.placed(restaurantId).remove(orderId);
         queues.preparation(restaurantId).remove(orderId);
         queues.ready(restaurantId).remove(orderId);
+        queues.removeGlobalReady(orderId);
     }
 
     @Transactional
@@ -248,7 +252,13 @@ public class ORDFacade {
 
         orderService.save(order);
         publishTransition(order, before, user.getUserId(), "READY");
+
+        //Enqueue the order in both the individual restaurant queue and global ready queue
         queues.ready(order.getRestaurantId()).enqueue(orderId);
+        queues.enqueueGlobalReady(orderId);
+
+        //Notify the dispatch system to find a courier
+        eventPublisher.publishEvent(new OrderReadyEvent());
     }
 
     @Transactional
@@ -302,6 +312,21 @@ public class ORDFacade {
             case OPERATOR   -> orderService.findHistoryForAll();
         };
 
+        return toViews(user, orders);
+    }
+
+    // A courier's orders that are still in their hands: offered or accepted (READY) or on the way (PICKEDUP)
+    // History leaves READY orders out, so the courier dashboard reads these instead
+    @Transactional
+    public List<OrderHistoryView> getCourierCurrentOrders(User user) {
+        if (user.getRole() != Role.COURIER) {
+            throw new PermissionDeniedException("Only a courier has current deliveries.");
+        }
+        return toViews(user, orderService.findCurrentForCourier(user.getUserId()));
+    }
+
+    // Wraps orders with the item, restaurant and customer names and the pricing the caller's role may see
+    private List<OrderHistoryView> toViews(User user, List<Order> orders) {
         // One query for every item name on the page, same as getRestaurantOrders.
         Map<UUID, String> itemNames = menuService.getNames(orders.stream()
                 .flatMap(o -> o.getOrderLineItems().stream())

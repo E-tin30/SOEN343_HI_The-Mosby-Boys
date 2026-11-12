@@ -7,7 +7,8 @@ import Button from "../components/Button";
 import Heading from "../components/Heading";
 import Tag from "../components/Tag";
 import { cancelOrder, getOrderHistory, refundOrder } from "./api/ordersApi";
-import type { HistoryOrder, HistoryStatus } from "./types/order";
+import type { HistoryOrder } from "./types/order";
+import { STATUS_LABEL, STATUS_TONE } from "./orderStatus";
 import "../styles/OrderHistoryPage.css";
 
 type Tone = "sage" | "mustard" | "tomato" | "navy" | "neutral";

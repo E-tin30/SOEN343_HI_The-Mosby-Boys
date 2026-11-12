@@ -10,6 +10,8 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import com.mosbyboys.dishesbecrazy.domain.ord.Location;
 import com.mosbyboys.dishesbecrazy.technical.repository.UserRepo;
@@ -47,18 +49,19 @@ class AuthServiceTest {
         service.createUser("Rita", "Owner", "r@b.c", "rita", "password1",
                 "RESTAURANT", "9 Food Lane", "Demo Diner");
 
+        verify(geocoder).geocode("9 Food Lane");
         verify(userRepo).saveUser(newUserId, "Rita", "Owner", "rita", "RESTAURANT",
                 "9 Food Lane", "Demo Diner", montreal);
     }
 
     @Test
-    void courierIsNotGeocodedAndHasNoLocation() {
+    void courierIsGeocodedAndSavedWithItsLocation() {
         service.createUser("Cory", "Courier", "c@b.c", "cory", "password1",
-                "COURIER", null, null);
+                "COURIER", "123 Demo Street", null);
 
-        verify(geocoder, never()).geocode(any());
+        verify(geocoder).geocode("123 Demo Street");
         verify(userRepo).saveUser(newUserId, "Cory", "Courier", "cory", "COURIER",
-                null, null, null);
+                "123 Demo Street", null, montreal);
     }
 
     @Test
@@ -71,16 +74,17 @@ class AuthServiceTest {
         verify(userRepo, never()).saveUser(any(), any(), any(), any(), any(), any(), any(), any());
     }
 
-    @Test
-    void customerWithoutAnAddressIsRejectedBeforeAnyLoginIsCreated() {
-        assertThrows(IllegalArgumentException.class, () ->
-                service.createUser("Alex", "Example", "a@b.c", "alex", "password1",
-                        "CUSTOMER", "  ", null));
-        assertThrows(IllegalArgumentException.class, () ->
-                service.createUser("Alex", "Example", "a@b.c", "alex", "password1",
-                        "CUSTOMER", null, null));
+    @ParameterizedTest
+    @ValueSource(strings = {"CUSTOMER", "RESTAURANT", "COURIER"})
+    void missingAddressIsRejectedBeforeGeocodingOrCreatingAnyUser(String role) {
+        for (String address : new String[]{null, "", " \t "}) {
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                    service.createUser("Alex", "Example", "a@b.c", "alex", "password1",
+                            role, address, "Demo Diner"));
+            assertEquals("address is required for " + role, exception.getMessage());
+        }
 
-        verify(userRepo, never()).createAuthUser(any(), any(), any());
+        verifyNoInteractions(geocoder, userRepo);
     }
 
     @Test

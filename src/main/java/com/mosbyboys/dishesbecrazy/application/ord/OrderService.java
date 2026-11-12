@@ -137,6 +137,13 @@ public class OrderService {
         return withLines(orderRepo.findByCourierIdAndStateInOrderByCreatedAtDesc(courierId, CARRIED_STATES));
     }
 
+    // A courier's orders that are offered, accepted or on the way (at most one at a time)
+    @Transactional(readOnly = true)
+    public List<Order> findCurrentForCourier(UUID courierId) {
+        return withLines(orderRepo.findByCourierIdAndStateInOrderByCreatedAtDesc(courierId,
+                List.of("ReadyState", "PickedUpState")));
+    }
+
     // Every order, newest first (operator).
     @Transactional(readOnly = true)
     public List<Order> findHistoryForAll() {
