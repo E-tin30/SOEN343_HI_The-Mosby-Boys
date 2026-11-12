@@ -106,11 +106,11 @@ export default function RestaurantStatusControl({ variant = "card", onRestaurant
       {restaurant === null && !error && <p className="meta">Loading…</p>}
 
       {restaurant && (
-        <>
-          <Tag tone={STATUS_TAG[restaurant.status].tone}>{STATUS_TAG[restaurant.status].label}</Tag>
-          {restaurant.status === "PAUSED" && <p className="home-card__text meta">{PAUSED_TEXT}</p>}
-          {isOpen ? pauseButton : reopenButton}
-        </>
+          <div className="intro-card__actions">
+            <Tag tone={STATUS_TAG[restaurant.status].tone}>{STATUS_TAG[restaurant.status].label}</Tag>
+            {restaurant.status === "PAUSED" && <p className="home-card__text meta">{PAUSED_TEXT}</p>}
+            {isOpen ? pauseButton : reopenButton}
+          </div>
       )}
     </section>
   );

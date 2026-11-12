@@ -394,4 +394,10 @@ public class ORDFacade {
         return restaurant;
     }
 
+    //save menu item
+    @Transactional
+    public void saveMenuItem(MenuItem item) {
+        menuService.save(item);
+    }
+
 }

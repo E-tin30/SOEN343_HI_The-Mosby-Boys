@@ -36,21 +36,20 @@ export default function RestaurantHomePage() {
           <p className="home-card__text meta">
             Manage your menu and keep up with incoming orders.
           </p>
-          <Button onClick={() => navigate("/restaurant/orders")}>
-            View Orders
-          </Button>
+          <div className="intro-card__actions">
+            <Button onClick={() => navigate("/restaurant/orders")}>
+              View Orders
+            </Button>
+            <Button variant="secondary" onClick={() => navigate("/restaurant/add")}>
+              Add Menu Item
+            </Button>
+            <Button variant="secondary" onClick={() => navigate("/restaurant/edit")}>
+              Edit Menu Item
+            </Button>
+          </div>
         </section>
 
         <RestaurantStatusControl onRestaurant={(r) => setRestaurantName(r.name)} />
-
-        <section className="home-card card">
-          <Heading level={3}>Development placeholder</Heading>
-          <p className="home-card__text meta">
-            This is the starting point for restaurant features such as menu
-            management and the order queue. Team members can add their pages
-            and components here.
-          </p>
-        </section>
       </main>
     </div>
   );
