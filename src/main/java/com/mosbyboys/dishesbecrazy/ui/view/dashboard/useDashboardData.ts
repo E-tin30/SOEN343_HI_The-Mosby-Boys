@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "../AuthContext";
 
 export type RestaurantDashboardData = {
@@ -37,29 +37,32 @@ export function useDashboardData(enabled = true) {
     const [couriers, setCouriers] = useState<CourierData[]>([]);
     const [error, setError] = useState<string | null>(null);
 
+    // True while the effect below is running; a box that survives renders, unlike a plain let.
+    // Lets load ignore responses that arrive after the effect is torn down (unmount, token change, disabled).
+    const active = useRef(false);
+
+    // Fetches restaurants and couriers once. Defined outside the effect so it can also be
+    // returned as refresh, e.g. right after a pause so the change shows at once (R-DASH-06).
+    const load = useCallback(async () => {
+        if (!accessToken || !enabled) return;
+        const [restaurantsResult, couriersResult] = await Promise.allSettled([
+            fetchDashboard<RestaurantDashboardData[]>("restaurants", accessToken),
+            fetchDashboard<CourierData[]>("couriers", accessToken),
+        ]);
+        if (!active.current) return;
+        if (restaurantsResult.status === "fulfilled") setRestaurants(restaurantsResult.value);
+        else console.error("Error loading restaurants:", restaurantsResult.reason);
+        if (couriersResult.status === "fulfilled") setCouriers(couriersResult.value);
+        else console.error("Error loading couriers:", couriersResult.reason);
+        // Keep the last good data on screen; just flag that the latest refresh failed.
+        if (restaurantsResult.status === "rejected") setError("Couldn't load restaurants.");
+        else if (couriersResult.status === "rejected") setError("Couldn't load couriers.");
+        else setError(null);
+    }, [accessToken, enabled]);
+
     useEffect(() => {
         if (!accessToken || !enabled) return;
-        // Ignore responses that arrive after the effect is torn down (unmount, token change, disabled).
-        let cancelled = false;
-
-        const load = async () => {
-            const [restaurantsResult, couriersResult] = await Promise.allSettled([
-                fetchDashboard<RestaurantDashboardData[]>("restaurants", accessToken),
-                fetchDashboard<CourierData[]>("couriers", accessToken),
-            ]);
-            if (cancelled) return;
-
-            if (restaurantsResult.status === "fulfilled") setRestaurants(restaurantsResult.value);
-            else console.error("Error loading restaurants:", restaurantsResult.reason);
-
-            if (couriersResult.status === "fulfilled") setCouriers(couriersResult.value);
-            else console.error("Error loading couriers:", couriersResult.reason);
-
-            // Keep the last good data on screen; just flag that the latest refresh failed.
-            if (restaurantsResult.status === "rejected") setError("Couldn't load restaurants.");
-            else if (couriersResult.status === "rejected") setError("Couldn't load couriers.");
-            else setError(null);
-        };
+        active.current = true;
 
         load();
         const interval = setInterval(() => {
@@ -74,11 +77,11 @@ export function useDashboardData(enabled = true) {
         document.addEventListener("visibilitychange", onVisibilityChange);
 
         return () => {
-            cancelled = true;
+            active.current = false;
             clearInterval(interval);
             document.removeEventListener("visibilitychange", onVisibilityChange);
         };
-    }, [accessToken, enabled]);
+    }, [accessToken, enabled, load]);
 
-    return { restaurants, couriers, error };
+    return { restaurants, couriers, error, refresh: load };
 }
