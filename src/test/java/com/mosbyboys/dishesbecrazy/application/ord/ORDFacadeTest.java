@@ -501,18 +501,18 @@ class ORDFacadeTest {
         verify(restaurantService, never()).save(any());
     }
 
-    // a restaurant tries to open itself: permission denied, and nothing is saved (Appendix A, R-DASH-01)
+    // a restaurant opens itself from PAUSED: the restaurant that gets saved is OPEN
     @Test
-    void ownerCannotOpenOwnRestaurant() {
+    void ownerOpensOwnPausedRestaurant() {
         Restaurant owner = owner(restaurantId);
         when(regFacade.getCurrentUser(owner.getUserId())).thenReturn(owner);
         Restaurant restaurant = restaurantWithStatus(RestaurantStatus.PAUSED);
         when(restaurantService.load(restaurantId)).thenReturn(restaurant);
 
-        assertThrows(PermissionDeniedException.class, () -> {
-            facade.openRestaurant(owner.getUserId(), restaurantId);
-        });
-        verify(restaurantService, never()).save(any());
+        Restaurant result = facade.openRestaurant(owner.getUserId(), restaurantId);
+
+        assertEquals(RestaurantStatus.OPEN, result.getStatus());
+        verify(restaurantService).save(restaurant);
     }
 
     // an operator opens a PAUSED restaurant: the restaurant that gets saved is OPEN

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../AuthContext";
-import { getRestaurants, pauseRestaurant } from "../menu/api/menuApi";
+import { getRestaurants, openRestaurant, pauseRestaurant } from "../menu/api/menuApi";
 import type { Restaurant } from "../menu/types/menu";
 import Button from "./Button";
 import Heading from "./Heading";
@@ -13,18 +13,19 @@ const STATUS_TAG: Record<Restaurant["status"], { tone: "sage" | "mustard" | "neu
   CLOSED: { tone: "neutral", label: "Closed" },
 };
 
-const PAUSED_TEXT = "New orders are blocked until an operator reopens the restaurant.";
+const PAUSED_TEXT = "New orders are blocked until the restaurant is reopened.";
 
 type RestaurantStatusControlProps = {
   // "card": its own card with the status spelled out (home page).
-  // "header": compact, for an AppHeader; just the Pause button while open, a status pill otherwise (orders page).
+  // "header": compact, for an AppHeader; the Pause button while open, a status pill and Reopen otherwise (orders page).
   variant?: "card" | "header";
   // Called with the restaurant whenever it is loaded or changed, e.g. so a page can show its name.
   onRestaurant?: (restaurant: Restaurant) => void;
 };
 
-// The logged-in restaurant's status, with Pause shown only while it is open (R-DASH-01).
-// Used on the restaurant home page and the orders page (Dinner Rush: pause while watching the queue).
+// The logged-in restaurant's status, with Pause shown while it is open (R-DASH-01) and Reopen
+// while it is paused or closed (team decision). Used on the restaurant home page and the orders page
+// (Dinner Rush: pause while watching the queue, reopen once caught up).
 export default function RestaurantStatusControl({ variant = "card", onRestaurant }: RestaurantStatusControlProps) {
   const { accessToken } = useAuth();
   const [restaurant, setRestaurantState] = useState<Restaurant | null>(null);
@@ -47,9 +48,10 @@ export default function RestaurantStatusControl({ variant = "card", onRestaurant
       .catch((e: Error) => setError(e.message));
   }, [accessToken]);
 
-  const handlePause = () => {
+  // Pause and Reopen share the same handling: show the updated restaurant, or the error.
+  const changeStatus = (change: typeof pauseRestaurant) => {
     if (!accessToken || !restaurant) return;
-    pauseRestaurant(accessToken, restaurant.id)
+    change(accessToken, restaurant.id)
       .then((updatedRestaurant) => {
         setRestaurant(updatedRestaurant);
         setError(""); // Clear any previous error
@@ -61,8 +63,13 @@ export default function RestaurantStatusControl({ variant = "card", onRestaurant
 
   const isOpen = restaurant?.status === "OPEN";
   const pauseButton = (
-    <Button variant="secondary" onClick={handlePause}>
+    <Button variant="secondary" onClick={() => changeStatus(pauseRestaurant)}>
       Pause restaurant
+    </Button>
+  );
+  const reopenButton = (
+    <Button variant="secondary" onClick={() => changeStatus(openRestaurant)}>
+      Reopen restaurant
     </Button>
   );
 
@@ -71,11 +78,12 @@ export default function RestaurantStatusControl({ variant = "card", onRestaurant
       <>
         {isOpen && pauseButton}
         {restaurant && !isOpen && (
-          // Hovering the pill explains a pause: only an operator can reopen.
+          // Hovering the pill explains a pause.
           <span title={restaurant.status === "PAUSED" ? PAUSED_TEXT : undefined}>
             <Tag tone={STATUS_TAG[restaurant.status].tone}>{STATUS_TAG[restaurant.status].label}</Tag>
           </span>
         )}
+        {restaurant && !isOpen && reopenButton}
         {error && (
           <span role="alert">
             <Tag tone="tomato">{error}</Tag>
@@ -101,7 +109,7 @@ export default function RestaurantStatusControl({ variant = "card", onRestaurant
         <>
           <Tag tone={STATUS_TAG[restaurant.status].tone}>{STATUS_TAG[restaurant.status].label}</Tag>
           {restaurant.status === "PAUSED" && <p className="home-card__text meta">{PAUSED_TEXT}</p>}
-          {isOpen && pauseButton}
+          {isOpen ? pauseButton : reopenButton}
         </>
       )}
     </section>
