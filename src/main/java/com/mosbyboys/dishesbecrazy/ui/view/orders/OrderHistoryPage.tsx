@@ -36,6 +36,17 @@ const STATUS_TONE: Record<HistoryStatus, Tone> = {
   REFUNDED: "navy",
 };
 
+// Tabs group the states by what the reader does with them; null means every state.
+// "Delivered" is the operator's refund queue (R-PRC-05); each card's tag still shows the exact state.
+type TabLabel = "All" | "In progress" | "Delivered" | "Refunded" | "Cancelled / rejected";
+const TABS: Record<TabLabel, HistoryStatus[] | null> = {
+  All: null,
+  "In progress": ["PLACED", "ACCEPTED", "PREPARING", "READY", "PICKEDUP"],
+  Delivered: ["DELIVERED"],
+  Refunded: ["REFUNDED"],
+  "Cancelled / rejected": ["CANCELLED", "REJECTED"],
+};
+
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleString([], {
     month: "short",
@@ -64,7 +75,7 @@ export default function OrderHistoryPage() {
   const [orders, setOrders] = useState<HistoryOrder[] | null>(null);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState("");
-  const [tab, setTab] = useState<"active" | "refunded">("active");
+  const [tab, setTab] = useState<TabLabel>("All");
 
   const loadOrders = useCallback(async () => {
     if (!accessToken) return;
@@ -173,9 +184,8 @@ export default function OrderHistoryPage() {
     </li>
   );
 
-  const current = orders?.filter((o) => o.status !== "REFUNDED") ?? [];
-  const refunded = orders?.filter((o) => o.status === "REFUNDED") ?? [];
-  const shown = tab === "active" ? current : refunded;
+  const ordersIn = (t: TabLabel) => orders?.filter((o) => TABS[t]?.includes(o.status) ?? true) ?? [];
+  const shown = ordersIn(tab);
 
   return (
     <div className="page">
@@ -199,31 +209,23 @@ export default function OrderHistoryPage() {
         {orders && (
           <>
             <div className="history-tabs" role="tablist">
-              <button
-                role="tab"
-                aria-selected={tab === "active"}
-                className={`history-tab${tab === "active" ? " history-tab--active" : ""}`}
-                onClick={() => setTab("active")}
-              >
-                Orders ({current.length})
-              </button>
-              <button
-                role="tab"
-                aria-selected={tab === "refunded"}
-                className={`history-tab${tab === "refunded" ? " history-tab--active" : ""}`}
-                onClick={() => setTab("refunded")}
-              >
-                Refunded ({refunded.length})
-              </button>
+              {(Object.keys(TABS) as TabLabel[]).map((t) => (
+                <button
+                  key={t}
+                  role="tab"
+                  aria-selected={tab === t}
+                  className={`history-tab${tab === t ? " history-tab--active" : ""}`}
+                  onClick={() => setTab(t)}
+                >
+                  {t} ({ordersIn(t).length})
+                </button>
+              ))}
             </div>
 
-            <section
-              className="card history-section"
-              aria-label={tab === "active" ? "Orders" : "Refunded orders"}
-            >
+            <section className="card history-section" aria-label={`${tab} orders`}>
               {shown.length === 0 ? (
                 <p className="page__status meta">
-                  {tab === "active" ? "No orders yet." : "No refunded orders."}
+                  {tab === "All" ? "No orders yet." : `No ${tab.toLowerCase()} orders.`}
                 </p>
               ) : (
                 <ul className="page__list">{shown.map(renderOrder)}</ul>

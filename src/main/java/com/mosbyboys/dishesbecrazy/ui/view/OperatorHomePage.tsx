@@ -2,10 +2,11 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 import AppHeader from "./components/AppHeader";
 import Button from "./components/Button";
+import DemoResetControl from "./components/DemoResetControl";
 import Heading from "./components/Heading";
 import "./styles/HomePage.css";
 
-export default function RestaurantHomePage() {
+export default function OperatorHomePage() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
@@ -20,27 +21,21 @@ export default function RestaurantHomePage() {
         <Button variant="secondary" onClick={handleLogout}>
           Log out
         </Button>
+        {/* Only operators reach this page (ProtectedRoute); the control and the backend also check the role. */}
+        <DemoResetControl key={user?.id} />
       </AppHeader>
 
       <main className="page__content">
         <section className="home-card card">
           <p className="caption meta">Welcome back</p>
-          <Heading>{`Hey ${user?.firstName ?? "there"}, ~ready to get cooking?~`}</Heading>
+          <Heading>{`Hey ${user?.firstName ?? "there"}, ~everything running smoothly?~`}</Heading>
           <p className="home-card__text meta">
-            Manage your menu and keep up with incoming orders.
+            Keep an eye on restaurants, orders and deliveries across the city.
           </p>
-          <Button onClick={() => navigate("/restaurant/orders")}>
-            View Orders
+          {/* Every order with its charge, plus Refund on delivered ones (R-DASH-01, R-PRC-04, R-PRC-05). */}
+          <Button onClick={() => navigate("/orders/history")}>
+            View all orders
           </Button>
-        </section>
-
-        <section className="home-card card">
-          <Heading level={3}>Development placeholder</Heading>
-          <p className="home-card__text meta">
-            This is the starting point for restaurant features such as menu
-            management and the order queue. Team members can add their pages
-            and components here.
-          </p>
         </section>
       </main>
     </div>
