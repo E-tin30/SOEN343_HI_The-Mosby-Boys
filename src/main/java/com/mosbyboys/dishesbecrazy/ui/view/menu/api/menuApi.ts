@@ -13,10 +13,26 @@ async function get<T>(path: string, token: string, signal?: AbortSignal): Promis
   // Reports JSON parsing failures through the same output console as request failures.
 }
 
+async function post<T>(path: string, token: string): Promise<T> {  
+  const response = await loggedFetch(API + path, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return readJson(response);
+}
+
 export function getRestaurants(token: string, signal?: AbortSignal): Promise<Restaurant[]> {
   return get("/api/restaurants", token, signal);
 }
 
 export function getMenu(token: string, restaurantId: string, signal?: AbortSignal): Promise<MenuItem[]> {
   return get(`/api/restaurants/${restaurantId}/menu`, token, signal);
+}
+
+export function pauseRestaurant(token: string, restaurantId: string): Promise<Restaurant> {
+  return post(`/api/restaurants/${restaurantId}/pause`, token);
+}
+
+export function openRestaurant(token: string, restaurantId: string): Promise<Restaurant> {
+  return post(`/api/restaurants/${restaurantId}/open`, token);
 }

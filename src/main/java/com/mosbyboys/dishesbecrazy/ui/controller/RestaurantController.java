@@ -48,7 +48,7 @@ public class RestaurantController {
         return ResponseEntity.ok(RestaurantResponse.from(resto));
     }
 
-    // An operator opens a paused or closed restaurant (R-DASH-01)
+    // A restaurant opens itself, or an operator opens any paused or closed restaurant (R-DASH-01)
     @PostMapping("/api/restaurants/{restaurantId}/open")
     public ResponseEntity<RestaurantResponse> openRestaurant(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID restaurantId) {
         Restaurant resto = ordFacade.openRestaurant(UUID.fromString(jwt.getSubject()), restaurantId);
