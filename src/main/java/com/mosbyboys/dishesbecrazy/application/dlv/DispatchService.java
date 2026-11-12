@@ -3,7 +3,6 @@ package com.mosbyboys.dishesbecrazy.application.dlv;
 import com.mosbyboys.dishesbecrazy.application.ord.OrderQueues;
 import com.mosbyboys.dishesbecrazy.application.ord.OrderService;
 import com.mosbyboys.dishesbecrazy.domain.ord.Order;
-import com.mosbyboys.dishesbecrazy.domain.ord.Restaurant;
 import com.mosbyboys.dishesbecrazy.domain.ord.Location;
 import com.mosbyboys.dishesbecrazy.domain.ord.state.ReadyState;
 import com.mosbyboys.dishesbecrazy.application.ord.RestaurantService;
@@ -89,8 +88,14 @@ public class DispatchService {
                 continue;
             }
 
+            // Skip orders whose restaurant has no location (e.g. deleted)
+            Location pickup = restaurantService.load(order.getRestaurantId()).getLocation();
+            if (pickup == null) {
+                continue;
+            }
+
             // Find the nearest available courier
-            CourierData courier = findNearestIdleCourier(order);
+            CourierData courier = findNearestIdleCourier(pickup);
 
             // No eligible courier available
             if (courier == null) {
@@ -102,15 +107,7 @@ public class DispatchService {
         }
     }
 
-    private CourierData findNearestIdleCourier(Order order) {
-
-        //Get the restaurant's location
-        Restaurant restaurant = restaurantService.load(order.getRestaurantId());
-        Location location = restaurant.getLocation();
-
-        if (location == null) {
-            throw new IllegalStateException("Restaurant has no location");
-        }
+    private CourierData findNearestIdleCourier(Location location) {
 
         CourierData nearestCourier = null;
         double minDistance = Double.POSITIVE_INFINITY;

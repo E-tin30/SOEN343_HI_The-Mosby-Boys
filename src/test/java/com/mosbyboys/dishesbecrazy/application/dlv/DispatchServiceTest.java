@@ -35,22 +35,35 @@ class DispatchServiceTest {
     private final UUID restaurantId = UUID.randomUUID();
 
     private Order stored(String state) {
+        return stored(state, restaurantId);
+    }
+
+    private Order stored(String state, UUID restaurant) {
         Order order = Order.reconstitute(UUID.randomUUID(), OrderStates.fromName(state), UUID.randomUUID(),
-                restaurantId, null, List.of(), Instant.now(), null, BigDecimal.ZERO);
+                restaurant, null, List.of(), Instant.now(), null, BigDecimal.ZERO);
         when(orderService.load(order.getId())).thenReturn(order);
         queues.enqueueGlobalReady(order.getId());
         return order;
+    }
+
+    private void restaurantAt(UUID id, Location location) {
+        when(restaurantService.load(id)).thenReturn(new Restaurant(id, OffsetDateTime.now(),
+                "A", "B", "a@b.c", "ab", "hash", "Resto", RestaurantStatus.OPEN, location));
+    }
+
+    private UUID idleCourier() {
+        UUID courierId = UUID.randomUUID();
+        when(courierService.getIdleCouriers())
+                .thenReturn(List.of(new CourierData(courierId, CourierState.IDLE, 45.5, -73.6)));
+        return courierId;
     }
 
     @Test
     void ordersNoLongerReadyAreDroppedAndTheRestAreStillOffered() {
         Order cancelled = stored("CancelledState");
         Order ready = stored("ReadyState");
-        UUID courierId = UUID.randomUUID();
-        when(restaurantService.load(restaurantId)).thenReturn(new Restaurant(restaurantId, OffsetDateTime.now(),
-                "A", "B", "a@b.c", "ab", "hash", "Resto", RestaurantStatus.OPEN, new Location(45.5, -73.6)));
-        when(courierService.getIdleCouriers())
-                .thenReturn(List.of(new CourierData(courierId, CourierState.IDLE, 45.5, -73.6)));
+        restaurantAt(restaurantId, new Location(45.5, -73.6));
+        UUID courierId = idleCourier();
 
         dispatch.dispatchWaitingOrders();
 
@@ -59,4 +72,21 @@ class DispatchServiceTest {
         assertNull(cancelled.getCourierId());
     }
     // A cancelled order at the front used to throw on assignment and stop every order behind it.
+
+    @Test
+    void ordersFromARestaurantWithNoLocationAreSkippedAndTheRestAreStillOffered() {
+        UUID nowhere = UUID.randomUUID();
+        Order stranded = stored("ReadyState", nowhere);
+        Order ready = stored("ReadyState");
+        restaurantAt(nowhere, null);
+        restaurantAt(restaurantId, new Location(45.5, -73.6));
+        UUID courierId = idleCourier();
+
+        dispatch.dispatchWaitingOrders();
+
+        assertNull(stranded.getCourierId());
+        assertEquals(courierId, ready.getCourierId());
+        assertEquals(List.of(stranded.getId(), ready.getId()), queues.globalReadySnapshot());
+    }
+    // Throwing on it used to stop every order behind it, and stopped the app starting if it was waiting then.
 }
