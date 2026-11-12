@@ -37,12 +37,10 @@ export function useDashboardData(enabled = true) {
     const [couriers, setCouriers] = useState<CourierData[]>([]);
     const [error, setError] = useState<string | null>(null);
 
-    // True while the effect below is running; a box that survives renders, unlike a plain let.
-    // Lets load ignore responses that arrive after the effect is torn down (unmount, token change, disabled).
+    // false once the effect is cleaned up, so late responses get ignored
     const active = useRef(false);
 
-    // Fetches restaurants and couriers once. Defined outside the effect so it can also be
-    // returned as refresh, e.g. right after a pause so the change shows at once (R-DASH-06).
+    // outside the effect so we can also return it as refresh()
     const load = useCallback(async () => {
         if (!accessToken || !enabled) return;
         const [restaurantsResult, couriersResult] = await Promise.allSettled([

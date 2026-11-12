@@ -1,4 +1,4 @@
-/* Own card layout: children stretch to the full card width (home-card shrinks them). */
+/* not using home-card here, it shrinks everything to content width */
 .op-restaurants {
   display: flex;
   flex-direction: column;
@@ -9,7 +9,6 @@
   margin: 0;
 }
 
-/* Search box and status filter above the list. */
 .op-restaurants__toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -73,7 +72,6 @@
   font-weight: 600;
 }
 
-/* One bordered block, rows separated by lines; paused rows tinted. */
 .op-restaurants__list {
   margin: 0;
   padding: 0;
@@ -133,7 +131,6 @@
   gap: var(--space-1);
 }
 
-/* Compact row buttons, no extra top margin. */
 .op-restaurants__row .btn {
   flex-shrink: 0;
   height: 40px;
@@ -148,7 +145,7 @@
   color: var(--status-color);
 }
 
-/* R-DASH-03 queue bands: 3-5 amber, 6+ red. */
+/* R-DASH-03: amber at 3-5, red at 6+ */
 .op-restaurants__queue--steady { color: var(--mustard-dark); }
 .op-restaurants__queue--busy { color: var(--tomato-dark); }
 

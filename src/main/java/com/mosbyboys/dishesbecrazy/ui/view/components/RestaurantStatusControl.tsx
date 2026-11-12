@@ -16,7 +16,6 @@ export const STATUS_TAG: Record<Restaurant["status"], { tone: "sage" | "mustard"
 
 const PAUSED_TEXT = "New orders are blocked until the restaurant is reopened.";
 
-// Title and description shown in the home page card.
 const STATUS_COPY: Record<Restaurant["status"], { title: string; text: string }> = {
   OPEN: { title: "Open for orders", text: "Customers can see your menu and order now." },
   PAUSED: { title: "Orders paused", text: PAUSED_TEXT },

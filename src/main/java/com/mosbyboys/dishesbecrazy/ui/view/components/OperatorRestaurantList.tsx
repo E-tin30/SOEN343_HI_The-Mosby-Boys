@@ -11,7 +11,6 @@ import "./OperatorRestaurantList.css";
 type Filter = "ALL" | "OPEN" | "PAUSED" | "CLOSED";
 const FILTER_LABEL: Record<Filter, string> = { ALL: "All", OPEN: "Open", PAUSED: "Paused", CLOSED: "Closed" };
 
-// Small inline icons: they inherit the text colour and look the same on every system font.
 const SearchIcon = () => (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
         <circle cx="11" cy="11" r="7" />
@@ -28,11 +27,11 @@ const AlertIcon = () => (
 const waitingText = (n: number) =>
     n === 0 ? "No orders waiting" : `${n} order${n === 1 ? "" : "s"} waiting`;
 
-// Every restaurant with its live status and queue, and Pause/Reopen for each (R-DASH-01).
+// Operator can pause/reopen any restaurant (R-DASH-01)
 export default function OperatorRestaurantList() {
     const { accessToken } = useAuth();
     const { restaurants, error, refresh } = useDashboardData();
-    const [pendingId, setPendingId] = useState<string | null>(null);   // row whose request is in flight
+    const [pendingId, setPendingId] = useState<string | null>(null); // id of the row that's saving
     const [actionError, setActionError] = useState("");
     const [search, setSearch] = useState("");
     const [filter, setFilter] = useState<Filter>("ALL");
@@ -43,7 +42,7 @@ export default function OperatorRestaurantList() {
         setActionError("");
         try {
             await change(accessToken, id);
-            await refresh(); // show the new status now instead of on the next 5 s poll (R-DASH-06)
+            await refresh(); // don't wait for the 5s poll
         } catch (e) {
             setActionError(e instanceof Error ? e.message : "Something went wrong.");
         } finally {
@@ -97,7 +96,7 @@ export default function OperatorRestaurantList() {
             ) : (
                 <ul className="op-restaurants__list">
                     {shown.map((r) => {
-                        // Queue band of R-DASH-03 from the queue alone; the pause already shows in the status.
+                        // treat it as open here, otherwise every paused restaurant shows red (status already says paused)
                         const band = restaurantLoad({ ...r, status: "OPEN" });
                         return (
                             <li key={r.id} className={`op-restaurants__row op-restaurants__row--${r.status.toLowerCase()}`}>
@@ -108,7 +107,6 @@ export default function OperatorRestaurantList() {
                                         <span className="op-restaurants__status">{STATUS_TAG[r.status].label}</span>
                                         {" · "}
                                         <span className={`op-restaurants__queue op-restaurants__queue--${band}`}>
-                                            {/* Warning mark for the amber and red queue bands (R-DASH-03). */}
                                             {band !== "quiet" && <AlertIcon />}
                                             {waitingText(r.queueLength)}
                                         </span>

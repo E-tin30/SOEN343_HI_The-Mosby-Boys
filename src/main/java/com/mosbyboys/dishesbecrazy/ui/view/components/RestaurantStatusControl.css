@@ -1,4 +1,3 @@
-/* The status colour drives both the dot and the title. */
 .status-control--open { --status-color: var(--sage-dark); }
 .status-control--paused { --status-color: var(--mustard-dark); }
 .status-control--closed { --status-color: var(--tomato-dark); }
