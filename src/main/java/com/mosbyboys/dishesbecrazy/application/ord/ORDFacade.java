@@ -131,6 +131,8 @@ public class ORDFacade {
         for (OrderLine item : orderLineItems) {
             subtotal = subtotal.add(item.getLineTotal());
         }
+        // deduct stock first: if there isn't enough stock, this throws before anything is saved
+        orderLineItems.forEach(this::reserveStock);
 
         Order order = new Order(customer.getUserId(), restaurantId, orderLineItems, subtotal);
 
@@ -392,6 +394,12 @@ public class ORDFacade {
         restaurant.pause();
         restaurantService.save(restaurant);
         return restaurant;
+    }
+
+    private void reserveStock(OrderLine line) {
+        MenuItem item = menuService.load(line.getMenuItemId());
+        item.decreaseStock(line.getQuantity());
+        menuService.save(item);
     }
 
 }
