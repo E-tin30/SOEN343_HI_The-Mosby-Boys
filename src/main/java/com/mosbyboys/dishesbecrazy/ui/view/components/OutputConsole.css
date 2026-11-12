@@ -3,6 +3,7 @@
   left: 0;
   right: 0;
   bottom: 0;
+  z-index: 10;
   background: var(--espresso);
   color: var(--porcelain);
   font-size: var(--text-caption);

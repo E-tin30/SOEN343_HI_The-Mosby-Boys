@@ -45,6 +45,7 @@
   justify-content: center;
   min-height: 0;
   overflow: hidden;
+  isolation: isolate;
   background: var(--linen);
   border-radius: var(--radius-md);
 }
