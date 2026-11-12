@@ -285,11 +285,19 @@ public class PermissionPolicyTest {
         assertDoesNotThrow(() -> policy.checkCanOpen(op, restaurant));
     }
 
-    // check that a restaurant cannot open itself, only an operator can (Appendix A, R-DASH-01)
+    // check that a restaurant can open itself (caller and target have the same id)
     @Test
-    void ownerCannotOpenOwnRestaurant() {
+    void ownerCanOpenOwnRestaurant() {
         Restaurant restaurant = restaurantWithStatus(UUID.randomUUID(), RestaurantStatus.PAUSED);
-        assertThrows(PermissionDeniedException.class, () -> policy.checkCanOpen(restaurant, restaurant));
+        assertDoesNotThrow(() -> policy.checkCanOpen(restaurant, restaurant));
+    }
+
+    // check that a restaurant cannot open another restaurant (two different ids)
+    @Test
+    void ownerCannotOpenOtherRestaurant() {
+        Restaurant restaurant1 = restaurantWithStatus(UUID.randomUUID(), RestaurantStatus.PAUSED);
+        Restaurant restaurant2 = restaurantWithStatus(UUID.randomUUID(), RestaurantStatus.PAUSED);
+        assertThrows(PermissionDeniedException.class, () -> policy.checkCanOpen(restaurant1, restaurant2));
     }
 
     // check that customers cannot open a restaurant

@@ -23,6 +23,7 @@ import {CartProvider} from "./CartContext";
 import CartPage from "./menu/CartPage";
 import OrderSummaryPage from "./orders/OrderSummaryPage";
 import DashboardPage from "./dashboard/DashboardPage";
+import OperatorHomePage from "./OperatorHomePage";
 
 createRoot(document.getElementById("root")!).render(
     <BrowserRouter>
@@ -36,7 +37,7 @@ createRoot(document.getElementById("root")!).render(
                     <Route
                         path="/home"
                         element={
-                            <ProtectedRoute allowedRoles={["CUSTOMER", "OPERATOR"]}>
+                            <ProtectedRoute allowedRoles={["CUSTOMER"]}>
                                 <HomePage/>
                             </ProtectedRoute>
                         }
@@ -54,6 +55,10 @@ createRoot(document.getElementById("root")!).render(
                         element={
                             <ProtectedRoute allowedRoles={["COURIER"]}>
                                 <CourierHomePage/>
+                        path="/operator/home"
+                        element={
+                            <ProtectedRoute allowedRoles={["OPERATOR"]}>
+                                <OperatorHomePage/>
                             </ProtectedRoute>
                         }
                     />

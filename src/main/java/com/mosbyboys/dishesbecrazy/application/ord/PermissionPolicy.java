@@ -217,7 +217,8 @@ public class PermissionPolicy {
     }
 
     // Who can open a restaurant (from paused or closed)
-    // Only an operator can (Appendix A, R-DASH-01).
+    // An operator can open any restaurant (R-DASH-01); a restaurant can only open itself
+    // (team decision: the restaurant knows when it has caught up after a pause).
     public void checkCanOpen(User caller, Restaurant restaurant) {
         if (caller == null) {
             throw new PermissionDeniedException("No caller.");
@@ -225,8 +226,12 @@ public class PermissionPolicy {
         if (restaurant == null) {
             throw new PermissionDeniedException("No restaurant.");
         }
-        if (caller.getRole() != Role.OPERATOR) {
-            throw new PermissionDeniedException("Only an operator can open a restaurant.");
+        if (caller.getRole() == Role.OPERATOR) {
+            return;
         }
+        if (caller.getRole() == Role.RESTAURANT && caller.getUserId().equals(restaurant.getUserId())) {
+            return;
+        }
+        throw new PermissionDeniedException("Only an operator or the restaurant itself can open a restaurant.");
     }
 }

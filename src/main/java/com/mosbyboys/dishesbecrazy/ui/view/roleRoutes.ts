@@ -7,6 +7,7 @@ const HOME_ROUTES: Partial<Record<Role, string>> = {
   CUSTOMER: "/home",
   RESTAURANT: "/restaurant/home",
   COURIER: "/courier/home",
+  OPERATOR: "/operator/home"
 };
 
 // Roles without their own dashboard yet fall back to the customer home page.

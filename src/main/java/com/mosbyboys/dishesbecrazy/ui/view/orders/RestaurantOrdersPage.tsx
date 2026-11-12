@@ -4,6 +4,7 @@ import { useAuth } from "../AuthContext";
 import AppHeader from "../components/AppHeader";
 import Button from "../components/Button";
 import Heading from "../components/Heading";
+import RestaurantStatusControl from "../components/RestaurantStatusControl";
 import Tag from "../components/Tag";
 import {
   acceptOrder,
@@ -120,6 +121,7 @@ export default function RestaurantOrdersPage() {
         <Button variant="secondary" onClick={() => navigate("/restaurant/home")}>
           Back to home
         </Button>
+        <RestaurantStatusControl variant="header" />
       </AppHeader>
 
       <main className="orders-board">

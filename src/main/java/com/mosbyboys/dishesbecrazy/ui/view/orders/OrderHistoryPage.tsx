@@ -11,6 +11,43 @@ import type { HistoryOrder } from "./types/order";
 import { STATUS_LABEL, STATUS_TONE } from "./orderStatus";
 import "../styles/OrderHistoryPage.css";
 
+type Tone = "sage" | "mustard" | "tomato" | "navy" | "neutral";
+
+const STATUS_LABEL: Record<HistoryStatus, string> = {
+  PLACED: "Placed",
+  ACCEPTED: "Accepted",
+  PREPARING: "Preparing",
+  READY: "Ready",
+  PICKEDUP: "Picked up",
+  DELIVERED: "Delivered",
+  CANCELLED: "Cancelled",
+  REJECTED: "Rejected",
+  REFUNDED: "Refunded",
+};
+
+const STATUS_TONE: Record<HistoryStatus, Tone> = {
+  PLACED: "mustard",
+  ACCEPTED: "mustard",
+  PREPARING: "mustard",
+  READY: "mustard",
+  PICKEDUP: "navy",
+  DELIVERED: "sage",
+  CANCELLED: "tomato",
+  REJECTED: "tomato",
+  REFUNDED: "navy",
+};
+
+// Tabs group the states by what the reader does with them; null means every state.
+// "Delivered" is the operator's refund queue (R-PRC-05); each card's tag still shows the exact state.
+type TabLabel = "All" | "In progress" | "Delivered" | "Refunded" | "Cancelled / rejected";
+const TABS: Record<TabLabel, HistoryStatus[] | null> = {
+  All: null,
+  "In progress": ["PLACED", "ACCEPTED", "PREPARING", "READY", "PICKEDUP"],
+  Delivered: ["DELIVERED"],
+  Refunded: ["REFUNDED"],
+  "Cancelled / rejected": ["CANCELLED", "REJECTED"],
+};
+
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleString([], {
     month: "short",
@@ -38,8 +75,10 @@ export default function OrderHistoryPage() {
   const { user, accessToken } = useAuth();
   const [orders, setOrders] = useState<HistoryOrder[] | null>(null);
   const [pendingId, setPendingId] = useState<string | null>(null);
+  // The order whose Refund was clicked; its card asks to confirm inline instead of a browser pop-up.
+  const [confirmRefundId, setConfirmRefundId] = useState<string | null>(null);
   const [error, setError] = useState("");
-  const [tab, setTab] = useState<"active" | "refunded">("active");
+  const [tab, setTab] = useState<TabLabel>("All");
 
   const loadOrders = useCallback(async () => {
     if (!accessToken) return;
@@ -76,7 +115,7 @@ export default function OrderHistoryPage() {
 
   const handleRefund = (order: HistoryOrder) => {
     if (!accessToken) return;
-    if (!window.confirm("Refund this order?")) return;
+    setConfirmRefundId(null);
     runAction(order.id, () => refundOrder(accessToken, order.id));
   };
 
@@ -138,19 +177,25 @@ export default function OrderHistoryPage() {
                 {pendingId === order.id ? "Saving…" : "Cancel order"}
                 </Button>
             )}
-            {canRefund(order) && (
-                <Button variant="secondary" disabled={pendingId !== null} onClick={() => handleRefund(order)}>
+            {canRefund(order) && confirmRefundId !== order.id && (
+                <Button variant="secondary" disabled={pendingId !== null} onClick={() => setConfirmRefundId(order.id)}>
                 {pendingId === order.id ? "Saving…" : "Refund"}
                 </Button>
+            )}
+            {canRefund(order) && confirmRefundId === order.id && (
+                <div className="history-card__confirm" role="group" aria-label="Confirm refund">
+                <span className="meta">Refund {showTotal(order)} for this order?</span>
+                <Button variant="link" onClick={() => setConfirmRefundId(null)}>Keep</Button>
+                <Button onClick={() => handleRefund(order)}>Confirm refund</Button>
+                </div>
             )}
             </div>
         </div>
     </li>
   );
 
-  const current = orders?.filter((o) => o.status !== "REFUNDED") ?? [];
-  const refunded = orders?.filter((o) => o.status === "REFUNDED") ?? [];
-  const shown = tab === "active" ? current : refunded;
+  const ordersIn = (t: TabLabel) => orders?.filter((o) => TABS[t]?.includes(o.status) ?? true) ?? [];
+  const shown = ordersIn(tab);
 
   return (
     <div className="page">
@@ -174,31 +219,23 @@ export default function OrderHistoryPage() {
         {orders && (
           <>
             <div className="history-tabs" role="tablist">
-              <button
-                role="tab"
-                aria-selected={tab === "active"}
-                className={`history-tab${tab === "active" ? " history-tab--active" : ""}`}
-                onClick={() => setTab("active")}
-              >
-                Orders ({current.length})
-              </button>
-              <button
-                role="tab"
-                aria-selected={tab === "refunded"}
-                className={`history-tab${tab === "refunded" ? " history-tab--active" : ""}`}
-                onClick={() => setTab("refunded")}
-              >
-                Refunded ({refunded.length})
-              </button>
+              {(Object.keys(TABS) as TabLabel[]).map((t) => (
+                <button
+                  key={t}
+                  role="tab"
+                  aria-selected={tab === t}
+                  className={`history-tab${tab === t ? " history-tab--active" : ""}`}
+                  onClick={() => setTab(t)}
+                >
+                  {t} ({ordersIn(t).length})
+                </button>
+              ))}
             </div>
 
-            <section
-              className="card history-section"
-              aria-label={tab === "active" ? "Orders" : "Refunded orders"}
-            >
+            <section className="card history-section" aria-label={`${tab} orders`}>
               {shown.length === 0 ? (
                 <p className="page__status meta">
-                  {tab === "active" ? "No orders yet." : "No refunded orders."}
+                  {tab === "All" ? "No orders yet." : `No ${tab.toLowerCase()} orders.`}
                 </p>
               ) : (
                 <ul className="page__list">{shown.map(renderOrder)}</ul>

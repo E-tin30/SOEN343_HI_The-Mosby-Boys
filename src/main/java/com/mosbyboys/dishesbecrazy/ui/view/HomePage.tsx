@@ -14,6 +14,7 @@ import "./styles/Dashboard.css";
 // Statuses for an order that hasn't reached the customer yet.
 const IN_PROGRESS: HistoryStatus[] = ["PLACED", "ACCEPTED", "PREPARING", "READY", "PICKEDUP"];
 import DemoResetControl from "./components/DemoResetControl";
+import "./styles/HomePage.css";
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -67,8 +68,6 @@ export default function HomePage() {
         <Button variant="secondary" onClick={handleLogout}>
           Log out
         </Button>
-        {user?.role === "OPERATOR" && <DemoResetControl key={user.id} />}
-        {/* Keep the operator's demo reset beside session actions without occupying a dashboard card. */}
       </AppHeader>
 
       <main className="page__content">
