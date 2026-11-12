@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import type { CurrentUser, Role } from "../../main/java/com/mosbyboys/dishesbecrazy/ui/view/AuthContext";
-import HomePage from "../../main/java/com/mosbyboys/dishesbecrazy/ui/view/HomePage";
+import OperatorHomePage from "../../main/java/com/mosbyboys/dishesbecrazy/ui/view/OperatorHomePage";
 import OutputConsole from "../../main/java/com/mosbyboys/dishesbecrazy/ui/view/components/OutputConsole";
 import { getEntries } from "../../main/java/com/mosbyboys/dishesbecrazy/ui/view/outputLog";
 
@@ -17,9 +17,9 @@ beforeEach(() => {
 });
 
 function showHome() {
-  return render(<MemoryRouter><HomePage /><OutputConsole /></MemoryRouter>);
+  return render(<MemoryRouter><OperatorHomePage /><OutputConsole /></MemoryRouter>);
 }
-// Render the real home page so role visibility and button wiring are verified together.
+// Render the real operator home page so role visibility and button wiring are verified together.
 
 it.each<Role>(["CUSTOMER", "RESTAURANT", "COURIER"])("hides Reset from %s accounts", (role) => {
   auth.user = { ...auth.user!, role };

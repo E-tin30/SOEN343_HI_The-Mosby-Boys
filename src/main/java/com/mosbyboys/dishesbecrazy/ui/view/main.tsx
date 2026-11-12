@@ -21,6 +21,7 @@ import MenuPage from "./menu/MenuPage";
 import {CartProvider} from "./CartContext";
 import CartPage from "./menu/CartPage";
 import OrderSummaryPage from "./orders/OrderSummaryPage";
+import OperatorHomePage from "./OperatorHomePage";
 
 createRoot(document.getElementById("root")!).render(
     <BrowserRouter>
@@ -34,7 +35,7 @@ createRoot(document.getElementById("root")!).render(
                     <Route
                         path="/home"
                         element={
-                            <ProtectedRoute allowedRoles={["CUSTOMER", "COURIER", "OPERATOR"]}>
+                            <ProtectedRoute allowedRoles={["CUSTOMER", "COURIER"]}>
                                 <HomePage/>
                             </ProtectedRoute>
                         }
@@ -44,6 +45,14 @@ createRoot(document.getElementById("root")!).render(
                         element={
                             <ProtectedRoute allowedRoles={["RESTAURANT"]}>
                                 <RestaurantHomePage/>
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/operator/home"
+                        element={
+                            <ProtectedRoute allowedRoles={["OPERATOR"]}>
+                                <OperatorHomePage/>
                             </ProtectedRoute>
                         }
                     />
