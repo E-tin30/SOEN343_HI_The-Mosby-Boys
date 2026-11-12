@@ -31,11 +31,7 @@ export default function HomePage() {
       <main className="page__content">
         <section className="home-card card">
           <p className="caption meta">Welcome back</p>
-          <Heading>
-            {user?.role === "OPERATOR"
-              ? `Hey ${user.firstName}, ~everything running smoothly?~`
-              : `Hey ${user?.firstName ?? "there"}, ~hungry?~`}
-          </Heading>
+          <Heading>{`Hey ${user?.firstName ?? "there"}, ~hungry?~`}</Heading>
           <p className="home-card__text meta">
             Find home cooks and restaurants near you.
           </p>
