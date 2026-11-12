@@ -48,6 +48,8 @@ public class DemoDataRestorer {
                         .map(account -> users.get(account.username())).toList())
                 .addValue("restaurants", baseline.accounts().stream().filter(account -> account.role() == Role.RESTAURANT)
                         .map(account -> users.get(account.username())).toList())
+                .addValue("couriers", baseline.accounts().stream().filter(account -> account.role() == Role.COURIER)
+                        .map(account -> users.get(account.username())).toList())
                 .addValue("menuItems", baseline.menuItems().stream().map(DemoFixtures.MenuSeed::id).toList())
                 .addValue("fixtureOrders", baseline.orders().stream().map(DemoFixtures.OrderSeed::id).toList());
     }
@@ -55,6 +57,15 @@ public class DemoDataRestorer {
 
     private void checkOwnership(NamedParameterJdbcTemplate sql, MapSqlParameterSource scope) {
         int conflicts = sql.queryForObject("""
+                SELECT COUNT(*) FROM public."Order"
+                WHERE courier_id IN (:couriers) AND state IN ('ReadyState', 'PickedUpState')
+                    AND user_id NOT IN (:customers) AND restaurant_id NOT IN (:restaurants)
+                """, scope, Integer.class);
+        Assert.state(conflicts == 0,
+                "A demo courier has an active order outside the demo. Finish that delivery before Reset.");
+        // Resetting this courier would strand an unrelated order that restoration deliberately preserves.
+
+        conflicts = sql.queryForObject("""
                 SELECT COUNT(*) FROM public."MenuItem"
                 WHERE id IN (:menuItems) AND restaurant_id NOT IN (:restaurants)
                 """, scope, Integer.class);

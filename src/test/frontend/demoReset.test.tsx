@@ -84,6 +84,26 @@ it.each([409, 503])("reports HTTP %s once and permits a successful retry", async
   expect(fetchMock).toHaveBeenCalledTimes(2);
 });
 
+it("explains an unrelated courier delivery conflict and allows Reset to be retried", async () => {
+  const reason = "A demo courier has an active order outside the demo. Finish that delivery before Reset.";
+  const fetchMock = vi.fn()
+    .mockResolvedValueOnce(new Response(reason, { status: 409, headers: { "Content-Type": "text/plain" } }))
+    .mockResolvedValueOnce(new Response(null, { status: 204 }));
+  vi.stubGlobal("fetch", fetchMock);
+  showHome();
+
+  fireEvent.click(screen.getByRole("button", { name: "Reset demo" }));
+
+  expect((await screen.findByRole("alert")).textContent).toBe(reason);
+  expect(screen.queryByText("Demo data restored.")).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Reset demo" }));
+
+  await screen.findByText("Demo data restored.");
+  expect(screen.queryByRole("alert")).toBeNull();
+  expect(fetchMock).toHaveBeenCalledTimes(2);
+});
+// Exercises the new preflight reason through the real HTTP helper and Reset control, with no shared database access.
+
 it("keeps network failures visible and leaves Reset available for retry", async () => {
   vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Network unavailable")));
   showHome();

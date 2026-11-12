@@ -10,7 +10,9 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -161,6 +163,67 @@ class DemoDataRestorerTest {
         assertEquals("CARRYING", courierState(busyElsewhere));
     }
     // Deleting a demo order must not leave its courier ASSIGNED/CARRYING with nothing to deliver; a past demo delivery doesn't count.
+
+    @ParameterizedTest
+    @CsvSource({"ReadyState, IDLE", "ReadyState, ASSIGNED", "PickedUpState, CARRYING"})
+    void refusesResetWhileADemoCourierHoldsAnUnrelatedDelivery(String orderState, String courierState) throws Exception {
+        restorer.restore();
+        UUID order = unrelatedOrder();
+        UUID courier = users.get("demo_courier");
+        giveToCourier(order, orderState, courier);
+        jdbc.update("UPDATE public.\"Courier\" SET state = ? WHERE user_id = ?", courierState, courier);
+        var expected = snapshot();
+
+        var error = assertThrows(IllegalStateException.class, restorer::restore);
+
+        assertEquals("A demo courier has an active order outside the demo. Finish that delivery before Reset.", error.getMessage());
+        assertEquals(expected, snapshot());
+
+        giveToCourier(order, "DeliveredState", courier);
+        jdbc.update("UPDATE public.\"Courier\" SET state = 'IDLE' WHERE user_id = ?", courier);
+        var completed = jdbc.queryForMap("SELECT * FROM public.\"Order\" WHERE id = ?", order);
+
+        restorer.restore();
+
+        assertEquals(completed, jdbc.queryForMap("SELECT * FROM public.\"Order\" WHERE id = ?", order));
+        assertEquals("OFFLINE", courierState(courier));
+    }
+    // Reject before any rows change, including a pending offer; retry is safe once the unrelated delivery is finished.
+
+    @ParameterizedTest
+    @ValueSource(strings = {"DeliveredState", "RefundedState", "CancelledState", "RejectedState"})
+    void unrelatedHistoryDoesNotPreventRestoringADemoCourier(String orderState) throws Exception {
+        restorer.restore();
+        UUID order = unrelatedOrder();
+        UUID courier = users.get("demo_courier");
+        giveToCourier(order, orderState, courier);
+        var expected = snapshot();
+
+        restorer.restore();
+
+        assertEquals(expected, snapshot());
+    }
+    // Historical courier references do not represent a delivery in progress and must not block Reset.
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void aDemoCourierCanStillBeResetWithAnActiveDemoDelivery(boolean demoCustomer) throws Exception {
+        restorer.restore();
+        unrelatedOrder();
+        UUID courier = users.get("demo_courier");
+        UUID order = demoCustomer
+                ? addOrder(users.get("demo_customer"), outsideRestaurant, outsideMenu)
+                : addOrder(outsideCustomer, users.get("demo_restaurant"), baseline.menuItems().getFirst().id());
+        giveToCourier(order, "PickedUpState", courier);
+        jdbc.update("UPDATE public.\"Courier\" SET state = 'CARRYING' WHERE user_id = ?", courier);
+
+        restorer.restore();
+
+        assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM public.\"Order\" WHERE id = ?", Integer.class, order));
+        assertEquals("OFFLINE", courierState(courier));
+        assertEquals(14, count("Order"));
+    }
+    // Either a fixture customer or a fixture restaurant makes the delivery part of the demo restoration scope.
 
     @Test
     void repeatedRestorationLeavesTheSameBaseline() throws Exception {
