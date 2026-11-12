@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 import AppHeader from "./components/AppHeader";
@@ -22,8 +22,8 @@ import {
 import type { ActiveDelivery, HistoryOrder } from "./orders/types/order";
 import "./styles/Dashboard.css";
 
-// How often an idle courier checks for a new offer.
-const OFFER_POLL_MS = 5000;
+// How often an on-duty courier rechecks the backend for offers and changes to their delivery.
+const POLL_MS = 5000;
 
 const STATE_TAG: Record<CourierState, { tone: "sage" | "mustard" | "navy" | "neutral"; label: string }> = {
   OFFLINE: { tone: "neutral", label: "Offline: The dishes are too crazy" },
@@ -51,14 +51,19 @@ export default function CourierHomePage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
+  // Only the newest refresh may update the page, so a poll sent before an action can't overwrite its result
+  const latestRefresh = useRef(0);
+
   // Reread backend after eavry action to keep page in sync
   const refresh = useCallback(async () => {
     if (!accessToken || !user) return;
+    const id = ++latestRefresh.current;
     const [state, pending, current] = await Promise.all([
       getCourierState(accessToken),
       getPendingOffer(accessToken),
       getCurrentOrders(accessToken),
     ]);
+    if (id !== latestRefresh.current) return;
     setCourierState(state);
     setOffer(pending ? current.find((o) => o.id === pending.orderId) ?? null : null);
     const delivery = current.find((o) => o.id !== pending?.orderId);
@@ -69,12 +74,12 @@ export default function CourierHomePage() {
     refresh().catch((e: Error) => setError(e.message));
   }, [refresh]);
 
-  // While idle, keep checking for an offer from dispatch
+  // While on duty, keep refreshing the backend
   useEffect(() => {
-    if (courierState !== "IDLE") return;
+    if (courierState === null || courierState === "OFFLINE") return;
     const timer = window.setInterval(() => {
       refresh().catch(() => {});
-    }, OFFER_POLL_MS);
+    }, POLL_MS);
     return () => window.clearInterval(timer);
   }, [courierState, refresh]);
 

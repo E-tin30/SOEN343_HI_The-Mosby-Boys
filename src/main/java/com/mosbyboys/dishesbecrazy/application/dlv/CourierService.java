@@ -114,6 +114,18 @@ public class CourierService {
         courierRepo.save(courier);
     }
 
+    //Frees a courier whose order was cancelled and sets them back to IDLE
+    @Transactional
+    public void release(UUID courierId) {
+        courierRepo.findById(courierId)
+            .filter(courier -> courier.getState() == CourierState.ASSIGNED
+                    || courier.getState() == CourierState.CARRYING)
+            .ifPresent(courier -> {
+                courier.setState(CourierState.IDLE);
+                courierRepo.save(courier);
+            });
+    }
+
     @Transactional
     public void moveToCustomerLocation(UUID courierId, UUID customerId) {
         Location destination = jdbcTemplate.queryForObject(
