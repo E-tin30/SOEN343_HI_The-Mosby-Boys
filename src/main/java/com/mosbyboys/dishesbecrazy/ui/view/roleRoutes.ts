@@ -6,6 +6,7 @@ import type { Role } from "./AuthContext";
 const HOME_ROUTES: Partial<Record<Role, string>> = {
   CUSTOMER: "/home",
   RESTAURANT: "/restaurant/home",
+  OPERATOR: "/operator/home"
 };
 
 // Roles without their own dashboard yet fall back to the customer home page.
