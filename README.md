@@ -83,6 +83,8 @@ The seed profile runs without an HTTP server and exits after the runners finish.
 ./mvnw spring-boot:run
 ```
 
+For the starting data, the four scenario scripts and a manual results checklist, see [Phase III demo walkthroughs](docs/demo-walkthroughs.md). Reset restores the demo data and both restaurant and dispatch queues. On the shared database it refuses to reset a demo courier who has an active delivery outside the demo; finish that delivery and retry.
+
 ## Tests
 
 ```sh
