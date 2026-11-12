@@ -74,6 +74,8 @@ export default function OrderHistoryPage() {
   const { user, accessToken } = useAuth();
   const [orders, setOrders] = useState<HistoryOrder[] | null>(null);
   const [pendingId, setPendingId] = useState<string | null>(null);
+  // The order whose Refund was clicked; its card asks to confirm inline instead of a browser pop-up.
+  const [confirmRefundId, setConfirmRefundId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [tab, setTab] = useState<TabLabel>("All");
 
@@ -112,7 +114,7 @@ export default function OrderHistoryPage() {
 
   const handleRefund = (order: HistoryOrder) => {
     if (!accessToken) return;
-    if (!window.confirm("Refund this order?")) return;
+    setConfirmRefundId(null);
     runAction(order.id, () => refundOrder(accessToken, order.id));
   };
 
@@ -174,10 +176,17 @@ export default function OrderHistoryPage() {
                 {pendingId === order.id ? "Saving…" : "Cancel order"}
                 </Button>
             )}
-            {canRefund(order) && (
-                <Button variant="secondary" disabled={pendingId !== null} onClick={() => handleRefund(order)}>
+            {canRefund(order) && confirmRefundId !== order.id && (
+                <Button variant="secondary" disabled={pendingId !== null} onClick={() => setConfirmRefundId(order.id)}>
                 {pendingId === order.id ? "Saving…" : "Refund"}
                 </Button>
+            )}
+            {canRefund(order) && confirmRefundId === order.id && (
+                <div className="history-card__confirm" role="group" aria-label="Confirm refund">
+                <span className="meta">Refund {showTotal(order)} for this order?</span>
+                <Button variant="link" onClick={() => setConfirmRefundId(null)}>Keep</Button>
+                <Button onClick={() => handleRefund(order)}>Confirm refund</Button>
+                </div>
             )}
             </div>
         </div>

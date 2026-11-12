@@ -70,6 +70,17 @@
   gap: var(--space-4);
 }
 
+/* Inline "Refund $X?" confirmation that replaces the Refund button. */
+.history-card__confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: 8px;
+  background: rgba(217, 72, 43, 0.08);
+}
+
 /* Fees and taxes, between the items and the total. */
 .history-card__pricing {
   display: flex;
