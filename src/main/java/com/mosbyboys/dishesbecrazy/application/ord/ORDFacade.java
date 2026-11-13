@@ -337,7 +337,7 @@ public class ORDFacade {
         return toViews(user, orderService.findCurrentForCourier(user.getUserId()));
     }
 
-    // Wraps orders with the item, restaurant and customer names and the pricing the caller's role may see
+    // Wraps orders with the item, restaurant and customer names and the pricing breakdown (visible to every role)
     private List<OrderHistoryView> toViews(User user, List<Order> orders) {
         // One query for every item name on the page, same as getRestaurantOrders.
         Map<UUID, String> itemNames = menuService.getNames(orders.stream()
@@ -358,11 +358,9 @@ public class ORDFacade {
                     .collect(Collectors.toSet()))
             : Map.of();
 
-        boolean seesPricing = user.getRole() == Role.CUSTOMER || user.getRole() == Role.OPERATOR;
-
         return orders.stream()
-                .map(o -> new OrderHistoryView(o, itemNames, restaurantNames, customerNames, seesPricing ? priceOf(o) : null))
-                .toList();
+            .map(o -> new OrderHistoryView(o, itemNames, restaurantNames, customerNames, priceOf(o)))
+            .toList();
     }
 
     // The breakdown for one stored order, from its item subtotal and today's pricing rates.
