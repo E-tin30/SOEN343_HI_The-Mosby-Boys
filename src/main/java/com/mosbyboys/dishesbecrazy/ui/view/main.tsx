@@ -14,6 +14,7 @@ import LoginPage from "./LoginPage";
 import RegistrationPage from "./RegistrationPage";
 import HomePage from "./HomePage";
 import RestaurantHomePage from "./RestaurantHomePage";
+import CourierHomePage from "./CourierHomePage";
 import RestaurantOrdersPage from "./orders/RestaurantOrdersPage";
 import OrderHistoryPage from "./orders/OrderHistoryPage";
 import RestaurantsPage from "./menu/RestaurantsPage";
@@ -21,6 +22,10 @@ import MenuPage from "./menu/MenuPage";
 import {CartProvider} from "./CartContext";
 import CartPage from "./menu/CartPage";
 import OrderSummaryPage from "./orders/OrderSummaryPage";
+import DashboardPage from "./dashboard/DashboardPage";
+import OperatorHomePage from "./OperatorHomePage";
+import AddMenuItemPage from "./menu/AddMenuItemPage";
+import EditMenuItemPage from "./menu/EditMenuItemPage";
 
 createRoot(document.getElementById("root")!).render(
     <BrowserRouter>
@@ -34,7 +39,7 @@ createRoot(document.getElementById("root")!).render(
                     <Route
                         path="/home"
                         element={
-                            <ProtectedRoute allowedRoles={["CUSTOMER", "COURIER", "OPERATOR"]}>
+                            <ProtectedRoute allowedRoles={["CUSTOMER"]}>
                                 <HomePage/>
                             </ProtectedRoute>
                         }
@@ -47,11 +52,43 @@ createRoot(document.getElementById("root")!).render(
                             </ProtectedRoute>
                         }
                     />
+                                        <Route
+                        path="/courier/home"
+                        element={
+                            <ProtectedRoute allowedRoles={["COURIER"]}>
+                                <CourierHomePage/>
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/operator/home"
+                        element={
+                            <ProtectedRoute allowedRoles={["OPERATOR"]}>
+                                <OperatorHomePage/>
+                            </ProtectedRoute>
+                        }
+                    />
                     <Route
                         path="/restaurant/orders"
                         element={
                             <ProtectedRoute allowedRoles={["RESTAURANT"]}>
                                 <RestaurantOrdersPage/>
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/restaurant/add"
+                        element={
+                            <ProtectedRoute allowedRoles={["RESTAURANT"]}>
+                                <AddMenuItemPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/restaurant/edit"
+                        element={
+                            <ProtectedRoute allowedRoles={["RESTAURANT"]}>
+                                <EditMenuItemPage />
                             </ProtectedRoute>
                         }
                     />
@@ -90,7 +127,24 @@ createRoot(document.getElementById("root")!).render(
                     <Route
                         path="/order-summary/:orderId"
                         element={
-                            <OrderSummaryPage />
+                            <ProtectedRoute allowedRoles={["CUSTOMER"]}>
+                                <OrderSummaryPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/dashboard"
+                        element={
+                            <ProtectedRoute
+                                allowedRoles={[
+                                    "CUSTOMER",
+                                    "RESTAURANT",
+                                    "COURIER",
+                                    "OPERATOR"
+                                ]}
+                            >
+                                <DashboardPage />
+                            </ProtectedRoute>
                         }
                     />
                 </Routes>

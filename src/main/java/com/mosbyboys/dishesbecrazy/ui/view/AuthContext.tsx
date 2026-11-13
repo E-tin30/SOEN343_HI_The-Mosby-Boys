@@ -1,3 +1,4 @@
+import { loggedFetch, readJson } from "./api/loggedFetch";
 
 import {
   createContext,
@@ -6,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { log } from "./outputLog";
+import { log, logError } from "./outputLog";
 
 export type LoginTokens = {
   accessToken: string;
@@ -58,22 +59,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       try {
-        const response = await fetch(`${API_URL}/api/auth/me`, {
+        const response = await loggedFetch(`${API_URL}/api/auth/me`, {
           headers: {
             Authorization: `Bearer ${savedAccessToken}`,
           },
         });
 
-        if (!response.ok) {
-          throw new Error("Session expired or invalid");
-        }
-
-        const profile: CurrentUser = await response.json();
+        const profile: CurrentUser = await readJson<CurrentUser>(response);
+        // Records restoration requests and unreadable responses without logging the saved token.
 
         setAccessToken(savedAccessToken);
         setUser(profile);
       } catch (error) {
-        console.error("Could not restore session:", error);
+        logError(error, "Could not restore session. Please sign in again.");
+        // Sends restoration failures to the application console instead of only developer tools.
 
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
@@ -89,19 +88,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   async function completeLogin(tokens: LoginTokens): Promise<CurrentUser> {
-    log("command", "GET /api/auth/me");
-
-    const response = await fetch(`${API_URL}/api/auth/me`, {
+    const response = await loggedFetch(`${API_URL}/api/auth/me`, {
       headers: {
         Authorization: `Bearer ${tokens.accessToken}`,
       },
     });
 
-    if (!response.ok) {
-      throw new Error("Could not retrieve authenticated user");
-    }
-
-    const profile: CurrentUser = await response.json();
+    const profile: CurrentUser = await readJson<CurrentUser>(response);
+    // Uses shared request/JSON logging when retrieving the profile after a successful login.
 
     // Persist tokens across page reloads.
     localStorage.setItem("accessToken", tokens.accessToken);
@@ -114,6 +108,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   function logout() {
+    log("command", "Log out");
+    // Records logout even though it is handled locally rather than by an HTTP request.
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
 

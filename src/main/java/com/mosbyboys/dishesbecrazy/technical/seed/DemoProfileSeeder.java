@@ -1,19 +1,15 @@
 package com.mosbyboys.dishesbecrazy.technical.seed;
 
-import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.UUID;
 
-import com.mosbyboys.dishesbecrazy.domain.reg.Role;
+import com.mosbyboys.dishesbecrazy.technical.seed.DemoFixtures.Account;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.core.annotation.Order;
-import tools.jackson.databind.json.JsonMapper;
 
 // Loads demo accounts only when the demo-seed profile is active.
 @Order(1)
@@ -22,40 +18,36 @@ import tools.jackson.databind.json.JsonMapper;
 public class DemoProfileSeeder implements CommandLineRunner {
     private final JdbcTemplate jdbc;
     private final TransactionTemplate transaction;
-    private final JsonMapper json;
+    private final DemoFixtureLoader fixtures;
     private final DemoAuthAdmin auth;
 
-    public DemoProfileSeeder(JdbcTemplate jdbc, PlatformTransactionManager manager, JsonMapper json, DemoAuthAdmin auth) {
+    public DemoProfileSeeder(JdbcTemplate jdbc, PlatformTransactionManager manager, DemoFixtureLoader fixtures, DemoAuthAdmin auth) {
         this.jdbc = jdbc;
         this.transaction = new TransactionTemplate(manager);
-        this.json = json;
+        this.fixtures = fixtures;
         this.auth = auth;
     }
 
     @Override
     public void run(String... args) throws Exception {
-        // Loads the four fictional profiles from JSON.
-        Account[] accounts;
-        try (var input = new ClassPathResource("demo/profiles.json").getInputStream()) {
-            accounts = json.readValue(input, Account[].class);
-        }
-        validate(accounts);
+        var accounts = fixtures.load().accounts();
+        // Loads validated profile/menu fixtures before contacting Auth or the database.
 
         // Reuses existing Auth accounts; creates missing ones before the SQL transaction.
-        UUID[] userIds = new UUID[accounts.length];
-        for (int i = 0; i < accounts.length; i++) {
+        UUID[] userIds = new UUID[accounts.size()];
+        for (int i = 0; i < accounts.size(); i++) {
             var ids = jdbc.queryForList("SELECT id FROM auth.users WHERE email = ?",
-                    UUID.class, accounts[i].email());
+                    UUID.class, accounts.get(i).email());
             if (ids.size() > 1) {
-                throw new IllegalStateException("Multiple Auth users match " + accounts[i].email());
+                throw new IllegalStateException("Multiple Auth users match " + accounts.get(i).email());
             }
-            userIds[i] = ids.isEmpty() ? auth.create(accounts[i]) : ids.getFirst();
+            userIds[i] = ids.isEmpty() ? auth.create(accounts.get(i)) : ids.getFirst();
         }
 
         // Saves all public profiles together or rolls them all back.
         transaction.executeWithoutResult(status -> {
-            for (int i = 0; i < accounts.length; i++) {
-                seed(accounts[i], userIds[i]);
+            for (int i = 0; i < accounts.size(); i++) {
+                seed(accounts.get(i), userIds[i]);
             }
         });
         System.out.println("Demo profiles ready: CUSTOMER, RESTAURANT, COURIER, OPERATOR.");
@@ -89,29 +81,5 @@ public class DemoProfileSeeder implements CommandLineRunner {
                     account.latitude(), account.longitude());
             case OPERATOR -> { /* Operators need only their Users row. */ }
         }
-    }
-
-    // Requires one unique demo account per role.
-    private void validate(Account[] accounts) {
-        var roles = EnumSet.noneOf(Role.class);
-        var emails = new HashSet<String>();
-        for (Account account : accounts) {
-            if (account.email() == null || !account.email().endsWith(".demo@example.com")
-                    || !emails.add(account.email()) || account.role() == null || !roles.add(account.role())) {
-                throw new IllegalArgumentException("Seed configuration requires unique demo emails and roles.");
-            }
-            if (account.role() == Role.RESTAURANT && (account.latitude() == null || account.longitude() == null)) {
-                throw new IllegalArgumentException("Restaurant profiles require latitude and longitude.");
-            }
-        }
-        if (roles.size() != Role.values().length) {
-            throw new IllegalArgumentException("Seed configuration requires one account of each role.");
-        }
-    }
-
-    // Holds the JSON fields; passwords stay in the environment.
-    public record Account(String email, String firstName, String lastName, String username,
-                          Role role, String address, String state, String location,
-                          String restaurantName, String status, Double latitude, Double longitude) {
     }
 }

@@ -8,6 +8,7 @@ import com.mosbyboys.dishesbecrazy.domain.ord.state.DeliveredState;
 import com.mosbyboys.dishesbecrazy.domain.ord.state.PlacedState;
 import com.mosbyboys.dishesbecrazy.domain.reg.User;
 import com.mosbyboys.dishesbecrazy.domain.reg.Courier;
+import com.mosbyboys.dishesbecrazy.domain.reg.CourierState;
 import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
 import com.mosbyboys.dishesbecrazy.domain.reg.Role;
 
@@ -88,7 +89,7 @@ public class PermissionPolicy {
         if (!courier.getUserId().equals(order.getCourierId())) {
             throw new PermissionDeniedException("This order was not offered to you.");
         }
-        if (!"idle".equalsIgnoreCase(courier.getState())) {
+        if (courier.getState() != CourierState.IDLE) {
             throw new PermissionDeniedException("There is no pending offer for you on this order.");
         }
     }
@@ -107,7 +108,7 @@ public class PermissionPolicy {
         if (!courier.getUserId().equals(order.getCourierId())) {
             throw new PermissionDeniedException("Only the courier assigned to this order can change it.");
         }
-        if (!"assigned".equalsIgnoreCase(courier.getState()) && !"carrying".equalsIgnoreCase(courier.getState())) {
+        if (courier.getState() != CourierState.ASSIGNED && courier.getState() != CourierState.CARRYING) {
             throw new PermissionDeniedException("You have not accepted this order, or you are not on duty.");
         }
     }
@@ -195,5 +196,42 @@ public class PermissionPolicy {
         if (caller.getRole() != Role.OPERATOR) {
             throw new PermissionDeniedException("Only an operator can reassign an order.");
         }
+    }
+
+    // Who can pause a restaurant
+    // An operator can pause any restaurant; a restaurant can only pause itself (Appendix A, R-DASH-01).
+    public void checkCanPause(User caller, Restaurant restaurant) {
+        if (caller == null) {
+            throw new PermissionDeniedException("No caller.");
+        }
+        if (restaurant == null) {
+            throw new PermissionDeniedException("No restaurant.");
+        }
+        if (caller.getRole() == Role.OPERATOR) {
+            return;
+        }
+        if (caller.getRole() == Role.RESTAURANT && caller.getUserId().equals(restaurant.getUserId())) {
+            return;
+        }
+        throw new PermissionDeniedException("Only an operator or the restaurant itself can pause a restaurant.");
+    }
+
+    // Who can open a restaurant (from paused or closed)
+    // An operator can open any restaurant (R-DASH-01); a restaurant can only open itself
+    // (team decision: the restaurant knows when it has caught up after a pause).
+    public void checkCanOpen(User caller, Restaurant restaurant) {
+        if (caller == null) {
+            throw new PermissionDeniedException("No caller.");
+        }
+        if (restaurant == null) {
+            throw new PermissionDeniedException("No restaurant.");
+        }
+        if (caller.getRole() == Role.OPERATOR) {
+            return;
+        }
+        if (caller.getRole() == Role.RESTAURANT && caller.getUserId().equals(restaurant.getUserId())) {
+            return;
+        }
+        throw new PermissionDeniedException("Only an operator or the restaurant itself can open a restaurant.");
     }
 }

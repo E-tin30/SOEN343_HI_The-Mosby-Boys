@@ -9,6 +9,13 @@ spring:
     url: ${SUPABASE_DB_URL}
     username: ${SUPABASE_DB_USER}
     password: ${SUPABASE_DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 3
+      minimum-idle: 1
+      connection-timeout: 30000
+      idle-timeout: 300000
+      max-lifetime: 1200000
+
 
   flyway:
     enabled: false
@@ -41,3 +48,4 @@ pricing:
 
 stripe:
   secret-key: ${STRIPE_SECRET_KEY}
+

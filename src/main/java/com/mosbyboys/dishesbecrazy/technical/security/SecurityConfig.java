@@ -11,6 +11,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.http.HttpMethod;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -23,7 +24,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, DemoStateAccess access) throws Exception {
         return http
             .cors(Customizer.withDefaults())
             .csrf(AbstractHttpConfigurer::disable)
@@ -45,6 +46,9 @@ public class SecurityConfig {
             .oauth2ResourceServer(oauth2 -> oauth2
                 .jwt(Customizer.withDefaults())
             )
+
+            .addFilterAfter(new DemoRequestFilter(access), AuthorizationFilter.class)
+            // Authenticate and authorize first; scope application request access around the remaining synchronous work.
 
             .build();
     }

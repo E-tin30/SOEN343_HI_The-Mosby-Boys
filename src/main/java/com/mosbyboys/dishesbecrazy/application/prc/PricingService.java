@@ -15,30 +15,52 @@ public class PricingService {
     }
 
     public PricingBreakdown calculateTotal(BigDecimal subtotal) {
-        //delivery fee
+        // Delivery fee
         BigDecimal deliveryFee = pricingConfiguration.getDeliveryFee();
 
-        //service fee rate
-        BigDecimal serviceFee = subtotal.multiply(pricingConfiguration.getServiceFeeRate());
+        // Service fee rate
+        BigDecimal serviceFee = subtotal.multiply(
+                pricingConfiguration.getServiceFeeRate()
+        );
 
-        //check and add surcharge
+        // Check and add surcharge
         BigDecimal smallOrderSurcharge;
-        if(subtotal.compareTo(pricingConfiguration.getSmallOrderThreshold()) < 0) {
+
+        if (subtotal.compareTo(
+                pricingConfiguration.getSmallOrderThreshold()) < 0) {
             smallOrderSurcharge = pricingConfiguration.getSmallOrderSurcharge();
         } else {
             smallOrderSurcharge = BigDecimal.ZERO;
         }
 
-        //new subtotal (taxable subtotal)
-        BigDecimal taxableSubtotal = subtotal.add(deliveryFee).add(serviceFee).add(smallOrderSurcharge);
+        // New subtotal (taxable subtotal)
+        BigDecimal taxableSubtotal = subtotal
+                .add(deliveryFee)
+                .add(serviceFee)
+                .add(smallOrderSurcharge);
 
-        //add tax
-        BigDecimal gst = taxableSubtotal.multiply(pricingConfiguration.getGst());
-        BigDecimal qst  = taxableSubtotal.multiply(pricingConfiguration.getQst());
+        // Add tax
+        BigDecimal gst = taxableSubtotal.multiply(
+                pricingConfiguration.getGst()
+        );
 
-        //final total
+        BigDecimal qst = taxableSubtotal.multiply(
+                pricingConfiguration.getQst()
+        );
+
+        // Final total
         BigDecimal total = taxableSubtotal.add(gst).add(qst);
 
-        return new PricingBreakdown(subtotal, deliveryFee, serviceFee, smallOrderSurcharge, taxableSubtotal, gst, qst, total);
+        // Build pricing breakdown
+        return new PricingBreakdown.Builder()
+                .subtotal(subtotal)
+                .deliveryFee(deliveryFee)
+                .serviceFee(serviceFee)
+                .smallOrderSurcharge(smallOrderSurcharge)
+                .taxableSubtotal(taxableSubtotal)
+                .gst(gst)
+                .qst(qst)
+                .total(total)
+                .build();
     }
 }

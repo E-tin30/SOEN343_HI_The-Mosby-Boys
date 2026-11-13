@@ -131,5 +131,12 @@ public class Order {
         }
         return total;
     }
+
+    public void clearCourierOffer(UUID courierId) {
+        if (!(state instanceof ReadyState) || !courierId.equals(this.courierId)) {
+            throw new IllegalStateException("Courier does not hold this offer");
+        }
+        this.courierId = null;
+    }
     
 }

@@ -27,7 +27,7 @@ public class DemoAuthAdmin {
         this.password = password;
     }
 
-    public UUID create(DemoProfileSeeder.Account account) {
+    public UUID create(DemoFixtures.Account account) {
         // Rejects missing configuration before sending a request.
         if (!url.startsWith("https://") || key.isBlank() || password.length() < 8) {
             throw new IllegalStateException("Set SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_SECRET_KEY), "

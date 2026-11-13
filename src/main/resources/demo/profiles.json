@@ -15,7 +15,7 @@
     "lastName": "Demo",
     "username": "demo_restaurant",
     "role": "RESTAURANT",
-    "restaurantName": "Dishes Be Crazy Demo",
+    "restaurantName": "Sam's Family Kitchen",
     "status": "OPEN",
     "latitude": 45.5017,
     "longitude": -73.5673
@@ -26,7 +26,7 @@
     "lastName": "Demo",
     "username": "demo_courier",
     "role": "COURIER",
-    "state": "OFF_DUTY",
+    "state": "OFFLINE",
     "latitude": 45.5200,
     "longitude": -73.5800
   },
@@ -36,5 +36,27 @@
     "lastName": "Demo",
     "username": "demo_operator",
     "role": "OPERATOR"
+  },
+  {
+    "email": "restaurant2.demo@example.com",
+    "firstName": "Robin",
+    "lastName": "Demo",
+    "username": "demo_restaurant_building",
+    "role": "RESTAURANT",
+    "restaurantName": "Robin's Sunday Kitchen",
+    "status": "OPEN",
+    "latitude": 45.5100,
+    "longitude": -73.5700
+  },
+  {
+    "email": "restaurant3.demo@example.com",
+    "firstName": "Casey",
+    "lastName": "Demo",
+    "username": "demo_restaurant_busy",
+    "role": "RESTAURANT",
+    "restaurantName": "Casey's Home Kitchen",
+    "status": "OPEN",
+    "latitude": 45.5250,
+    "longitude": -73.5800
   }
 ]
