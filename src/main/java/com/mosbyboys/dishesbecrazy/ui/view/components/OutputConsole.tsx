@@ -6,29 +6,15 @@ import "./OutputConsole.css";
 export default function OutputConsole() {
   const entries = useSyncExternalStore(subscribe, getEntries);
   const end = useRef<HTMLLIElement>(null);
-  const root = useRef<HTMLDetailsElement>(null);
 
-  // Publish the console's real height so pages can pad exactly that much.
-  useEffect(() => {
-    const el = root.current;
-    if (!el) return;
-    const style = document.documentElement.style;
-    const observer = new ResizeObserver(() => {
-      style.setProperty("--console-height", `${el.getBoundingClientRect().height}px`);
-    });
-    observer.observe(el);
-    return () => {
-      observer.disconnect();
-      style.removeProperty("--console-height");
-    };
-  }, []);
-
+  // The console takes its own space below the page (see #root in base.css), so pages no longer
+  // need its height to pad themselves.
   useEffect(() => {
     end.current?.scrollIntoView({ block: "nearest" });
   }, [entries]);
 
   return (
-    <details ref={root} className="output-console" open>
+    <details className="output-console" open>
       <summary>Output console ({entries.length})</summary>
       <ol>
         {entries.map((e, i) => (

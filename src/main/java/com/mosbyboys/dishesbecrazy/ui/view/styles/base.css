@@ -36,9 +36,27 @@ a:hover {
 }
 
 /* Page shell: Cream page with a centred content column. */
+/* App shell: exactly the window's height, with the pages scrolling in .app-scroll and the output
+   console docked underneath (main.tsx), so the page's scrollbar stops at the console. */
+#root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh; /* tracks mobile browser bars where supported */
+}
+
+.app-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* Full height of the scroll area, not the window, so a short page doesn't scroll by the console's height. */
 .page {
-  min-height: 100vh;
+  min-height: 100%;
   padding: var(--space-4);
+  /* Extra room at the end of a long page so the last card doesn't sit right on the output console. */
+  padding-bottom: calc(var(--space-6) + var(--space-4));
 }
 
 .page__content {

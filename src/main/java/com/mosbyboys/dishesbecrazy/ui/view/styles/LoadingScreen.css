@@ -5,7 +5,7 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-5);
-  min-height: 100vh;
+  min-height: 100%; /* the scroll area above the output console */
   padding: var(--space-4);
   background: var(--cream);
 }

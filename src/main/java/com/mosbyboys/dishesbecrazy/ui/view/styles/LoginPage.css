@@ -2,7 +2,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: calc(100vh - var(--console-height, 0px));
+  min-height: 100%;
   padding: var(--space-4);
   background: var(--cream) url("../assets/dishes-be-crazy-background.jpg") right center / cover no-repeat;
 }
