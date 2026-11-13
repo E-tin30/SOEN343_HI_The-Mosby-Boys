@@ -92,6 +92,11 @@ public class MenuController {
     public ResponseEntity<MenuItem> editMenuItem(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody EditMenuItemRequest request) {
         UUID restaurantId = regFacade.getCurrentUser(UUID.fromString(jwt.getSubject())).getUserId();
 
+        //check if the restaurant is the correct one calling and also ensures that the menu item exists already
+        if(restaurantId == null || !restaurantId.equals(ordFacade.getRestaurantId(request.id()))) {
+            return ResponseEntity.status(HttpStatus.PRECONDITION_FAILED).body(null);
+        }
+
         MenuItemStatus status = request.stockQuantity() > 0
                 ? MenuItemStatus.AVAILABLE
                 : MenuItemStatus.SOLD_OUT;

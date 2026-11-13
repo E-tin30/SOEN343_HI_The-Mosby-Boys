@@ -121,6 +121,10 @@ export default function EditMenuItemPage() {
             });
 
             if (!response.ok) {
+                if (response.status === 412) {
+                    throw new Error("This menu item does not belong to this restaurant.");
+                }
+
                 throw new Error("Failed to update menu item.");
             }
 
