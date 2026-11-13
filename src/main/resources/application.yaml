@@ -11,8 +11,10 @@ spring:
     password: ${SUPABASE_DB_PASSWORD}
     hikari:
       maximum-pool-size: 3
-      minimum-idle: 0
-      idle-timeout: 30000
+      minimum-idle: 1
+      connection-timeout: 30000
+      idle-timeout: 300000
+      max-lifetime: 1200000
 
 
   flyway:

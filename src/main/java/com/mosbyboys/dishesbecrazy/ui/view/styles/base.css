@@ -179,3 +179,7 @@ a:hover {
   color: var(--navy-dark);
   text-decoration: underline;
 }
+
+.margin-top {
+  margin-top: 1rem;
+}

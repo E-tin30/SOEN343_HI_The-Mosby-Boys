@@ -394,4 +394,16 @@ public class ORDFacade {
         return restaurant;
     }
 
+    //save menu item
+    @Transactional
+    public void saveMenuItem(MenuItem item) {
+        menuService.save(item);
+    }
+
+    //get restaurantID from db
+    @Transactional
+    public UUID getRestaurantId(UUID menuItemId) {
+        return menuService.getRestaurantId(menuItemId);
+    }
+
 }
