@@ -149,6 +149,14 @@ a:hover {
   margin-top: var(--space-2);
 }
 
+/* A full-width rule between the intro text and what follows, e.g. the restaurant's status bar. */
+.intro-card__divider {
+  align-self: stretch;
+  margin: var(--space-2) 0;
+  border: none;
+  border-top: var(--border-width) solid var(--linen);
+}
+
 /* A row of buttons plus a status tag, e.g. the courier's Start Driving / Go Offline. */
 .intro-card__actions {
   display: flex;
