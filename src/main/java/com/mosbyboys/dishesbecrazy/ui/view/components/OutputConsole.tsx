@@ -7,6 +7,8 @@ export default function OutputConsole() {
   const entries = useSyncExternalStore(subscribe, getEntries);
   const end = useRef<HTMLLIElement>(null);
 
+  // The console takes its own space below the page (see #root in base.css), so pages no longer
+  // need its height to pad themselves.
   useEffect(() => {
     end.current?.scrollIntoView({ block: "nearest" });
   }, [entries]);

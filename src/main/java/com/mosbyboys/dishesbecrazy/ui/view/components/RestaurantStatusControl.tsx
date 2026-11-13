@@ -3,29 +3,30 @@ import { useAuth } from "../AuthContext";
 import { getRestaurants, openRestaurant, pauseRestaurant } from "../menu/api/menuApi";
 import type { Restaurant } from "../menu/types/menu";
 import Button from "./Button";
+import StatusBar, { type StatusTone } from "./StatusBar";
 import Tag from "./Tag";
 import "./RestaurantStatusControl.css";
 
 // Same colours as the restaurant list (RestaurantsPage).
-export const STATUS_TAG: Record<Restaurant["status"], { tone: "sage" | "mustard" | "neutral"; label: string }> = {
+export const STATUS_TAG: Record<Restaurant["status"], { tone: "sage" | "terracotta" | "neutral"; label: string }> = {
   OPEN: { tone: "sage", label: "Open" },
-  PAUSED: { tone: "mustard", label: "Paused" },
+  PAUSED: { tone: "terracotta", label: "Paused" },
   CLOSED: { tone: "neutral", label: "Closed" },
 };
 
 
 const PAUSED_TEXT = "New orders are blocked until the restaurant is reopened.";
 
-const STATUS_COPY: Record<Restaurant["status"], { title: string; text: string }> = {
-  OPEN: { title: "Open for orders", text: "Customers can see your menu and order now." },
-  PAUSED: { title: "Orders paused", text: PAUSED_TEXT },
-  CLOSED: { title: "Closed", text: "Customers can't order until you reopen." },
+const STATUS_COPY: Record<Restaurant["status"], { tone: StatusTone; title: string; text: string }> = {
+  OPEN: { tone: "sage", title: "Open for orders", text: "Customers can see your menu and order now." },
+  PAUSED: { tone: "terracotta", title: "Orders paused", text: PAUSED_TEXT },
+  CLOSED: { tone: "cocoa", title: "Closed", text: "Customers can't order until you reopen." },
 };
 
 type RestaurantStatusControlProps = {
-  // "card": its own card with the status spelled out (home page).
+  // "inline": the status spelled out in a full-width row, placed inside another card (home page's intro card).
   // "header": compact, for an AppHeader; the Pause button while open, a status pill and Reopen otherwise (orders page).
-  variant?: "card" | "header";
+  variant?: "inline" | "header";
   // Called with the restaurant whenever it is loaded or changed, e.g. so a page can show its name.
   onRestaurant?: (restaurant: Restaurant) => void;
 };
@@ -33,7 +34,7 @@ type RestaurantStatusControlProps = {
 // The logged-in restaurant's status, with Pause shown while it is open (R-DASH-01) and Reopen
 // while it is paused or closed (team decision). Used on the restaurant home page and the orders page
 // (Dinner Rush: pause while watching the queue, reopen once caught up).
-export default function RestaurantStatusControl({ variant = "card", onRestaurant }: RestaurantStatusControlProps) {
+export default function RestaurantStatusControl({ variant = "inline", onRestaurant }: RestaurantStatusControlProps) {
   const { accessToken } = useAuth();
   const [restaurant, setRestaurantState] = useState<Restaurant | null>(null);
   const [error, setError] = useState("");
@@ -71,12 +72,12 @@ export default function RestaurantStatusControl({ variant = "card", onRestaurant
   const isOpen = restaurant?.status === "OPEN";
   const pauseButton = (
     <Button variant="secondary" onClick={() => changeStatus(pauseRestaurant)}>
-      <span className="status-control__icon" aria-hidden="true">⏸</span> Pause orders
+      <span className="status-bar__icon" aria-hidden="true">⏸</span> Pause orders
     </Button>
   );
   const reopenButton = (
     <Button variant="secondary" onClick={() => changeStatus(openRestaurant)}>
-      <span className="status-control__icon" aria-hidden="true">▶</span> Reopen orders
+      <span className="status-bar__icon" aria-hidden="true">▶</span> Reopen orders
     </Button>
   );
 
@@ -101,7 +102,7 @@ export default function RestaurantStatusControl({ variant = "card", onRestaurant
   }
 
   return (
-    <section className="status-control card">
+    <section className="status-control">
       {error && (
         <p className="page__status page__status--error" role="alert">
           Error: {error}
@@ -111,16 +112,9 @@ export default function RestaurantStatusControl({ variant = "card", onRestaurant
       {restaurant === null && !error && <p className="meta">Loading…</p>}
 
       {restaurant && (
-        <div className={`status-control__row status-control--${restaurant.status.toLowerCase()}`}>
-          <div className="status-control__info">
-            <span className="status-control__dot" />
-            <div>
-              <p className="status-control__title">{STATUS_COPY[restaurant.status].title}</p>
-              <p className="status-control__text">{STATUS_COPY[restaurant.status].text}</p>
-            </div>
-          </div>
+        <StatusBar {...STATUS_COPY[restaurant.status]}>
           {isOpen ? pauseButton : reopenButton}
-        </div>
+        </StatusBar>
       )}
     </section>
   );

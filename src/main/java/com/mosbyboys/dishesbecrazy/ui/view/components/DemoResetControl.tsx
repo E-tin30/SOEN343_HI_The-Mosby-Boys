@@ -42,7 +42,7 @@ export default function DemoResetControl() {
 
   return (
     <div className="demo-reset" aria-busy={pending}>
-      <Button variant="link" className="demo-reset__button" onClick={handleReset} disabled={pending || !accessToken}>
+      <Button variant="secondary" onClick={handleReset} disabled={pending || !accessToken}>
         {pending ? "Resetting…" : "Reset demo"}
       </Button>
       {message && <p className="demo-reset__feedback meta" role="status">{message}</p>}

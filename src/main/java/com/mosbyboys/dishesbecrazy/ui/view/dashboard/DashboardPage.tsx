@@ -15,7 +15,7 @@ import "../styles/DashboardMap.css";
 export default function DashboardPage() {
     const navigate = useNavigate();
     const { user } = useAuth();
-    const { restaurants, couriers, error } = useDashboardData();
+    const { restaurants, couriers, error, refresh } = useDashboardData();
     const [showLabels, setShowLabels] = useState(true);
     
     // Track the id, not the object, so the panel shows fresh data after each refresh.
@@ -77,7 +77,10 @@ export default function DashboardPage() {
                                     <span className="legend-swatch legend-swatch--steady" /> Steady (3 – 5 orders)
                                 </span>
                                 <span className="dashboard-map__legend-item">
-                                    <span className="legend-swatch legend-swatch--busy" /> Busy (6+ orders/Paused)
+                                    <span className="legend-swatch legend-swatch--busy" /> Busy (6+ orders)
+                                </span>
+                                <span className="dashboard-map__legend-item">
+                                    <span className="legend-swatch legend-swatch--paused" /> Paused
                                 </span>
                             </div>
                             <div className="dashboard-map__legend-group">
@@ -127,9 +130,12 @@ export default function DashboardPage() {
                         {/* Details for the hovered or clicked restaurant, in their own card beside the map */}
                         {selected ? (
                             <RestaurantDetailsPanel
+                                // Remount per restaurant so a save or error on one doesn't carry over to the next
+                                key={selected.id}
                                 restaurant={selected}
                                 queueCount={selected.queueLength}
                                 onClose={close}
+                                onStatusChange={refresh}
                             />
                         ) : (
                             <aside className="dashboard-layout__placeholder card">

@@ -5,7 +5,7 @@ import AppHeader from "./components/AppHeader";
 import Button from "./components/Button";
 import Heading from "./components/Heading";
 import ActiveOrderDetails from "./components/ActiveOrderDetails";
-import Tag from "./components/Tag";
+import StatusBar, { type StatusTone } from "./components/StatusBar";
 import { MapCard } from "./dashboard/LiveMap";
 import {
   acceptOffer,
@@ -25,11 +25,11 @@ import "./styles/Dashboard.css";
 // How often an on-duty courier rechecks the backend for offers and changes to their delivery.
 const POLL_MS = 5000;
 
-const STATE_TAG: Record<CourierState, { tone: "sage" | "mustard" | "navy" | "neutral"; label: string }> = {
-  OFFLINE: { tone: "neutral", label: "Offline: The dishes are too crazy" },
-  IDLE: { tone: "sage", label: "Idle: Let's get this party started" },
-  ASSIGNED: { tone: "mustard", label: "Delivering: Heading to the restaurant" },
-  CARRYING: { tone: "navy", label: "Delivering: On the way to the customer" },
+const STATE_COPY: Record<CourierState, { tone: StatusTone; title: string; text: string }> = {
+  OFFLINE: { tone: "cocoa", title: "Offline", text: "The dishes are too crazy." },
+  IDLE: { tone: "sage", title: "Idle", text: "Let's get this party started." },
+  ASSIGNED: { tone: "mustard", title: "Delivering", text: "Heading to the restaurant." },
+  CARRYING: { tone: "navy", title: "Delivering", text: "On the way to the customer." },
 };
 
 const toDelivery = (order: HistoryOrder): ActiveDelivery => ({
@@ -128,17 +128,22 @@ export default function CourierHomePage() {
           <p className="intro-card__text meta">
             Start driving to receive delivery offers.
           </p>
-          <div className="intro-card__actions">
-            <Button onClick={run(goOnline)} disabled={courierState !== "OFFLINE" || busy}>
-              Start Driving
-            </Button>
-            <Button variant="secondary" onClick={run(goOffline)} disabled={!canEndDriving}>
-              End Driving
-            </Button>
-            {courierState && (
-              <Tag tone={STATE_TAG[courierState].tone}>{STATE_TAG[courierState].label}</Tag>
-            )}
-          </div>
+          <hr className="intro-card__divider" />
+          {courierState === null && !error && <p className="meta">Loading…</p>}
+          {/* Same layout as the restaurant's open/paused status: Start Driving while offline, End Driving otherwise. */}
+          {courierState && (
+            <StatusBar {...STATE_COPY[courierState]}>
+              {courierState === "OFFLINE" ? (
+                <Button variant="secondary" onClick={run(goOnline)} disabled={busy}>
+                  <span className="status-bar__icon" aria-hidden="true">▶</span> Start Driving
+                </Button>
+              ) : (
+                <Button variant="secondary" onClick={run(goOffline)} disabled={!canEndDriving}>
+                  <span className="status-bar__icon" aria-hidden="true">⏹</span> End Driving
+                </Button>
+              )}
+            </StatusBar>
+          )}
           {error && (
             <p className="page__status page__status--error" role="alert">
               {error}
