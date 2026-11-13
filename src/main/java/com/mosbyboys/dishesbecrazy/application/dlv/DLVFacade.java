@@ -26,6 +26,14 @@ public class DLVFacade {
         return courierService.getOnlineCouriers();
     }
 
+    public List<CourierData> getOtherIdleCouriers(UUID courierId) {
+        return courierService.getIdleCouriers().stream().filter(courier -> !courier.id().equals(courierId)).filter(courier -> dispatchService.getPendingOffer(courier.id()) == null).toList();
+    }
+
+    public List<CourierData> getAssignedCouriers() {
+        return courierService.getAssignedCouriers();
+    }
+
     public CourierState getCourierState(UUID courierId) {
         return courierService.getState(courierId);
     }
@@ -77,5 +85,10 @@ public class DLVFacade {
         dispatchService.acceptOffer(courierId, orderId);
     }
 
+    public void reassignCourier(UUID oldCourierId, UUID newCourierId) {
+        dispatchService.reassignCourier(oldCourierId, newCourierId);
+        
+        eventPublisher.publishEvent(new DispatchRequestEvent());
+    }
 }
 

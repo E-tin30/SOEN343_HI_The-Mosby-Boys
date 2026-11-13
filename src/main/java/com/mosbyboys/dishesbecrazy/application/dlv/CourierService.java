@@ -36,6 +36,10 @@ public class CourierService {
         return courierRepo.findByState(CourierState.IDLE).stream().map(this::toCourierData).toList();
     }
 
+    public List<CourierData> getAssignedCouriers() {
+        return courierRepo.findByState(CourierState.ASSIGNED).stream().map(this::toCourierData).toList();
+    }
+
     public CourierState getState(UUID courierId) {
         return courierRepo.findById(courierId)
             .orElseThrow(() -> new IllegalArgumentException("Courier not found: " + courierId))

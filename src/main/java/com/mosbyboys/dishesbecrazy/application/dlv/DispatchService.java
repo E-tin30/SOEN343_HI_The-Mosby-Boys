@@ -5,6 +5,7 @@ import com.mosbyboys.dishesbecrazy.application.ord.OrderService;
 import com.mosbyboys.dishesbecrazy.domain.ord.Order;
 import com.mosbyboys.dishesbecrazy.domain.ord.Location;
 import com.mosbyboys.dishesbecrazy.domain.ord.state.ReadyState;
+import com.mosbyboys.dishesbecrazy.domain.reg.CourierState;
 import com.mosbyboys.dishesbecrazy.application.ord.RestaurantService;
 
 
@@ -173,6 +174,56 @@ public class DispatchService {
         boolean removed = queues.removeGlobalReady(orderId);
         if (!removed) {
             throw new IllegalStateException("Order is not queued");
+        }
+    }
+
+    public synchronized void reassignCourier(
+        UUID oldCourierId, UUID newCourierId) {
+
+        Order order = inNewTransaction(() -> {
+
+            //Verify that the old courier is assigned
+            if (courierService.getState(oldCourierId) != CourierState.ASSIGNED) {
+                throw new IllegalStateException(
+                    "Old courier must be ASSIGNED"
+                );
+            }
+
+            //Verify that the new courier is idle
+            if (courierService.getState(newCourierId)!= CourierState.IDLE) {
+                throw new IllegalStateException(
+                    "New courier must be IDLE"
+                );
+            }
+
+            //Find the order associated with the old courier
+            Order currentOrder = orderService
+                .findCurrentForCourier(oldCourierId)
+                .stream()
+                .filter(o -> o.getState() instanceof ReadyState)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException(
+                    "No ready order found for the old courier"
+                ));
+
+            //Replace the courier ID and save the order
+            currentOrder.assignCourier(newCourierId);
+            orderService.save(currentOrder);
+
+            //Release the old courier
+            courierService.release(oldCourierId);
+
+            return currentOrder;
+        });
+
+        //Add the order back to the global ready queue
+        if (!queues.globalReadySnapshot().contains(order.getId())) {
+            queues.enqueueGlobalReady(order.getId());
+        }
+
+        //Ensure the order is in the restaurant's ready queue
+        if (!queues.ready(order.getRestaurantId()).contains(order.getId())) {
+            queues.ready(order.getRestaurantId()).enqueue(order.getId());
         }
     }
 
