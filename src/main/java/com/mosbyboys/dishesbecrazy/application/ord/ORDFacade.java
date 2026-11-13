@@ -419,6 +419,16 @@ public class ORDFacade {
                 // the item was removed from the menu; there is no stock to give back
             }
         }
+    //save menu item
+    @Transactional
+    public void saveMenuItem(MenuItem item) {
+        menuService.save(item);
+    }
+
+    //get restaurantID from db
+    @Transactional
+    public UUID getRestaurantId(UUID menuItemId) {
+        return menuService.getRestaurantId(menuItemId);
     }
 
 }

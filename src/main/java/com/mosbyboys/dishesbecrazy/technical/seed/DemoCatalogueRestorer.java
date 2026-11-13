@@ -25,14 +25,11 @@ class DemoCatalogueRestorer {
                     UUID.class, account.email());
             Assert.state(ids.size() == 1, "Run demo-seed first: no single Auth account matches " + account.email());
             UUID id = ids.getFirst();
-            var roles = jdbc.queryForList("SELECT role FROM public.\"User\" WHERE id = ?", String.class, id);
-            Assert.state(roles.isEmpty() || account.role().name().equals(roles.getFirst()),
-                    "Existing demo profile has a different role: " + account.email());
             users.put(account.username(), id);
         }
         return users;
     }
-    // Email identifies existing Auth accounts even after a public profile is renamed or deleted; Auth itself is unchanged.
+    // Email identifies fixture Auth accounts even after a public profile is renamed or deleted; their IDs remain stable.
 
     void restore(DemoFixtures baseline, Map<String, UUID> users) {
         for (var account : baseline.accounts()) {

@@ -83,6 +83,8 @@ The seed profile runs without an HTTP server and exits after the runners finish.
 ./mvnw spring-boot:run
 ```
 
+For the starting data, the four scenario scripts and a manual results checklist, see [Phase III demo walkthroughs](docs/demo-walkthroughs.md). Reset restores the fixture starting state globally: it clears everyone's order activity, removes accounts and menus outside the fixtures (including non-fixture Auth users), restores fixture values and history, and rebuilds both restaurant and dispatch queues. The six fixture Auth accounts keep their IDs and logins; deleted accounts' emails can be registered again. Use the fixture accounts after Reset.
+
 ## Tests
 
 ```sh

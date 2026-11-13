@@ -109,6 +109,7 @@ build/
 .vscode/
 *.md
 !README.md
+!docs/demo-walkthroughs.md
 
 
 ###Agent skills###
