@@ -23,8 +23,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.math.BigDecimal;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -131,6 +133,11 @@ public class ORDFacade {
         for (OrderLine item : orderLineItems) {
             subtotal = subtotal.add(item.getLineTotal());
         }
+        // deduct stock first: if there isn't enough stock, this throws before anything is saved
+        // Sorted by item id so concurrent orders always lock menu items in the same order.
+        orderLineItems.stream()
+                .sorted(Comparator.comparing(OrderLine::getMenuItemId))
+                .forEach(this::reserveStock);
 
         Order order = new Order(customer.getUserId(), restaurantId, orderLineItems, subtotal);
 
@@ -187,7 +194,7 @@ public class ORDFacade {
     @Transactional
     public void rejectOrder(UUID userId, UUID orderId, String reason) {
         User user = regFacade.getCurrentUser(userId);
-        Order order = orderService.load(orderId);
+        Order order = orderService.loadForUpdate(orderId);
         permissionPolicy.checkCanActAsRestaurant(user, order);
         String before = order.getState().toString();
 
@@ -196,6 +203,7 @@ public class ORDFacade {
         orderService.save(order);
         // record transition change event
         publishTransition(order, before, user.getUserId(), "REJECT");
+        restoreStock(order);
         // remove from placed queue
         queues.placed(order.getRestaurantId()).remove(orderId);
     }
@@ -203,7 +211,7 @@ public class ORDFacade {
     @Transactional
     public void cancelOrder(UUID userId, UUID orderId) {
         User user = regFacade.getCurrentUser(userId);
-        Order order = orderService.load(orderId);
+        Order order = orderService.loadForUpdate(orderId);
         permissionPolicy.checkCanCancel(user, order);
         String before = order.getState().toString();
 
@@ -211,6 +219,10 @@ public class ORDFacade {
 
         orderService.save(order);
         publishTransition(order, before, user.getUserId(), "CANCEL");
+        // food that already left with the courier isn't coming back
+        if (!before.equals("PickedUpState") && !before.equals("DeliveredState")) {
+            restoreStock(order);
+        }
         // the order could be in any line. Remove returns false where it isn't
         UUID restaurantId = order.getRestaurantId();
         queues.placed(restaurantId).remove(orderId);
@@ -325,7 +337,7 @@ public class ORDFacade {
         return toViews(user, orderService.findCurrentForCourier(user.getUserId()));
     }
 
-    // Wraps orders with the item, restaurant and customer names and the pricing the caller's role may see
+    // Wraps orders with the item, restaurant and customer names and the pricing breakdown (visible to every role)
     private List<OrderHistoryView> toViews(User user, List<Order> orders) {
         // One query for every item name on the page, same as getRestaurantOrders.
         Map<UUID, String> itemNames = menuService.getNames(orders.stream()
@@ -346,11 +358,9 @@ public class ORDFacade {
                     .collect(Collectors.toSet()))
             : Map.of();
 
-        boolean seesPricing = user.getRole() == Role.CUSTOMER || user.getRole() == Role.OPERATOR;
-
         return orders.stream()
-                .map(o -> new OrderHistoryView(o, itemNames, restaurantNames, customerNames, seesPricing ? priceOf(o) : null))
-                .toList();
+            .map(o -> new OrderHistoryView(o, itemNames, restaurantNames, customerNames, priceOf(o)))
+            .toList();
     }
 
     // The breakdown for one stored order, from its item subtotal and today's pricing rates.
@@ -392,6 +402,28 @@ public class ORDFacade {
         restaurant.pause();
         restaurantService.save(restaurant);
         return restaurant;
+    }
+
+    private void reserveStock(OrderLine line) {
+        MenuItem item = menuService.loadForUpdate(line.getMenuItemId());
+        item.decreaseStock(line.getQuantity());
+        menuService.save(item);
+    }
+
+    // Puts an order's quantities back on the menu stock (order was rejected or cancelled before the food left).
+    private void restoreStock(Order order) {
+        List<OrderLine> lines = order.getOrderLineItems().stream()
+                .sorted(Comparator.comparing(OrderLine::getMenuItemId))
+                .toList();
+        for (OrderLine line : lines) {
+            try {
+                MenuItem item = menuService.loadForUpdate(line.getMenuItemId());
+                item.increaseStock(line.getQuantity());
+                menuService.save(item);
+            } catch (NoSuchElementException e) {
+                // the item was removed from the menu; there is no stock to give back
+            }
+        }
     }
 
     //save menu item

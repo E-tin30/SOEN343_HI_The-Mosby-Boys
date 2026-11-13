@@ -10,6 +10,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.time.Instant;
 
 import com.mosbyboys.dishesbecrazy.application.prc.PricingService;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,6 +36,7 @@ import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
 import com.mosbyboys.dishesbecrazy.domain.reg.Operator;
 import com.mosbyboys.dishesbecrazy.domain.ord.OrderObserver;
 import com.mosbyboys.dishesbecrazy.domain.ord.OrderStateChanged;
+import com.mosbyboys.dishesbecrazy.domain.ord.MenuItemStatus;
 
 class ORDFacadeTest {
 
@@ -112,12 +114,14 @@ class ORDFacadeTest {
         when(item.getPrice()).thenReturn(new BigDecimal("10.00"));
         when(item.getName()).thenReturn("Pizza");
         when(menuService.load(menuItemId)).thenReturn(item);
+        when(menuService.loadForUpdate(menuItemId)).thenReturn(item);
     }
 
     // a stored order the facade will "load"
     private Order storedOrder() {
         Order order = new Order(customerId, restaurantId, List.of(line()), new BigDecimal("10.00"));
         when(orderService.load(order.getId())).thenReturn(order);
+        when(orderService.loadForUpdate(order.getId())).thenReturn(order);
         return order;
     }
 
@@ -175,6 +179,54 @@ class ORDFacadeTest {
     }
     // Confirms the existing sold-out guard rejects placement without persistence or queue side effects.
 
+    // a real item (not a mock) so the stock arithmetic is actually exercised
+    private MenuItem realItem(int stock) {
+        MenuItem item = new MenuItem(menuItemId, restaurantId, "Pizza", new BigDecimal("10.00"), stock,
+                MenuItemStatus.AVAILABLE, "Cheese", null, Instant.now());
+        when(menuService.load(menuItemId)).thenReturn(item);
+        when(menuService.loadForUpdate(menuItemId)).thenReturn(item);
+        return item;
+    }
+
+    @Test
+    void placingAnOrderDecreasesTheItemsStockByTheOrderedQuantity() {
+        restaurantIsOpen(true);
+        MenuItem item = realItem(5);
+
+        facade.placeOrder(customer(), restaurantId,
+                List.of(new OrderLine(menuItemId, 2, new BigDecimal("10.00"), null)));
+
+        assertEquals(3, item.getStockQuantity());
+        assertEquals(MenuItemStatus.AVAILABLE, item.getStatus());
+        verify(menuService).save(item);
+    }
+
+    @Test
+    void orderingTheLastUnitsSellsTheItemOut() {
+        restaurantIsOpen(true);
+        MenuItem item = realItem(2);
+
+        facade.placeOrder(customer(), restaurantId,
+                List.of(new OrderLine(menuItemId, 2, new BigDecimal("10.00"), null)));
+
+        assertEquals(0, item.getStockQuantity());
+        assertEquals(MenuItemStatus.SOLD_OUT, item.getStatus());
+    }
+
+    @Test
+    void orderingMoreThanTheStockIsRefusedAndNothingIsSavedOrDeducted() {
+        restaurantIsOpen(true);
+        MenuItem item = realItem(1);
+
+        assertThrows(IllegalStateException.class, () -> facade.placeOrder(customer(), restaurantId,
+                List.of(new OrderLine(menuItemId, 3, new BigDecimal("10.00"), null))));
+
+        assertEquals(1, item.getStockQuantity());
+        verify(menuService, never()).save(any());
+        verify(orderService, never()).save(any());
+        assertEquals(0, queues.placed(restaurantId).size());
+    }
+
     @Test
     void aRestaurantCannotPlaceAnOrder() {
         assertThrows(PermissionDeniedException.class,
@@ -217,6 +269,7 @@ class ORDFacadeTest {
 
     @Test
     void anyIncomingOrderCanBeRejected() {
+        menuHasAvailableItem();
         Order first = storedOrder();
         Order second = storedOrder();
         queues.placed(restaurantId).enqueue(first.getId());
@@ -246,6 +299,7 @@ class ORDFacadeTest {
 
     @Test
     void rejectingRemovesTheOrderFromThePlacedQueue() {
+        menuHasAvailableItem();
         Order order = storedOrder();
         queues.placed(restaurantId).enqueue(order.getId());
 
@@ -349,6 +403,7 @@ class ORDFacadeTest {
 
     @Test
     void cancellingRemovesTheOrderFromWhicheverQueueHoldsIt() {
+        menuHasAvailableItem();
         Order order = acceptedAndQueued(); // waiting in preparation
         Operator operator = operator();
         when(regFacade.getCurrentUser(operator.getUserId())).thenReturn(operator);
@@ -532,5 +587,59 @@ class ORDFacadeTest {
         // Assert: it was opened and saved
         assertEquals(RestaurantStatus.OPEN, result.getStatus());
         verify(restaurantService).save(restaurant);
+    }
+
+    @Test
+    void rejectingAnOrderGivesItsStockBack() {
+        MenuItem item = realItem(3);
+        Order order = storedOrder(); // one unit of the item
+        queues.placed(restaurantId).enqueue(order.getId());
+
+        facade.rejectOrder(restaurantId, order.getId(), "Out of ingredients");
+
+        assertEquals(4, item.getStockQuantity());
+        verify(menuService).save(item);
+    }
+
+    @Test
+    void cancellingBeforePickupGivesTheStockBack() {
+        MenuItem item = realItem(3);
+        Order order = acceptedAndQueued();
+        Operator operator = operator();
+        when(regFacade.getCurrentUser(operator.getUserId())).thenReturn(operator);
+
+        facade.cancelOrder(operator.getUserId(), order.getId());
+
+        assertEquals(4, item.getStockQuantity());
+    }
+
+    @Test
+    void cancellingAfterPickupDoesNotGiveStockBack() {
+        MenuItem item = realItem(3);
+        Order order = storedOrder();
+        order.accept();
+        order.startPreparing();
+        order.markReady();
+        order.pickUp();
+        Operator operator = operator();
+        when(regFacade.getCurrentUser(operator.getUserId())).thenReturn(operator);
+
+        facade.cancelOrder(operator.getUserId(), order.getId());
+
+        assertEquals(3, item.getStockQuantity());
+        verify(menuService, never()).save(any());
+    }
+
+    @Test
+    void givingStockBackReopensAnItemThatSoldOut() {
+        MenuItem item = realItem(1);
+        item.decreaseStock(1); // sold out
+        Order order = storedOrder();
+        queues.placed(restaurantId).enqueue(order.getId());
+
+        facade.rejectOrder(restaurantId, order.getId(), "Out of ingredients");
+
+        assertEquals(1, item.getStockQuantity());
+        assertEquals(MenuItemStatus.AVAILABLE, item.getStatus());
     }
 }

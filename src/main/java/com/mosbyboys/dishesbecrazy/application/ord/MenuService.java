@@ -66,4 +66,11 @@ public class MenuService {
         return new MenuItem(e.getId(), e.getRestaurantId(), e.getName(), e.getPrice(), e.getStockQuantity(),
                 e.getStatus(), e.getDescription(), e.getImageUrl(), e.getCreatedAt());
     }
+
+    @Transactional
+    public MenuItem loadForUpdate(UUID menuItemId) {
+        return menuItemRepo.findByIdForUpdate(menuItemId)
+                .map(this::toDomain)
+                .orElseThrow(() -> new NoSuchElementException("Menu item not found: " + menuItemId));
+}
 }
