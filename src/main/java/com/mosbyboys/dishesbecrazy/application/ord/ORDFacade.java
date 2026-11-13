@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.math.BigDecimal;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -133,7 +134,10 @@ public class ORDFacade {
             subtotal = subtotal.add(item.getLineTotal());
         }
         // deduct stock first: if there isn't enough stock, this throws before anything is saved
-        orderLineItems.forEach(this::reserveStock);
+        // Sorted by item id so concurrent orders always lock menu items in the same order.
+        orderLineItems.stream()
+                .sorted(Comparator.comparing(OrderLine::getMenuItemId))
+                .forEach(this::reserveStock);
 
         Order order = new Order(customer.getUserId(), restaurantId, orderLineItems, subtotal);
 
@@ -190,7 +194,7 @@ public class ORDFacade {
     @Transactional
     public void rejectOrder(UUID userId, UUID orderId, String reason) {
         User user = regFacade.getCurrentUser(userId);
-        Order order = orderService.load(orderId);
+        Order order = orderService.loadForUpdate(orderId);
         permissionPolicy.checkCanActAsRestaurant(user, order);
         String before = order.getState().toString();
 
@@ -207,7 +211,7 @@ public class ORDFacade {
     @Transactional
     public void cancelOrder(UUID userId, UUID orderId) {
         User user = regFacade.getCurrentUser(userId);
-        Order order = orderService.load(orderId);
+        Order order = orderService.loadForUpdate(orderId);
         permissionPolicy.checkCanCancel(user, order);
         String before = order.getState().toString();
 
@@ -403,22 +407,27 @@ public class ORDFacade {
     }
 
     private void reserveStock(OrderLine line) {
-        MenuItem item = menuService.load(line.getMenuItemId());
+        MenuItem item = menuService.loadForUpdate(line.getMenuItemId());
         item.decreaseStock(line.getQuantity());
         menuService.save(item);
     }
 
     // Puts an order's quantities back on the menu stock (order was rejected or cancelled before the food left).
     private void restoreStock(Order order) {
-        for (OrderLine line : order.getOrderLineItems()) {
+        List<OrderLine> lines = order.getOrderLineItems().stream()
+                .sorted(Comparator.comparing(OrderLine::getMenuItemId))
+                .toList();
+        for (OrderLine line : lines) {
             try {
-                MenuItem item = menuService.load(line.getMenuItemId());
+                MenuItem item = menuService.loadForUpdate(line.getMenuItemId());
                 item.increaseStock(line.getQuantity());
                 menuService.save(item);
             } catch (NoSuchElementException e) {
                 // the item was removed from the menu; there is no stock to give back
             }
         }
+    }
+
     //save menu item
     @Transactional
     public void saveMenuItem(MenuItem item) {

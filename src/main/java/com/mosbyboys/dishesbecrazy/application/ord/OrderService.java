@@ -149,4 +149,14 @@ public class OrderService {
     public List<Order> findHistoryForAll() {
         return withLines(orderRepo.findAllByOrderByCreatedAtDesc());
     }
+
+    @Transactional
+    public Order loadForUpdate(UUID orderId) {
+        OrderEntity entity = orderRepo.findByIdForUpdate(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("Order not found: " + orderId));
+
+        List<OrderLine> lines = lineItemRepo.findByOrderId(orderId).stream().map(OrderService::toLine).toList();
+
+        return toDomain(entity, lines);
+    }
 }

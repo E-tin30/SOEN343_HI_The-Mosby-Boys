@@ -114,12 +114,14 @@ class ORDFacadeTest {
         when(item.getPrice()).thenReturn(new BigDecimal("10.00"));
         when(item.getName()).thenReturn("Pizza");
         when(menuService.load(menuItemId)).thenReturn(item);
+        when(menuService.loadForUpdate(menuItemId)).thenReturn(item);
     }
 
     // a stored order the facade will "load"
     private Order storedOrder() {
         Order order = new Order(customerId, restaurantId, List.of(line()), new BigDecimal("10.00"));
         when(orderService.load(order.getId())).thenReturn(order);
+        when(orderService.loadForUpdate(order.getId())).thenReturn(order);
         return order;
     }
 
@@ -182,6 +184,7 @@ class ORDFacadeTest {
         MenuItem item = new MenuItem(menuItemId, restaurantId, "Pizza", new BigDecimal("10.00"), stock,
                 MenuItemStatus.AVAILABLE, "Cheese", null, Instant.now());
         when(menuService.load(menuItemId)).thenReturn(item);
+        when(menuService.loadForUpdate(menuItemId)).thenReturn(item);
         return item;
     }
 
