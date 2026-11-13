@@ -145,9 +145,9 @@ public class CourierController {
     }
 
     @GetMapping("/{courierId}/idle")
-    public ResponseEntity<List<CourierData>> getOtherIdleCouriers(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID courierId) {
+    public ResponseEntity<List<CourierData>> getOtherUnofferedIdleCouriers(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID courierId) {
         checkOperator(jwt);
-        return ResponseEntity.ok(dlvFacade.getOtherIdleCouriers(courierId));
+        return ResponseEntity.ok(dlvFacade.getOtherUnofferedIdleCouriers(courierId));
     }
 
     @PostMapping("/{oldCourierId}/swap/{newCourierId}")

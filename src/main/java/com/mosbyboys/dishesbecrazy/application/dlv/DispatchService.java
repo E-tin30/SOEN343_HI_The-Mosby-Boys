@@ -196,6 +196,12 @@ public class DispatchService {
                 );
             }
 
+            //Verify that the new courier isn't already holding an offer
+            //NOTE: Even though the original check accounts for it, offers may occur after the page is loaded
+            if (getPendingOffer(newCourierId) != null) {
+                throw new IllegalStateException("New courier already has a pending offer");
+            }
+
             //Find the order associated with the old courier
             Order currentOrder = orderService
                 .findCurrentForCourier(oldCourierId)
@@ -219,11 +225,6 @@ public class DispatchService {
         //Add the order back to the global ready queue
         if (!queues.globalReadySnapshot().contains(order.getId())) {
             queues.enqueueGlobalReady(order.getId());
-        }
-
-        //Ensure the order is in the restaurant's ready queue
-        if (!queues.ready(order.getRestaurantId()).contains(order.getId())) {
-            queues.ready(order.getRestaurantId()).enqueue(order.getId());
         }
     }
 
