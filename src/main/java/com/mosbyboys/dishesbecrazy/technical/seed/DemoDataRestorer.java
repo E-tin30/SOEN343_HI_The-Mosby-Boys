@@ -1,7 +1,6 @@
 package com.mosbyboys.dishesbecrazy.technical.seed;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -10,9 +9,7 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
-import org.springframework.util.Assert;
 
-import com.mosbyboys.dishesbecrazy.domain.reg.CourierState;
 import com.mosbyboys.dishesbecrazy.domain.reg.Role;
 
 import lombok.RequiredArgsConstructor;
@@ -30,83 +27,42 @@ public class DemoDataRestorer {
         DemoFixtures baseline = fixtures.load();
         transaction.executeWithoutResult(status -> {
             var users = catalogue.resolveUsers(baseline);
-            var scope = scope(baseline, users);
-            var sql = new NamedParameterJdbcTemplate(jdbc);
-            checkOwnership(sql, scope);
-            clearDemoActivity(sql, scope);
+            clearActivity();
             catalogue.restore(baseline, users);
+            removeExtraCatalogue(baseline, users);
             for (var order : baseline.orders()) {
                 orders.seedMissing(order, users);
             }
         });
     }
-    // The Reset coordinator holds exclusive request access through this database step and subsequent queue rebuilding.
+    // Restore one global starting point for every walkthrough; resolve Auth identities before any database writes.
 
-    private MapSqlParameterSource scope(DemoFixtures baseline, Map<String, UUID> users) {
-        return new MapSqlParameterSource()
+    private void clearActivity() {
+        jdbc.update("DELETE FROM public.\"Bill\"");
+        jdbc.update("DELETE FROM public.\"Event\"");
+        jdbc.update("DELETE FROM public.\"OrderLineItem\"");
+        jdbc.update("DELETE FROM public.\"Order\"");
+    }
+    // Clear everyone's activity in foreign-key order; the transaction also rolls these deletes back if reinserting the baseline fails.
+
+    private void removeExtraCatalogue(DemoFixtures baseline, Map<String, UUID> users) {
+        var scope = new MapSqlParameterSource()
+                .addValue("users", users.values())
                 .addValue("customers", baseline.accounts().stream().filter(account -> account.role() == Role.CUSTOMER)
                         .map(account -> users.get(account.username())).toList())
                 .addValue("restaurants", baseline.accounts().stream().filter(account -> account.role() == Role.RESTAURANT)
                         .map(account -> users.get(account.username())).toList())
-                .addValue("menuItems", baseline.menuItems().stream().map(DemoFixtures.MenuSeed::id).toList())
-                .addValue("fixtureOrders", baseline.orders().stream().map(DemoFixtures.OrderSeed::id).toList());
+                .addValue("couriers", baseline.accounts().stream().filter(account -> account.role() == Role.COURIER)
+                        .map(account -> users.get(account.username())).toList())
+                .addValue("menuItems", baseline.menuItems().stream().map(DemoFixtures.MenuSeed::id).toList());
+        var sql = new NamedParameterJdbcTemplate(jdbc);
+        sql.update("DELETE FROM public.\"MenuItem\" WHERE id NOT IN (:menuItems)", scope);
+        sql.update("DELETE FROM public.\"Customer\" WHERE user_id NOT IN (:customers)", scope);
+        sql.update("DELETE FROM public.\"Courier\" WHERE user_id NOT IN (:couriers)", scope);
+        sql.update("DELETE FROM public.\"Restaurant\" WHERE user_id NOT IN (:restaurants)", scope);
+        sql.update("DELETE FROM public.\"User\" WHERE id NOT IN (:users)", scope);
+        sql.update("DELETE FROM auth.users WHERE id NOT IN (:users)", scope);
     }
-    // An order belongs to the demo when its customer OR restaurant is a fixture account, including orders placed elsewhere.
-
-    private void checkOwnership(NamedParameterJdbcTemplate sql, MapSqlParameterSource scope) {
-        int conflicts = sql.queryForObject("""
-                SELECT COUNT(*) FROM public."MenuItem"
-                WHERE id IN (:menuItems) AND restaurant_id NOT IN (:restaurants)
-                """, scope, Integer.class);
-        Assert.state(conflicts == 0, "A fixture menu ID belongs to a restaurant outside the demo.");
-        conflicts = sql.queryForObject("""
-                SELECT COUNT(*) FROM public."Order" WHERE id IN (:fixtureOrders)
-                    AND user_id NOT IN (:customers) AND restaurant_id NOT IN (:restaurants)
-                """, scope, Integer.class);
-        Assert.state(conflicts == 0, "A fixture order ID belongs to an order outside the demo.");
-        conflicts = sql.queryForObject("""
-                SELECT COUNT(*) FROM public."OrderLineItem" line
-                JOIN public."Order" o ON o.id = line.order_id
-                JOIN public."MenuItem" menu ON menu.id = line.menu_item_id
-                WHERE menu.restaurant_id IN (:restaurants) AND menu.id NOT IN (:menuItems)
-                    AND o.user_id NOT IN (:customers) AND o.restaurant_id NOT IN (:restaurants)
-                """, scope, Integer.class);
-        Assert.state(conflicts == 0, "An order outside the demo references an extra demo menu item; resolve it before restoration.");
-    }
-    // Refuse ownership collisions or cross-demo cascades rather than silently deleting another team's order lines.
-
-    private void clearDemoActivity(NamedParameterJdbcTemplate sql, MapSqlParameterSource scope) {
-        var ids = sql.queryForList("""
-                SELECT id FROM public."Order" WHERE user_id IN (:customers) OR restaurant_id IN (:restaurants)
-                """, scope, UUID.class);
-        sql.update("""
-                DELETE FROM public."Bill" WHERE user_id IN (:customers) OR restaurant_id IN (:restaurants)
-                """, scope);
-        if (!ids.isEmpty()) {
-            scope.addValue("orders", ids);
-            releaseCouriers(sql, ids);
-            sql.update("DELETE FROM public.\"Bill\" WHERE order_id IN (:orders)", scope);
-            sql.update("DELETE FROM public.\"Event\" WHERE order_id IN (:orders)", scope);
-            sql.update("DELETE FROM public.\"OrderLineItem\" WHERE order_id IN (:orders)", scope);
-            sql.update("DELETE FROM public.\"Order\" WHERE id IN (:orders)", scope);
-        }
-        sql.update("""
-                DELETE FROM public."MenuItem" WHERE restaurant_id IN (:restaurants) AND id NOT IN (:menuItems)
-                """, scope);
-    }
-    // Remove current demo history and dependent bills before menus; all failures roll back the complete database step.
-
-    private void releaseCouriers(NamedParameterJdbcTemplate sql, List<UUID> orderIds) {
-        sql.update("""
-                UPDATE public."Courier" SET state = :offline
-                WHERE state IN (:busy) AND user_id IN (
-                    SELECT courier_id FROM public."Order" WHERE id IN (:orders) AND state IN (:current))
-                """, new MapSqlParameterSource()
-                        .addValue("orders", orderIds)
-                        .addValue("offline", CourierState.OFFLINE.name())
-                        .addValue("busy", List.of(CourierState.ASSIGNED.name(), CourierState.CARRYING.name()))
-                        .addValue("current", List.of("ReadyState", "PickedUpState")));
-    }
-    // A courier who accepted or is carrying a demo order would be stuck ASSIGNED/CARRYING once it is deleted,
-    // so they go OFFLINE like the demo courier and press Start Driving to get offers again. Past deliveries don't count.
+    // Repair fixture ownership first, then remove extra profiles, menus and Auth accounts in the same transaction.
+    // Preserve fixture Auth IDs and logins; deleting other identities frees their emails for registration again.
 }

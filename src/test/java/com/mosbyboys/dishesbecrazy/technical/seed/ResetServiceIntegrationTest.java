@@ -8,6 +8,8 @@ import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -172,6 +174,35 @@ class ResetServiceIntegrationTest {
     }
     // An ID left over from before Reset would make the next dispatch fail to load its order.
 
+    @ParameterizedTest
+    @CsvSource({"ReadyState, IDLE", "ReadyState, ASSIGNED", "PickedUpState, CARRYING"})
+    void resetRewindsOfferedAcceptedAndCarriedOrdersTogetherWithBothQueues(String orderState, String courierState) throws Exception {
+        restore();
+        var progressed = baseline.orders().getFirst();
+        UUID courier = users.get("demo_courier");
+        jdbc.update("UPDATE public.\"Order\" SET state = ?, courier_id = ? WHERE id = ?", orderState, courier, progressed.id());
+        jdbc.update("UPDATE public.\"Courier\" SET state = ?, latitude = 0, longitude = 0 WHERE user_id = ?", courierState, courier);
+        queues.preparation(users.get(progressed.restaurantUsername())).remove(progressed.id());
+        queues.ready(users.get(progressed.restaurantUsername())).enqueue(progressed.id());
+        if ("IDLE".equals(courierState)) queues.enqueueGlobalReady(progressed.id());
+        queues.enqueueGlobalReady(UUID.randomUUID());
+
+        restore();
+
+        assertBaselineQueues();
+        assertEquals("AcceptedState", state(progressed.id()));
+        assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM public.\"Order\" WHERE state IN ('ReadyState', 'PickedUpState')", Integer.class));
+        var initial = baseline.accounts().stream().filter(account -> account.role() == Role.COURIER).findFirst().orElseThrow();
+        var restored = jdbc.queryForMap("SELECT state, latitude, longitude FROM public.\"Courier\" WHERE user_id = ?", courier);
+        assertEquals(initial.state(), restored.get("state"));
+        assertEquals(initial.latitude(), ((Number) restored.get("latitude")).doubleValue());
+        assertEquals(initial.longitude(), ((Number) restored.get("longitude")).doubleValue());
+
+        restore();
+        assertBaselineQueues();
+    }
+    // A pending offer is queued; accepted/carried orders have left dispatch. Both cases must be safe to repeat after Reset.
+
     private void restore() throws Exception {
         reset.restoreDatabaseAndOrderQueues(users.get("demo_operator"));
     }
@@ -181,6 +212,7 @@ class ResetServiceIntegrationTest {
     }
 
     private void assertBaselineQueues() {
+        assertTrue(queues.globalReadySnapshot().isEmpty());
         for (var account : baseline.accounts()) {
             if (account.role() != Role.RESTAURANT) continue;
             UUID id = users.get(account.username());
