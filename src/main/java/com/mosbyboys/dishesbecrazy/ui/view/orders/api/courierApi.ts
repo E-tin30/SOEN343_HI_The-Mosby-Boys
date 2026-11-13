@@ -67,7 +67,7 @@ export function deliverOrder(token: string, orderId: string): Promise<void> {
   return post(`/api/courier/orders/${orderId}/deliver`, token);
 }
 
-export type IdleCourier = { id: string };
+export type IdleCourier = { id: string; latitude: number; longitude: number };
 
 // Operator only: idle couriers without an offer who could take over this courier's order.
 export async function getReassignCandidates(token: string, courierId: string): Promise<IdleCourier[]> {
