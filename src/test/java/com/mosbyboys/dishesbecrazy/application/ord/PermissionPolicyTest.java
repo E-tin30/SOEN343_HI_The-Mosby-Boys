@@ -269,6 +269,28 @@ public class PermissionPolicyTest {
         assertThrows(PermissionDeniedException.class, () -> policy.checkCanPause(courier(), restaurant));
     }
 
+    // check that a restaurant can close itself
+    @Test
+    void ownerCanCloseOwnRestaurant() {
+        Restaurant restaurant = restaurantWithStatus(UUID.randomUUID(), RestaurantStatus.OPEN);
+        assertDoesNotThrow(() -> policy.checkCanClose(restaurant, restaurant));
+    }
+
+    // check that a restaurant cannot close another restaurant
+    @Test
+    void ownerCannotCloseOtherRestaurant() {
+        Restaurant restaurant1 = restaurantWithStatus(UUID.randomUUID(), RestaurantStatus.OPEN);
+        Restaurant restaurant2 = restaurantWithStatus(UUID.randomUUID(), RestaurantStatus.OPEN);
+        assertThrows(PermissionDeniedException.class, () -> policy.checkCanClose(restaurant1, restaurant2));
+    }
+
+    // check that customers cannot close a restaurant
+    @Test
+    void customerCannotCloseRestaurant() {
+        Restaurant restaurant = restaurantWithStatus(UUID.randomUUID(), RestaurantStatus.OPEN);
+        assertThrows(PermissionDeniedException.class, () -> policy.checkCanClose(customer(UUID.randomUUID()), restaurant));
+    }
+
     // check that a null caller cannot pause a restaurant
     @Test
     void nullCallerCannotPause() {

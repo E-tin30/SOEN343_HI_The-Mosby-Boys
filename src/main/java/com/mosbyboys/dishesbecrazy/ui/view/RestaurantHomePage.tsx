@@ -28,6 +28,7 @@ const LOAD_TAG = {
   steady: { tone: "mustard", label: "Steady" },
   busy: { tone: "tomato", label: "Busy" },
   paused: { tone: "terracotta", label: "Paused" },
+  closed: { tone: "neutral", label: "Closed" },
 } as const;
 
 export default function RestaurantHomePage() {
@@ -54,7 +55,7 @@ export default function RestaurantHomePage() {
       .catch(() => setOrders([]));
   }, [accessToken]);
 
-  // Coloured the way the live map colours this restaurant's marker: paused has its own colour,
+  // Coloured the way the live map colours this restaurant's marker: closed and paused have their own colours,
   // otherwise 6+ accepted orders waiting to be prepared is busy, 3-5 is steady, fewer is quiet.
   const load = restaurantLoad({
     status: restaurant?.status ?? "OPEN",

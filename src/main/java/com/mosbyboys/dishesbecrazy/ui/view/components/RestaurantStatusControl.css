@@ -1,3 +1,39 @@
 .status-control {
   align-self: stretch;
 }
+
+/* Buttons stay on the status row, at the far right, whether one or two are shown;
+   the status text wraps onto a second line to make room instead. */
+.status-control .status-bar {
+  flex-wrap: nowrap;
+  gap: var(--space-6); /* extra room between the status text and the first button */
+}
+
+.status-control .status-bar__info {
+  min-width: 0;
+  align-items: flex-start;
+}
+
+/* Always reserve two lines for the status text (body line-height is 1.5), so the card keeps the
+   same height when the status changes and the text goes from one line to two, instead of
+   pushing the menu below up and down. */
+.status-control .status-bar__text {
+  min-height: 3em;
+}
+
+/* Centre the dot on the line between the title and the text below it, so it stays put
+   when the text wraps onto a second line (title line = h2 size x heading line-height 1.15). */
+.status-control .status-bar__dot {
+  margin-top: calc(var(--text-h2) * 1.15 - 6px);
+}
+
+/* Pause/Reopen and Close side by side, never stacked. */
+.status-control__actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--space-2);
+}
+
+.status-control__actions .btn {
+  white-space: nowrap;
+}

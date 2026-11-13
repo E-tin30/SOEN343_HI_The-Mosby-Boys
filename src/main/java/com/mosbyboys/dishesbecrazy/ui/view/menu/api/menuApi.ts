@@ -36,3 +36,7 @@ export function pauseRestaurant(token: string, restaurantId: string): Promise<Re
 export function openRestaurant(token: string, restaurantId: string): Promise<Restaurant> {
   return post(`/api/restaurants/${restaurantId}/open`, token);
 }
+
+export function closeRestaurant(token: string, restaurantId: string): Promise<Restaurant> {
+  return post(`/api/restaurants/${restaurantId}/close`, token);
+}

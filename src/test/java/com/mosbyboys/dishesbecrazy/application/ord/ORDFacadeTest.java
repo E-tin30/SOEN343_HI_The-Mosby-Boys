@@ -589,6 +589,47 @@ class ORDFacadeTest {
         verify(restaurantService).save(restaurant);
     }
 
+    // a restaurant closes itself from OPEN: the restaurant that gets saved is CLOSED
+    @Test
+    void ownerClosesOwnOpenRestaurant() {
+        Restaurant owner = owner(restaurantId);
+        when(regFacade.getCurrentUser(owner.getUserId())).thenReturn(owner);
+        Restaurant restaurant = restaurantWithStatus(RestaurantStatus.OPEN);
+        when(restaurantService.load(restaurantId)).thenReturn(restaurant);
+
+        Restaurant result = facade.closeRestaurant(owner.getUserId(), restaurantId);
+
+        assertEquals(RestaurantStatus.CLOSED, result.getStatus());
+        verify(restaurantService).save(restaurant);
+    }
+
+    // a restaurant closes itself while PAUSED: the restaurant that gets saved is CLOSED
+    @Test
+    void ownerClosesOwnPausedRestaurant() {
+        Restaurant owner = owner(restaurantId);
+        when(regFacade.getCurrentUser(owner.getUserId())).thenReturn(owner);
+        Restaurant restaurant = restaurantWithStatus(RestaurantStatus.PAUSED);
+        when(restaurantService.load(restaurantId)).thenReturn(restaurant);
+
+        Restaurant result = facade.closeRestaurant(owner.getUserId(), restaurantId);
+
+        assertEquals(RestaurantStatus.CLOSED, result.getStatus());
+        verify(restaurantService).save(restaurant);
+    }
+
+    // a customer tries to close: permission denied, and nothing is saved
+    @Test
+    void customerCannotCloseRestaurant() {
+        Customer customer = customer();
+        Restaurant restaurant = restaurantWithStatus(RestaurantStatus.OPEN);
+        when(restaurantService.load(restaurantId)).thenReturn(restaurant);
+
+        assertThrows(PermissionDeniedException.class, () -> {
+            facade.closeRestaurant(customer.getUserId(), restaurantId);
+        });
+        verify(restaurantService, never()).save(any());
+    }
+
     @Test
     void rejectingAnOrderGivesItsStockBack() {
         MenuItem item = realItem(3);

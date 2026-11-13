@@ -12,9 +12,10 @@ const MONTREAL_BOUNDS = {
     west: -74.10,
 };
 
-// Paused gets its own colour whatever the queue; otherwise 6+ queued is busy, 3-5 is getting there,
-// anything less is quiet.
+// Closed and paused each get their own colour whatever the queue; otherwise 6+ queued is busy,
+// 3-5 is getting there, anything less is quiet.
 export function restaurantLoad(restaurant: Pick<RestaurantDashboardData, "status" | "queueLength">) {
+    if (restaurant.status === "CLOSED") return "closed";
     if (restaurant.status === "PAUSED") return "paused";
     if (restaurant.queueLength >= 6) return "busy";
     if (restaurant.queueLength >= 3) return "steady";

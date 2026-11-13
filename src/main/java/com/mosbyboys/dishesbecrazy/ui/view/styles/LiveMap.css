@@ -76,6 +76,12 @@
   background: var(--terracotta);
 }
 
+/* Closed: the same muted cocoa as the Closed status tag. */
+.restaurant-marker__pin--closed,
+.legend-swatch--closed {
+  background: var(--cocoa);
+}
+
 /* Courier marker: circle when idle, rounded square when assigned, diamond while carrying. */
 .courier-marker {
   display: block;

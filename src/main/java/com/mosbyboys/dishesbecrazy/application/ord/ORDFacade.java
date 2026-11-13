@@ -404,6 +404,16 @@ public class ORDFacade {
         return restaurant;
     }
 
+    @Transactional
+    public Restaurant closeRestaurant(UUID userId, UUID restaurantId) {
+        Restaurant restaurant = restaurantService.load(restaurantId);
+        User user = regFacade.getCurrentUser(userId);
+        permissionPolicy.checkCanClose(user, restaurant);
+        restaurant.close();
+        restaurantService.save(restaurant);
+        return restaurant;
+    }
+
     private void reserveStock(OrderLine line) {
         MenuItem item = menuService.loadForUpdate(line.getMenuItemId());
         item.decreaseStock(line.getQuantity());
