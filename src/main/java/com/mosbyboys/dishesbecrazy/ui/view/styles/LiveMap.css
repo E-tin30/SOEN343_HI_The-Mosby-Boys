@@ -71,6 +71,11 @@
   background: var(--tomato);
 }
 
+.restaurant-marker__pin--paused,
+.legend-swatch--paused {
+  background: var(--terracotta);
+}
+
 /* Courier marker: circle when idle, rounded square when assigned, diamond while carrying. */
 .courier-marker {
   display: block;
