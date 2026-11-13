@@ -66,3 +66,14 @@ export function pickUpOrder(token: string, orderId: string): Promise<void> {
 export function deliverOrder(token: string, orderId: string): Promise<void> {
   return post(`/api/courier/orders/${orderId}/deliver`, token);
 }
+
+export type IdleCourier = { id: string };
+
+// Operator only: idle couriers without an offer who could take over this courier's order.
+export async function getReassignCandidates(token: string, courierId: string): Promise<IdleCourier[]> {
+  return (await get<IdleCourier[]>(`/api/courier/${courierId}/idle`, token)) ?? [];
+}
+
+export function swapCourier(token: string, oldCourierId: string, newCourierId: string): Promise<void> {
+  return post(`/api/courier/${oldCourierId}/swap/${newCourierId}`, token);
+}
