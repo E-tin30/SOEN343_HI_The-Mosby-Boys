@@ -13,7 +13,7 @@ const MONTREAL_BOUNDS = {
 };
 
 // Paused or 6+ queued is busy, 3-5 is getting there, anything less is quiet.
-function restaurantLoad(restaurant: RestaurantDashboardData) {
+export function restaurantLoad(restaurant: RestaurantDashboardData) {
     if (restaurant.status === "PAUSED" || restaurant.queueLength >= 6) return "busy";
     if (restaurant.queueLength >= 3) return "steady";
     return "quiet";
