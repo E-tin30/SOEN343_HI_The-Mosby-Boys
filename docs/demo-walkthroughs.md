@@ -7,7 +7,7 @@ Phase III instructions, section 9.1 (page 11), require a live run from Reset sho
 ## Setup and starting state
 
 1. Use the merged `phase-3` code, start the backend/frontend, and use the [demo accounts](../README.md#demo-accounts). Run the initial seeder only if setup has not already provisioned those accounts. Seeding inserts missing data; Reset restores the complete fixture starting state for everyone.
-   Reset deletes all orders, lines, events and bills before restoring fixture history. Application profiles and menus not defined in the fixtures are removed. This affects the whole configured application database, regardless of who created the records. Auth identities and sessions remain intact; only fixture profiles remain usable in the app after Reset.
+   Reset deletes all orders, lines, events and bills before restoring fixture history. Accounts and menus not defined in the fixtures are removed, including non-fixture `auth.users` rows and orphaned Auth accounts without an application profile. This affects the whole configured application database, regardless of who created the records. The six fixture Auth accounts retain their IDs and logins; deleted accounts' emails can be registered again. Auth deletion shares the application restoration transaction, so a failure rolls both back.
 2. Use separate browser profiles for the customer, cook, courier and operator. Tabs in the same profile share login storage. Keep the customer's order-summary tab after checkout so it can be refreshed after delivery.
 3. Use one backend for all demonstration sessions and stop other backends/writers. Database and queue rebuilding are coordinated within one backend; other backend processes would retain their own stale in-memory queues.
 4. After Reset, verify that the demo courier is the only application courier and is offline. Other couriers and their assignments are removed by global restoration. Keep other writers stopped during the walkthrough so new orders/couriers cannot interfere with dispatch.
@@ -22,6 +22,8 @@ Phase III instructions, section 9.1 (page 11), require a live run from Reset sho
 All three kitchens start open. There are 12 dishes (9 available, 3 sold out), and the demo courier starts offline at the fixture location. The 13 fixture orders include nine accepted orders and one each delivered, refunded, rejected and cancelled, with 13 lines and 35 events. Delivered/refunded fixture history remains after every Reset.
 
 Allow a dashboard refresh (normally five seconds while visible) or refresh/revisit other open pages after Reset. Clear a remaining customer cart before starting another scenario; the cart belongs to the browser session, not the database fixture.
+
+Deleting an Auth user removes its sessions and prevents new login/refresh, but an already-issued access token can remain valid until expiry. Reset does not force every browser to log out immediately. See [Supabase user deletion](https://supabase.com/docs/guides/auth/managing-user-data#deleting-users).
 
 ## 1. Happy Path Order
 
@@ -64,7 +66,7 @@ These check restoration reliability; they are not extra required demonstration s
 
 - Repeat Reset while a demo order has a pending offer, after acceptance, and after pickup. Refresh the courier page and verify the old delivery/offer disappears, the courier is offline, and the next walkthrough can start normally.
 - Place or progress orders using any accounts, then Reset. All added orders and billing/history records must disappear, including orders between accounts outside the fixtures. Fixture order history is reinstated.
-- Create or edit application profiles or menu items, then Reset. Only the six fixture profiles and twelve fixture dishes remain, with their configured roles, prices, availability, stock and locations. Auth identities are preserved; use the fixture accounts for the next walkthrough.
+- Create or edit application profiles or menu items, then Reset. Only the six fixture Auth accounts/profiles and twelve fixture dishes remain, with their configured roles, prices, availability, stock and locations. Register again with a deleted account's email to confirm it is reusable, then Reset again. Use the fixture accounts for the next walkthrough.
 - Repeat Reset without changing anything. The same fixture state, 0 / 3 / 6 preparation counts and empty dispatch queue must result.
 - A queue-rebuild failure after the database restores must report failure and keep normal requests blocked until Reset succeeds on retry. This failure/recovery behavior is covered by isolated tests; do not deliberately interrupt the shared demonstration backend.
 
