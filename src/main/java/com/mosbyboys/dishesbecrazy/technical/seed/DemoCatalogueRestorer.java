@@ -29,7 +29,7 @@ class DemoCatalogueRestorer {
         }
         return users;
     }
-    // Email identifies existing Auth accounts even after a public profile is renamed or deleted; Auth itself is unchanged.
+    // Email identifies fixture Auth accounts even after a public profile is renamed or deleted; their IDs remain stable.
 
     void restore(DemoFixtures baseline, Map<String, UUID> users) {
         for (var account : baseline.accounts()) {

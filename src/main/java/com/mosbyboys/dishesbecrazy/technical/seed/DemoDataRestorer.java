@@ -61,7 +61,8 @@ public class DemoDataRestorer {
         sql.update("DELETE FROM public.\"Courier\" WHERE user_id NOT IN (:couriers)", scope);
         sql.update("DELETE FROM public.\"Restaurant\" WHERE user_id NOT IN (:restaurants)", scope);
         sql.update("DELETE FROM public.\"User\" WHERE id NOT IN (:users)", scope);
+        sql.update("DELETE FROM auth.users WHERE id NOT IN (:users)", scope);
     }
-    // Repair fixture ownership first, then remove every non-fixture profile/menu and any stale role-specific rows.
-    // Auth identities are separate from application data and are never deleted by Reset.
+    // Repair fixture ownership first, then remove extra profiles, menus and Auth accounts in the same transaction.
+    // Preserve fixture Auth IDs and logins; deleting other identities frees their emails for registration again.
 }

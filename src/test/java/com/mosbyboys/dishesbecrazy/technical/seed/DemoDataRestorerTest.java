@@ -64,7 +64,7 @@ class DemoDataRestorerTest {
         assertBaseline();
         assertEquals(auth, jdbc.queryForList("SELECT * FROM auth.users ORDER BY id"));
     }
-    // Auth identities remain available; the application records return to the fixture starting point.
+    // Fixture Auth identities retain their IDs and login data while application records return to the starting point.
 
     @Test
     void rewindsChangedProfilesStockOrdersAndHistory() throws Exception {
@@ -133,16 +133,49 @@ class DemoDataRestorerTest {
         addOrder(users.get("demo_customer"), outsideRestaurant, outsideMenu);
         addOrder(outsideCustomer, users.get("demo_restaurant"), baseline.menuItems().getFirst().id());
         jdbc.update("INSERT INTO public.\"Bill\" (id, user_id) VALUES (?, ?)", UUID.randomUUID(), users.get("demo_customer"));
-        var auth = jdbc.queryForList("SELECT * FROM auth.users ORDER BY id");
 
         restorer.restore();
 
         assertEquals(expected, snapshot());
         assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM public.\"Order\" WHERE id = ?", Integer.class, outsideOrder));
-        assertEquals(auth, jdbc.queryForList("SELECT * FROM auth.users ORDER BY id"));
         assertBaseline();
     }
-    // Every workflow record is reset regardless of who created it; only fixture application profiles and menus remain.
+    // Every workflow record is reset regardless of who created it; only fixture Auth accounts, profiles and menus remain.
+
+    @Test
+    void removesOrphanAuthAccountsSoTheirEmailCanBeRegisteredAgain() throws Exception {
+        restorer.restore();
+        var expected = snapshot();
+        String email = "register.again@example.com";
+        UUID orphan = UUID.randomUUID();
+        jdbc.update("INSERT INTO auth.users (id, email) VALUES (?, ?)", orphan, email);
+
+        restorer.restore();
+
+        assertEquals(expected, snapshot());
+        UUID registered = addUser("register.again", "CUSTOMER");
+        assertNotEquals(orphan, registered);
+        assertEquals(registered, jdbc.queryForObject("SELECT id FROM auth.users WHERE email = ?", UUID.class, email));
+
+        restorer.restore();
+        assertEquals(expected, snapshot());
+    }
+    // Exercise the unique-email constraint locally; this does not call the Supabase signup API.
+
+    @Test
+    void authDeletionFailureRollsBackApplicationRestoration() throws Exception {
+        restorer.restore();
+        UUID outside = addUser("outside_operator", "OPERATOR");
+        jdbc.execute("CREATE TABLE auth.deletion_blocker (user_id uuid REFERENCES auth.users(id))");
+        jdbc.update("INSERT INTO auth.deletion_blocker (user_id) VALUES (?)", outside);
+        jdbc.update("UPDATE public.\"Restaurant\" SET status = 'PAUSED'");
+        var expected = snapshot();
+
+        assertThrows(DataAccessException.class, restorer::restore);
+
+        assertEquals(expected, snapshot());
+    }
+    // A restricted Auth reference must fail the entire Reset instead of committing deleted application profiles.
 
     @ParameterizedTest
     @CsvSource({"ReadyState, IDLE", "ReadyState, ASSIGNED", "PickedUpState, CARRYING"})
@@ -256,6 +289,9 @@ class DemoDataRestorerTest {
     // A real H2 constraint fails at the final history insert; all earlier global deletes and profile/menu changes must roll back.
 
     private void assertBaseline() {
+        assertEquals(users.size(), jdbc.queryForObject("SELECT COUNT(*) FROM auth.users", Integer.class));
+        assertEquals(users.values().stream().sorted().toList(),
+                jdbc.queryForList("SELECT id FROM auth.users", UUID.class).stream().sorted().toList());
         assertEquals(6, count("User"));
         assertEquals(1, count("Customer"));
         assertEquals(1, count("Courier"));
@@ -374,6 +410,7 @@ class DemoDataRestorerTest {
 
     private Map<String, List<Map<String, Object>>> snapshot() {
         var rows = new LinkedHashMap<String, List<Map<String, Object>>>();
+        rows.put("auth.users", jdbc.queryForList("SELECT * FROM auth.users ORDER BY id"));
         for (String table : List.of("User", "Customer", "Courier", "Restaurant", "MenuItem", "Order", "OrderLineItem", "Event", "Bill")) {
             String key = List.of("Customer", "Courier", "Restaurant").contains(table) ? "user_id" : "id";
             rows.put(table, jdbc.queryForList("SELECT * FROM public.\"" + table + "\" ORDER BY " + key));
