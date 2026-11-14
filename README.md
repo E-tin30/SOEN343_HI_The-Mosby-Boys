@@ -56,10 +56,10 @@ Open http://127.0.0.1:5173.
 2. Run `docker compose up --build`. The first build takes a few minutes.
 3. Open http://localhost:5173 and log in with the [demo accounts](#demo-accounts).
 
-The shared database is already seeded, so skip the seeding step below. Log in as the operator and click **Reset demo** to restore the starting state.
-Use a separate browser profile or private window for each role.
-Stripe test card: `4242 4242 4242 4242`, expiry date 12/34, any CVC.
-Stop with `docker compose down`.
+- The shared database is already seeded, so skip the seeding step below. Log in as the operator and click **Reset demo** to restore the starting state.
+- Use a separate browser profile or private window for each role.
+- Stripe test card: `4242 4242 4242 4242`, any future expiry date, any CVC.
+- Stop with `docker compose down`.
 
 Open http://localhost:5173.
 
