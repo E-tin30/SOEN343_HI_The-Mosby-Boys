@@ -13,6 +13,7 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.mosbyboys.dishesbecrazy.application.prc.LedgerService;
 import com.mosbyboys.dishesbecrazy.application.dash.ResetService;
 import com.mosbyboys.dishesbecrazy.application.dlv.DispatchQueueLoader;
 import com.mosbyboys.dishesbecrazy.application.ord.OrderQueueLoader;
@@ -38,6 +39,7 @@ class DemoResetControllerTest {
     @MockitoBean DemoDataRestorer database;
     @MockitoBean OrderQueueLoader queues;
     @MockitoBean DispatchQueueLoader dispatchQueue;
+    @MockitoBean LedgerService ledger;
     @MockitoBean JwtDecoder decoder;
     private final UUID operatorId = UUID.randomUUID();
 

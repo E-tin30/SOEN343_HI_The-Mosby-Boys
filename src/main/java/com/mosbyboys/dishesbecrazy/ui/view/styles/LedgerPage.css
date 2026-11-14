@@ -1,0 +1,42 @@
+.ledger {
+  overflow-x: auto;
+}
+
+.ledger__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+.ledger__table th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--cocoa);
+}
+
+.ledger__table th,
+.ledger__table td {
+  padding: var(--space-3);
+  border-bottom: var(--border-width) solid var(--linen);
+  vertical-align: middle;
+}
+
+.ledger__table tfoot td {
+  border-bottom: none;
+  font-weight: 600;
+}
+
+.ledger__sub {
+  display: block;
+  font-size: 13px;
+}
+
+.ledger__amount {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.ledger__nowrap {
+  white-space: nowrap;
+}

@@ -17,6 +17,7 @@ import RestaurantHomePage from "./RestaurantHomePage";
 import CourierHomePage from "./CourierHomePage";
 import RestaurantOrdersPage from "./orders/RestaurantOrdersPage";
 import OrderHistoryPage from "./orders/OrderHistoryPage";
+import LedgerPage from "./orders/LedgerPage";
 import RestaurantsPage from "./menu/RestaurantsPage";
 import MenuPage from "./menu/MenuPage";
 import {CartProvider} from "./CartContext";
@@ -98,6 +99,14 @@ createRoot(document.getElementById("root")!).render(
                         element={
                             <ProtectedRoute allowedRoles={["CUSTOMER", "RESTAURANT", "COURIER", "OPERATOR"]}>
                                 <OrderHistoryPage/>
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/ledger"
+                        element={
+                            <ProtectedRoute allowedRoles={["OPERATOR"]}>
+                                <LedgerPage/>
                             </ProtectedRoute>
                         }
                     />

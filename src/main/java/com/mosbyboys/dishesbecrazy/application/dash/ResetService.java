@@ -10,6 +10,7 @@ import org.springframework.util.Assert;
 import com.mosbyboys.dishesbecrazy.application.dlv.DispatchQueueLoader;
 import com.mosbyboys.dishesbecrazy.application.ord.OrderQueueLoader;
 import com.mosbyboys.dishesbecrazy.application.ord.PermissionDeniedException;
+import com.mosbyboys.dishesbecrazy.application.prc.LedgerService;
 import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
 import com.mosbyboys.dishesbecrazy.domain.reg.Role;
 import com.mosbyboys.dishesbecrazy.technical.seed.DemoDataRestorer;
@@ -25,6 +26,7 @@ public class ResetService {
     private final OrderQueueLoader orderQueues;
     private final DispatchQueueLoader dispatchQueue;
     private final DemoStateAccess access;
+    private final LedgerService ledger;
 
     public void restoreDatabaseAndOrderQueues(UUID operatorId) throws IOException {
         var caller = registration.getCurrentUser(operatorId);
@@ -37,6 +39,7 @@ public class ResetService {
 
         try (var restoration = access.beginRestoration()) {
             database.restore();
+            ledger.recordMissing();
             restoration.databaseRestored();
             orderQueues.rebuild();
             dispatchQueue.rebuild();

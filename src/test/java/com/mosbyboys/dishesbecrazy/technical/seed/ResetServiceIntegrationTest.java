@@ -20,6 +20,7 @@ import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import com.mosbyboys.dishesbecrazy.application.prc.LedgerService;
 import com.mosbyboys.dishesbecrazy.application.dash.ResetService;
 import com.mosbyboys.dishesbecrazy.application.dlv.CourierService;
 import com.mosbyboys.dishesbecrazy.application.dlv.DispatchQueueLoader;
@@ -81,7 +82,7 @@ class ResetServiceIntegrationTest {
         queues = new OrderQueues();
         // No courier is online, so every READY order goes back in the global ready queue.
         var dispatchQueue = new DispatchQueueLoader(orders, queues, mock(CourierService.class), mock(DispatchService.class));
-        reset = new ResetService(registration, database, new OrderQueueLoader(orders, queues), dispatchQueue, new DemoStateAccess());
+        reset = new ResetService(registration, database, new OrderQueueLoader(orders, queues), dispatchQueue, new DemoStateAccess(), mock(LedgerService.class));
     }
     // Restoration and queue rebuilding are real; only caller lookup and the OrderService read boundary use test adapters.
 

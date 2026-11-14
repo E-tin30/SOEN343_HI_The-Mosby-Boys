@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
+import com.mosbyboys.dishesbecrazy.application.prc.LedgerService;
 import com.mosbyboys.dishesbecrazy.application.dlv.DispatchQueueLoader;
 import com.mosbyboys.dishesbecrazy.application.ord.OrderQueueLoader;
 import com.mosbyboys.dishesbecrazy.application.ord.PermissionDeniedException;
@@ -39,7 +40,7 @@ class ResetServiceTest {
         queues = mock(OrderQueueLoader.class);
         dispatchQueue = mock(DispatchQueueLoader.class);
         access = new DemoStateAccess();
-        reset = new ResetService(registration, database, queues, dispatchQueue, access);
+        reset = new ResetService(registration, database, queues, dispatchQueue, access, mock(LedgerService.class));
         var operator = mock(User.class);
         when(operator.getRole()).thenReturn(Role.OPERATOR);
         when(registration.getCurrentUser(operatorId)).thenReturn(operator);

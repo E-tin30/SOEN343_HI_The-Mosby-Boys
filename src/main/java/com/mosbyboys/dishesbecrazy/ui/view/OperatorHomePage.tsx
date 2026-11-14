@@ -43,6 +43,10 @@ export default function OperatorHomePage() {
             <Button variant="secondary" onClick={() => navigate("/dashboard")}>
               View live map
             </Button>
+            {/* Every charge and refund as separate entries (R-PRC-03, R-PRC-05). */}
+            <Button variant="secondary" onClick={() => navigate("/ledger")}>
+              View ledger
+            </Button>
           </div>
         </section>
         <OperatorRestaurantList />

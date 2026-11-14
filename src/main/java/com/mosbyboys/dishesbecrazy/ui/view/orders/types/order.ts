@@ -61,3 +61,14 @@ export type OrderResponse = {
   subtotal: number;
   orderLines: OrderLine[];
 }
+
+// One ledger row (R-PRC-03, R-PRC-05): a charge, or a separate refund with a negative amount.
+export type LedgerEntry = {
+  orderId: string;
+  restaurantName: string;
+  entryType: "CHARGE" | "REFUND";
+  amount: number;
+  recordedAt: string;
+  placedAt: string;
+  orderStatus: HistoryStatus;
+};
