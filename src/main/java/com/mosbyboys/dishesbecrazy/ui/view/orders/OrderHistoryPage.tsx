@@ -100,7 +100,7 @@ export default function OrderHistoryPage() {
   const renderOrder = (order: HistoryOrder) => (
     <li key={order.id} className="list-card history-card">
         <div className="history-card__top">
-            <Heading level={3}>{`Order #${order.id.slice(0, 6)}`}</Heading>
+            <Heading level={3}>{`Order #${order.id.slice(-6)}`}</Heading>
             <Tag tone={STATUS_TONE[order.status]}>{STATUS_LABEL[order.status]}</Tag>
         </div>
 

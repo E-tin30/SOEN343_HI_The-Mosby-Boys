@@ -1,5 +1,5 @@
 import { loggedFetch, readJson } from "../../api/loggedFetch";
-import type { HistoryOrder, RestaurantOrder } from "../types/order";
+import type { HistoryOrder, LedgerEntry, RestaurantOrder } from "../types/order";
 
 const API = "http://localhost:8080";
 
@@ -59,4 +59,12 @@ export function cancelOrder(token: string, orderId: string): Promise<void> {
 
 export function refundOrder(token: string, orderId: string): Promise<void> {
   return post(`/api/orders/${orderId}/refund`, token);
+}
+
+// Every charge and refund, newest first (operator only).
+export async function getLedger(token: string): Promise<LedgerEntry[]> {
+  const response = await loggedFetch(API + "/api/ledger", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return readJson(response);
 }
