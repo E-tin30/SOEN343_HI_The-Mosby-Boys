@@ -21,11 +21,6 @@
   vertical-align: middle;
 }
 
-.ledger__table tfoot td {
-  border-bottom: none;
-  font-weight: 600;
-}
-
 .ledger__sub {
   display: block;
   font-size: 13px;
