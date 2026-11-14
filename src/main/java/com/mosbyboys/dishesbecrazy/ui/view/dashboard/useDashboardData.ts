@@ -17,14 +17,21 @@ export type CourierData = {
     longitude: number;
 };
 
+const RESETTING = new Error("Demo reset in progress");
+
 // GET one of the /api/dashboard endpoints as the signed-in user.
 async function fetchDashboard<T>(path: string, token: string): Promise<T> {
     const response = await fetch(`http://localhost:8080/api/dashboard/${path}`, {
         headers: { Authorization: `Bearer ${token}` },
     });
+    // 503 = a demo Reset is running; skip this refresh instead of showing an error
+    if (response.status === 503) throw RESETTING;
     if (!response.ok) throw new Error(`Failed to load ${path}: ${response.status}`);
     return response.json();
 }
+
+// Fired by the Reset button once the demo data is restored.
+export const DEMO_RESET_EVENT = "demo-reset";
 
 // How often the map data is re-fetched so markers and queues stay live.
 const REFRESH_INTERVAL_MS = 5000;
@@ -51,6 +58,8 @@ export function useDashboardData(enabled = true) {
             fetchDashboard<CourierData[]>("couriers", accessToken),
         ]);
         if (!active.current || id !== seq.current) return;
+        if (restaurantsResult.status === "rejected" && restaurantsResult.reason === RESETTING) return;
+        if (couriersResult.status === "rejected" && couriersResult.reason === RESETTING) return;
         if (restaurantsResult.status === "fulfilled") setRestaurants(restaurantsResult.value);
         else console.error("Error loading restaurants:", restaurantsResult.reason);
         if (couriersResult.status === "fulfilled") setCouriers(couriersResult.value);
@@ -76,11 +85,14 @@ export function useDashboardData(enabled = true) {
             if (document.visibilityState === "visible") load();
         };
         document.addEventListener("visibilitychange", onVisibilityChange);
+        // Reload as soon as a demo Reset finishes instead of waiting for the next poll.
+        window.addEventListener(DEMO_RESET_EVENT, load);
 
         return () => {
             active.current = false;
             clearInterval(interval);
             document.removeEventListener("visibilitychange", onVisibilityChange);
+            window.removeEventListener(DEMO_RESET_EVENT, load);
         };
     }, [accessToken, enabled, load]);
 

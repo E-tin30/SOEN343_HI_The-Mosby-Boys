@@ -3,6 +3,7 @@ import { useAuth } from "../AuthContext";
 import { loggedFetch, RequestError } from "../api/loggedFetch";
 import { logError } from "../outputLog";
 import Button from "./Button";
+import { DEMO_RESET_EVENT } from "../dashboard/useDashboardData";
 import "./DemoResetControl.css";
 
 export default function DemoResetControl() {
@@ -24,6 +25,7 @@ export default function DemoResetControl() {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       setMessage("Demo data restored.");
+      window.dispatchEvent(new Event(DEMO_RESET_EVENT));
     } catch (failure) {
       logError(failure, "Demo reset failed. Retry Reset.");
       if (failure instanceof RequestError && [401, 403, 409].includes(failure.status)) {

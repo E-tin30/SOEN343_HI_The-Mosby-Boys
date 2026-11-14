@@ -292,14 +292,14 @@ class DemoDataRestorerTest {
         assertEquals(users.size(), jdbc.queryForObject("SELECT COUNT(*) FROM auth.users", Integer.class));
         assertEquals(users.values().stream().sorted().toList(),
                 jdbc.queryForList("SELECT id FROM auth.users", UUID.class).stream().sorted().toList());
-        assertEquals(7, count("User"));
+        assertEquals(8, count("User"));
         assertEquals(1, count("Customer"));
-        assertEquals(2, count("Courier"));
+        assertEquals(3, count("Courier"));
         assertEquals(3, count("Restaurant"));
         assertEquals(12, count("MenuItem"));
-        assertEquals(13, count("Order"));
-        assertEquals(13, count("OrderLineItem"));
-        assertEquals(35, count("Event"));
+        assertEquals(14, count("Order"));
+        assertEquals(14, count("OrderLineItem"));
+        assertEquals(39, count("Event"));
         assertEquals(0, count("Bill"));
         var refunded = baseline.orders().stream().filter(order -> order.state().equals("RefundedState"))
                 .findFirst().orElseThrow();
@@ -350,7 +350,7 @@ class DemoDataRestorerTest {
                     SELECT COUNT(*) FROM public."Order" WHERE restaurant_id = ? AND state = 'AcceptedState'
                     """, Integer.class, users.get(entry.getKey())));
         }
-        assertEquals(List.of("OFFLINE"), jdbc.queryForList("SELECT DISTINCT state FROM public.\"Courier\"", String.class));
+        assertEquals(List.of("ASSIGNED", "IDLE"), jdbc.queryForList("SELECT DISTINCT state FROM public.\"Courier\" ORDER BY state", String.class));
     }
 
     private UUID unrelatedOrder() {

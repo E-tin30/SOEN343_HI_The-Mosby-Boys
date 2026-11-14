@@ -10,7 +10,7 @@ Phase III instructions, section 9.1 (page 11), require a live run from Reset sho
    Reset deletes all orders, lines, events and bills before restoring fixture history. Accounts and menus not defined in the fixtures are removed, including non-fixture `auth.users` rows and orphaned Auth accounts without an application profile. This affects the whole configured application database, regardless of who created the records. The six fixture Auth accounts retain their IDs and logins; deleted accounts' emails can be registered again. Auth deletion shares the application restoration transaction, so a failure rolls both back.
 2. Use separate browser profiles for the customer, cook, courier and operator. Tabs in the same profile share login storage. Keep the customer's order-summary tab after checkout so it can be refreshed after delivery.
 3. Use one backend for all demonstration sessions and stop other backends/writers. Database and queue rebuilding are coordinated within one backend; other backend processes would retain their own stale in-memory queues.
-4. After Reset, verify that the two fixture couriers (Jo and Riley) are the only application couriers and are offline. Other couriers and their assignments are removed by global restoration. Keep other writers stopped during the walkthrough so new orders/couriers cannot interfere with dispatch.
+4. After Reset, verify that the three fixture couriers are the only application couriers: Jo is assigned, Riley and Morgan are idle. Other couriers and their assignments are removed by global restoration. Keep other writers stopped during the walkthrough so new orders/couriers cannot interfere with dispatch.
 5. Sign in as `operator.demo@example.com` and choose **Reset demo**, immediately to the right of **Log out**. Wait for **Demo data restored.** Use **View live map** on the operator home to observe the map.
 
 | Kitchen | Cook account | Preparation count | Map colour after Reset |
@@ -19,7 +19,7 @@ Phase III instructions, section 9.1 (page 11), require a live run from Reset sho
 | Robin's Sunday Kitchen | `restaurant2.demo@example.com` | 3 | Amber |
 | Casey's Home Kitchen | `restaurant3.demo@example.com` | 6 | Red |
 
-All three kitchens start open. There are 12 dishes (9 available, 3 sold out), and both couriers start offline at their fixture locations. Jo is nearer every kitchen than Riley. The 13 fixture orders include nine accepted orders and one each delivered, refunded, rejected and cancelled, with 13 lines and 35 events. Delivered/refunded fixture history remains after every Reset.
+All three kitchens start open. There are 12 dishes (9 available, 3 sold out), and the couriers start at their fixture locations: Jo is assigned to a stalled ready order at Sam's (never picked up), Riley and Morgan are idle, and Morgan is much nearer Sam's than Riley. The 14 fixture orders include nine accepted orders, the stalled ready order, and one each delivered, refunded, rejected and cancelled, with 14 lines and 39 events. Delivered/refunded fixture history remains after every Reset.
 
 Allow a dashboard refresh (normally five seconds while visible) or refresh/revisit other open pages after Reset. Clear a remaining customer cart before starting another scenario; the cart belongs to the browser session, not the database fixture.
 
@@ -27,20 +27,20 @@ Deleting an Auth user removes its sessions and prevents new login/refresh, but a
 
 ## 1. Happy Path Order
 
-1. Reset and check the starting state above. As the demo courier, select **Start Driving**; expect an idle courier.
+1. Reset and check the starting state above. Sign in as Morgan (`courier3.demo@example.com`); Morgan is already idle.
 2. As the customer, browse Sam's kitchen, add one available dish, and use **Pay and Place Order** with the team's configured test payment setup. Record the new order and retain its summary page.
 3. As Sam, open **View orders**. Accept the new order, then choose **Start preparing** and **Mark ready** in order.
-4. As the courier, wait for the offer. To show the nearest-courier rule (R-DLV-02), put Riley on duty as well: the offer still goes to Jo, who is nearer. Select **Accept**, then **Pick Up Order**, then **Deliver**. The courier should move through idle, assigned, carrying and idle.
+4. As Morgan, wait for the offer. Riley is idle too, but the offer goes to Morgan, who is nearer (R-DLV-02). Select **Accept**, then **Pick Up Order**, then **Deliver**. The courier should move through idle, assigned, carrying and idle.
 5. Refresh the customer's summary page. Check the delivered state, dish/quantity and price breakdown against the configured fees. To show the small-order surcharge, order a dish under the threshold, such as Cinnamon Churros. Check that the delivered order also appears in order history.
-6. Reset. Confirm that this new order is gone, fixture history remains, the courier is offline at the initial location, and the preparation counts return to 0 / 3 / 6. Repeat the path once to check repeatability.
+6. Reset. Confirm that this new order is gone, fixture history remains, the couriers are back to their initial states and locations, and the preparation counts return to 0 / 3 / 6. Repeat the path once to check repeatability.
 
 ## 2. No Courier Available
 
-1. Reset and confirm every courier is offline. Use Sam's kitchen so existing preparation work does not hide the new order.
+1. Reset, then take Riley and Morgan off duty so no courier is idle (Jo stays assigned to the stalled order). Use Sam's kitchen so existing preparation work does not hide the new order.
 2. As the customer, place one available-dish order. As Sam, accept it, start preparing and mark it ready.
 3. Check that the order remains ready while no courier is eligible. No courier should receive an offer yet.
 4. Record how the operator can identify the waiting order. The current operator history can show the ready order, but the merged dashboard has no dedicated no-courier warning. Confirm the original project description/team interpretation of the alert wording before marking that acceptance item complete.
-5. As the demo courier, choose **Start Driving**. Expect the waiting order to be offered automatically, without an operator assignment command. Accept, pick up and deliver it.
+5. As Morgan, choose **Start Driving**. Expect the waiting order to be offered automatically, without an operator assignment command. Accept, pick up and deliver it.
 6. Reset and verify the starting state and absence of the walkthrough order. The global dispatch queue must not retain its deleted ID.
 
 ## 3. Sold Out / Paused
@@ -64,7 +64,7 @@ Deleting an Auth user removes its sessions and prevents new login/refresh, but a
 
 These check restoration reliability; they are not extra required demonstration scenarios.
 
-- Repeat Reset while a demo order has a pending offer, after acceptance, and after pickup. Refresh the courier page and verify the old delivery/offer disappears, the courier is offline, and the next walkthrough can start normally.
+- Repeat Reset while a demo order has a pending offer, after acceptance, and after pickup. Refresh the courier page and verify the old delivery/offer disappears, the courier is back to its fixture state, and the next walkthrough can start normally.
 - Place or progress orders using any accounts, then Reset. All added orders and billing/history records must disappear, including orders between accounts outside the fixtures. Fixture order history is reinstated.
 - Create or edit application profiles or menu items, then Reset. Only the six fixture Auth accounts/profiles and twelve fixture dishes remain, with their configured roles, prices, availability, stock and locations. Register again with a deleted account's email to confirm it is reusable, then Reset again. Use the fixture accounts for the next walkthrough.
 - Repeat Reset without changing anything. The same fixture state, 0 / 3 / 6 preparation counts and empty dispatch queue must result.
@@ -86,4 +86,4 @@ Record the exact commit tested and any remaining gaps. Do not equate automated c
 | Dinner Rush + Reset | | Not run | |
 | Reset during offer / accepted / carrying | | Not run | |
 
-Pending team features such as manual courier Swap/reassignment and menu editing should be checked after they merge, but are separate from this Reset safeguard. Reassignment is not an additional requirement of these four scenario paths. The current fixture data does not need expanding to stage the four paths.
+**Reassign a stalled order:** after Reset, Jo holds Sam's ready Pierogi order without picking it up. As the operator, reassign it from Jo to Riley or Morgan in the courier list. The new courier receives the offer, and Jo becomes idle.

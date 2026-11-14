@@ -29,10 +29,9 @@ class DemoOrderFixtureTest {
                 .collect(Collectors.groupingBy(DemoFixtures.OrderSeed::restaurantUsername, Collectors.counting()));
 
         assertEquals(Map.of("demo_restaurant_building", 3L, "demo_restaurant_busy", 6L), accepted);
-        assertTrue(fixtures.orders().stream().noneMatch(o -> o.restaurantUsername().equals("demo_restaurant")));
-        assertEquals(13, fixtures.orders().size());
-        assertEquals(13, fixtures.orders().stream().mapToInt(o -> o.lines().size()).sum());
-        assertEquals(35, fixtures.orders().stream().mapToInt(o -> o.events().size()).sum());
+        assertEquals(14, fixtures.orders().size());
+        assertEquals(14, fixtures.orders().stream().mapToInt(o -> o.lines().size()).sum());
+        assertEquals(39, fixtures.orders().stream().mapToInt(o -> o.events().size()).sum());
         for (String restaurant : accepted.keySet()) {
             var placementTimes = fixtures.orders().stream().filter(o -> o.state().equals("AcceptedState"))
                     .filter(o -> o.restaurantUsername().equals(restaurant))
@@ -42,6 +41,7 @@ class DemoOrderFixtureTest {
         }
         for (var order : fixtures.orders()) {
             assertEquals("demo_customer", order.customerUsername());
+            if (order.restaurantUsername().equals("demo_restaurant")) continue; // Sam's stalled READY order
             boolean building = order.restaurantUsername().equals("demo_restaurant_building");
             assertEquals(0, new BigDecimal(building ? "17.25" : "14.75").compareTo(order.subtotal()));
             assertEquals(building ? "Handmade Spinach Ravioli" : "Homemade Chicken Burrito", order.lines().getFirst().menuItemName());
@@ -59,12 +59,12 @@ class DemoOrderFixtureTest {
                 DemoFixtures.OrderSeed::state, Collectors.counting()));
 
         assertEquals(Map.of("AcceptedState", 9L, "DeliveredState", 1L, "RefundedState", 1L,
-                "RejectedState", 1L, "CancelledState", 1L), states);
+                "RejectedState", 1L, "CancelledState", 1L, "ReadyState", 1L), states);
         var delivered = fixtures.orders().stream().filter(o -> o.state().equals("DeliveredState")).findFirst().orElseThrow();
         assertEquals("demo_courier", delivered.courierUsername());
         assertEquals(java.util.List.of("PLACE", "ACCEPT", "PREPARING", "READY", "PICKUP", "DELIVER"),
                 delivered.events().stream().map(DemoFixtures.EventSeed::action).toList());
-        assertEquals("OFFLINE", fixtures.accounts().stream().filter(a -> a.username().equals("demo_courier"))
+        assertEquals("ASSIGNED", fixtures.accounts().stream().filter(a -> a.username().equals("demo_courier"))
                 .findFirst().orElseThrow().state());
     }
     // A past delivery references its courier without changing the courier's current state.
