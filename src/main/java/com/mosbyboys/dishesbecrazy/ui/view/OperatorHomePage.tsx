@@ -6,7 +6,6 @@ import DemoResetControl from "./components/DemoResetControl";
 import Heading from "./components/Heading";
 import OperatorRestaurantList from "./components/OperatorRestaurantList"
 import OperatorCourierList from "./components/OperatorCourierList";
-import OperatorAlerts from "./components/OperatorAlerts";
 
 export default function OperatorHomePage() {
   const navigate = useNavigate();
@@ -50,7 +49,6 @@ export default function OperatorHomePage() {
             </Button>
           </div>
         </section>
-        <OperatorAlerts />
         <OperatorRestaurantList />
         <OperatorCourierList />
       </main>

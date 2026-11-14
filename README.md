@@ -48,13 +48,18 @@ npm run dev                   # frontend → http://127.0.0.1:5173
 
 Open http://127.0.0.1:5173.
 
-### With Docker
+### With Docker (recommended for grading)
 
-Needs only Docker and the `.env` above. Stop any local backend/frontend first (ports 8080, 5173).
+**Requirements:** Docker Desktop (Compose v2), ports 8080 and 5173 free, internet access (Supabase, Stripe and Google Maps are hosted).
 
-```sh
-docker compose up --build     # stop with: docker compose down
-```
+1. Put the provided `.env` in the project root (it is already included in the submitted zip).
+2. Run `docker compose up --build`. The first build takes a few minutes.
+3. Open http://localhost:5173 and log in with the [demo accounts](#demo-accounts).
+
+The shared database is already seeded, so skip the seeding step below. Log in as the operator and click **Reset demo** to restore the starting state.
+Use a separate browser profile or private window for each role.
+Stripe test card: `4242 4242 4242 4242`, expiry date 12/34, any CVC.
+Stop with `docker compose down`.
 
 Open http://localhost:5173.
 

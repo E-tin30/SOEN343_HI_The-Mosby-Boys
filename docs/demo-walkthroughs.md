@@ -39,7 +39,7 @@ Deleting an Auth user removes its sessions and prevents new login/refresh, but a
 1. Reset and confirm every courier is offline. Use Sam's kitchen so existing preparation work does not hide the new order.
 2. As the customer, place one available-dish order. As Sam, accept it, start preparing and mark it ready.
 3. Check that the order remains ready while no courier is eligible. No courier should receive an offer yet.
-4. As the operator, expect the alert above the restaurant list: "1 ready order is waiting for a courier."
+4. Record how the operator can identify the waiting order. The current operator history can show the ready order, but the merged dashboard has no dedicated no-courier warning. Confirm the original project description/team interpretation of the alert wording before marking that acceptance item complete.
 5. As the demo courier, choose **Start Driving**. Expect the waiting order to be offered automatically, without an operator assignment command. Accept, pick up and deliver it.
 6. Reset and verify the starting state and absence of the walkthrough order. The global dispatch queue must not retain its deleted ID.
 
@@ -55,7 +55,7 @@ Deleting an Auth user removes its sessions and prevents new login/refresh, but a
 
 1. Reset. Open the operator list and map, and sign the cook profile into Robin's kitchen (three accepted orders).
 2. Place and accept three more customer orders at Robin's, without starting preparation. Expect the preparation count to grow from 3 to 6. Count accepted orders, rather than incoming orders or orders already being prepared.
-3. Expect Robin's map marker to turn red, its operator-list queue count to show the busy colour and warning icon, and the operator alert "Robin's Sunday Kitchen has 6 orders queued. Consider pausing it."
+3. Expect Robin's map marker to turn red and its operator-list queue count to show the busy colour and warning icon. These are the current visual warning; a separate popup is not implemented.
 4. Pause Robin as the operator. Verify that new customer orders are blocked while the cook can continue processing already accepted orders in FIFO order.
 5. Process enough waiting work to reduce the preparation count below six. The marker remains red while paused; reopen the kitchen to see the colour follow the reduced count.
 6. Reset. Confirm Robin returns to three accepted orders, all kitchens are open, test orders disappear and fixture stock is restored.
@@ -81,7 +81,7 @@ Record the exact commit tested and any remaining gaps. Do not equate automated c
 | Scenario | Commit | Result | Observed gaps / notes |
 |---|---|---|---|
 | Happy Path + Reset + repeat | | Not run | |
-| No Courier Available + Reset | | Not run | |
+| No Courier Available + Reset | | Not run | Confirm operator warning presentation |
 | Sold Out / Paused + Reset | | Not run | |
 | Dinner Rush + Reset | | Not run | |
 | Reset during offer / accepted / carrying | | Not run | |

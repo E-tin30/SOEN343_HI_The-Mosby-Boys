@@ -27,9 +27,4 @@ public class DashboardController {
     public List<CourierData> getOnlineCouriers() {
         return dashboardService.getOnlineCouriers();
     }
-
-    @GetMapping("/dispatch-queue")
-    public int getDispatchQueueLength() {
-        return dashboardService.getDispatchQueueLength();
-    }
 }
