@@ -38,9 +38,11 @@ public class OrderService {
         orderEntity.setId(order.getId());
         orderEntity.setUserId(order.getCustomerId());
         orderEntity.setRestaurantId(order.getRestaurantId());
+        orderEntity.setCourierId(order.getCourierId());
         orderEntity.setState(order.getState().toString());
         orderEntity.setCreatedAt(order.getPlacedAt());
         orderEntity.setRejectionReason(order.getRejectionReason());
+        orderEntity.setSubtotal(order.getSubtotal());
 
         orderRepo.saveAndFlush(orderEntity);
 
@@ -49,6 +51,7 @@ public class OrderService {
                 OrderLineItemEntity e = new OrderLineItemEntity();
                 e.setOrderId(order.getId());
                 e.setMenuItemId(line.getMenuItemId());
+                e.setMenuItemName(line.getMenuItemName());
                 e.setQuantity(line.getQuantity());
                 e.setUnitPrice(line.getUnitPrice());
                 return e;
@@ -95,7 +98,7 @@ public class OrderService {
     }
 
     private static OrderLine toLine(OrderLineItemEntity e) {
-        return new OrderLine(e.getMenuItemId(), e.getQuantity(), e.getUnitPrice());
+        return new OrderLine(e.getMenuItemId(), e.getQuantity(), e.getUnitPrice(), e.getMenuItemName());
     }
 
     private static Order toDomain(OrderEntity entity, List<OrderLine> lines) {
@@ -104,9 +107,56 @@ public class OrderService {
             OrderStates.fromName(entity.getState()),
             entity.getUserId(),
             entity.getRestaurantId(),
+            entity.getCourierId(),
             lines,
             entity.getCreatedAt(),
-            entity.getRejectionReason()
+            entity.getRejectionReason(),
+            entity.getSubtotal()
         );
+    }
+
+    // States in which a courier has actually carried the order (an offered-only order doesn't count).
+    private static final List<String> CARRIED_STATES =
+            List.of("PickedUpState", "DeliveredState", "RefundedState");
+
+    // A customer's own orders, newest first.
+    @Transactional(readOnly = true)
+    public List<Order> findHistoryForCustomer(UUID customerId) {
+        return withLines(orderRepo.findByUserIdOrderByCreatedAtDesc(customerId));
+    }
+
+    // A restaurant's own orders, newest first.
+    @Transactional(readOnly = true)
+    public List<Order> findHistoryForRestaurant(UUID restaurantId) {
+        return withLines(orderRepo.findByRestaurantIdOrderByCreatedAtDesc(restaurantId));
+    }
+
+    // Only the deliveries this courier carried, newest first.
+    @Transactional(readOnly = true)
+    public List<Order> findHistoryForCourier(UUID courierId) {
+        return withLines(orderRepo.findByCourierIdAndStateInOrderByCreatedAtDesc(courierId, CARRIED_STATES));
+    }
+
+    // A courier's orders that are offered, accepted or on the way (at most one at a time)
+    @Transactional(readOnly = true)
+    public List<Order> findCurrentForCourier(UUID courierId) {
+        return withLines(orderRepo.findByCourierIdAndStateInOrderByCreatedAtDesc(courierId,
+                List.of("ReadyState", "PickedUpState")));
+    }
+
+    // Every order, newest first (operator).
+    @Transactional(readOnly = true)
+    public List<Order> findHistoryForAll() {
+        return withLines(orderRepo.findAllByOrderByCreatedAtDesc());
+    }
+
+    @Transactional
+    public Order loadForUpdate(UUID orderId) {
+        OrderEntity entity = orderRepo.findByIdForUpdate(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("Order not found: " + orderId));
+
+        List<OrderLine> lines = lineItemRepo.findByOrderId(orderId).stream().map(OrderService::toLine).toList();
+
+        return toDomain(entity, lines);
     }
 }

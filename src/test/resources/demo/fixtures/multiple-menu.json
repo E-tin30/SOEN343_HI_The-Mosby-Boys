@@ -1,0 +1,29 @@
+[
+  {
+    "id": "34300000-0000-4000-8000-000000000101",
+    "restaurantUsername": "demo_restaurant",
+    "name": "Soup",
+    "price": 12.00,
+    "stockQuantity": 10,
+    "status": "AVAILABLE",
+    "description": "Soup at the first restaurant"
+  },
+  {
+    "id": "34300000-0000-4000-8000-000000000201",
+    "restaurantUsername": "demo_restaurant_building",
+    "name": "Chicken",
+    "price": 16.00,
+    "stockQuantity": 10,
+    "status": "AVAILABLE",
+    "description": "Chicken at the second restaurant"
+  },
+  {
+    "id": "34300000-0000-4000-8000-000000000301",
+    "restaurantUsername": "demo_restaurant_busy",
+    "name": "Pie",
+    "price": 7.50,
+    "stockQuantity": 0,
+    "status": "SOLD_OUT",
+    "description": "Sold-out pie at the third restaurant"
+  }
+]

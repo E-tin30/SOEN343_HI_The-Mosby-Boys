@@ -2,6 +2,8 @@ import type { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth, type Role } from "./AuthContext";
 import { getHomeRoute } from "./roleRoutes";
+import PlateLogo from "./components/PlateLogo";
+import "./styles/LoadingScreen.css";
 
 type ProtectedRouteProps = {
   children: ReactNode;
@@ -13,7 +15,18 @@ export default function ProtectedRoute({
   children,
   allowedRoles,
 }: ProtectedRouteProps) {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="loading-screen" role="status" aria-live="polite">
+        <div className="loading-screen__spinner">
+          <PlateLogo transparent />
+        </div>
+        <p className="caption loading-screen__text">Loading…</p>
+      </div>
+    );
+  }
 
   if (!user) {
     return <Navigate to="/login" replace />;

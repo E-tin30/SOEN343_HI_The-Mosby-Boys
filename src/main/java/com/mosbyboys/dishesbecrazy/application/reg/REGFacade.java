@@ -1,5 +1,7 @@
 package com.mosbyboys.dishesbecrazy.application.reg;
 
+import java.util.Collection;
+import java.util.Map;
 import java.util.UUID;
 
 import com.mosbyboys.dishesbecrazy.domain.ord.RestaurantStatus;
@@ -7,18 +9,17 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 
-import com.mosbyboys.dishesbecrazy.application.ord.RestaurantService;
 import com.mosbyboys.dishesbecrazy.domain.reg.UserFactory;
 import com.mosbyboys.dishesbecrazy.domain.reg.User;
 import com.mosbyboys.dishesbecrazy.domain.reg.Role;
 import com.mosbyboys.dishesbecrazy.technical.repository.UserRepo.LoginTokens;
 import com.mosbyboys.dishesbecrazy.technical.repository.UserRepo.UserProfile;
+import com.mosbyboys.dishesbecrazy.domain.reg.CourierState;
 
 @Service
 @RequiredArgsConstructor
 public class REGFacade {
     private final AuthService authService;
-    private final RestaurantService restaurantService;
     private final UserFactory userFactory = new UserFactory();
     private final JdbcTemplate jdbcTemplate;
 
@@ -34,6 +35,10 @@ public class REGFacade {
 
     public UserProfile getUserById(UUID id) {
         return authService.getUserById(id);
+    }
+
+    public Map<UUID, String> getDisplayNames(Collection<UUID> userIds) {
+        return authService.getDisplayNames(userIds);
     }
 
     public User getCurrentUser(UUID userId) {
@@ -53,7 +58,7 @@ public class REGFacade {
             case COURIER -> jdbcTemplate.queryForObject(
                     "SELECT state FROM \"Courier\" WHERE user_id = ?",
                     (rs, i) -> b
-                            .state(rs.getString("state")),
+                            .state(CourierState.valueOf(rs.getString("state"))),
                     userId);
             case RESTAURANT -> jdbcTemplate.queryForObject(
                     "SELECT name, status FROM \"Restaurant\" WHERE user_id = ?",

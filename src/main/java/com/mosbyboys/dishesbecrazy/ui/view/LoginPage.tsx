@@ -1,13 +1,15 @@
+import { loggedFetch, readJson, RequestError } from "./api/loggedFetch";
 
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type KeyboardEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth, type LoginTokens } from "./AuthContext";
 import { getHomeRoute } from "./roleRoutes";
-import { log } from "./outputLog";
+import { logError } from "./outputLog";
 import Button from "./components/Button";
 import Heading from "./components/Heading";
 import Input from "./components/Input";
 import TextLogo from "./components/TextLogo";
+import ClickableHotspot from "./components/ClickableHotspot";
 import "./styles/LoginPage.css";
 
 export default function LoginPage() {
@@ -16,6 +18,20 @@ export default function LoginPage() {
 
     const navigate = useNavigate();
     const { completeLogin } = useAuth();
+
+    // Easter egg
+    const handleKeyDown = (e: KeyboardEvent<HTMLFormElement>) => {
+        if (e.key !== "Enter") return;
+
+        const formData = new FormData(e.currentTarget);
+        const email = String(formData.get("email") ?? "").trim().toLowerCase();
+        const password = String(formData.get("password") ?? "");
+
+        if (email === "mysunshine" && password === "zaydenandjalen") {
+            e.preventDefault();
+            navigate("/mysunshine");
+        }
+    };
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -28,8 +44,7 @@ export default function LoginPage() {
         setLoading(true);
 
         try {
-            log("command", "POST /login");
-            const response = await fetch("http://localhost:8080/login", {
+            const response = await loggedFetch("http://localhost:8080/login", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -37,20 +52,8 @@ export default function LoginPage() {
                 body: JSON.stringify({ email, password }),
             });
 
-            if (response.status === 401) {
-                const message = await response.text();
-                log("error", `POST /login → 401: ${message || "Invalid email or password"}`);
-                setError(message || "Invalid email or password");
-                return;
-            }
-
-            if (!response.ok) {
-                log("error", `POST /login → ${response.status}`);
-                setError("Login failed. Please try again.");
-                return;
-            }
-
-            const loginTokens: LoginTokens = await response.json();
+            const loginTokens: LoginTokens = await readJson<LoginTokens>(response);
+            // Logs the login request and parsing failures without exposing the password or returned tokens.
 
             // Retrieve the authenticated user's profile and save it in the shared AuthContext.
             const profile = await completeLogin(loginTokens);
@@ -59,10 +62,13 @@ export default function LoginPage() {
             navigate(getHomeRoute(profile.role), { replace: true });
 
         } catch (error) {
-            log("error", `Login: ${error instanceof Error ? error.message : error}`);
+            logError(error, "Could not complete login or load your profile.");
             setError(
-                "Could not complete login or load your profile. Please try again."
+                error instanceof RequestError && error.status === 401
+                    ? "Invalid email or password"
+                    : "Could not complete login or load your profile. Please try again."
             );
+            // Preserves the invalid-credentials message while avoiding duplicate console error entries.
         } finally {
             setLoading(false);
         }
@@ -70,7 +76,8 @@ export default function LoginPage() {
 
     return (
         <main className="login-page">
-            <form className="login-card card" onSubmit={handleSubmit}>
+            <ClickableHotspot />
+            <form className="login-card card" onSubmit={handleSubmit} onKeyDown={handleKeyDown}>
                 <header className="login-card__header">
                     <TextLogo layout="stacked" />
                     <Heading level={2}>Welcome ~back.~</Heading>

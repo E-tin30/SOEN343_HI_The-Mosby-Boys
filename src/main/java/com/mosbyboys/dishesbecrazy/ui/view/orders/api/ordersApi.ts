@@ -1,27 +1,21 @@
-import type { RestaurantOrder } from "../types/order";
-import { log } from "../../outputLog";
+import { loggedFetch, readJson } from "../../api/loggedFetch";
+import type { HistoryOrder, LedgerEntry, RestaurantOrder } from "../types/order";
 
 const API = "http://localhost:8080";
 
 export async function getRestaurantOrders(token: string): Promise<RestaurantOrder[]> {
   const path = "/api/restaurant/orders";
-  log("command", `GET ${path}`);
-  const response = await fetch(API + path, {
+
+  const response = await loggedFetch(API + path, {
     headers: { Authorization: `Bearer ${token}` },
   });
-
-  if (!response.ok) {
-    const message = (await response.text()) || `Request failed (${response.status})`;
-    log("error", `GET ${path} → ${response.status}: ${message}`);
-    throw new Error(message);
-  }
-  return response.json();
+  return readJson(response);
 }
+// Queue reads now share command, HTTP, network, and JSON error logging.
 
 // The action endpoints reply 204 with no body, so there is nothing to parse on success.
-async function post(path: string, token: string, body?: unknown): Promise<void> {
-  log("command", `POST ${path}`);
-  const response = await fetch(API + path, {
+export async function post(path: string, token: string, body?: unknown): Promise<void> {
+  await loggedFetch(API + path, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -29,13 +23,8 @@ async function post(path: string, token: string, body?: unknown): Promise<void> 
     },
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
-
-  if (!response.ok) {
-    const message = (await response.text()) || `Request failed (${response.status})`;
-    log("error", `POST ${path} → ${response.status}: ${message}`);
-    throw new Error(message);
-  }
 }
+// Logs every order action while preserving the existing empty-success-response contract.
 
 export function acceptOrder(token: string, orderId: string): Promise<void> {
   return post(`/api/orders/${orderId}/accept`, token);
@@ -51,4 +40,31 @@ export function prepareOrder(token: string, orderId: string): Promise<void> {
 
 export function markOrderReady(token: string, orderId: string): Promise<void> {
   return post(`/api/orders/${orderId}/ready`, token);
+}
+
+// The logged-in user's order history. The backend picks which orders to return from the token's role.
+export async function getOrderHistory(token: string): Promise<HistoryOrder[]> {
+  const path = "/api/orders/history";
+
+  const response = await loggedFetch(API + path, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return readJson(response);
+}
+// History requests use the same logging path, including errors that occur before an HTTP response.
+
+export function cancelOrder(token: string, orderId: string): Promise<void> {
+  return post(`/api/orders/${orderId}/cancel`, token);
+}
+
+export function refundOrder(token: string, orderId: string): Promise<void> {
+  return post(`/api/orders/${orderId}/refund`, token);
+}
+
+// Every charge and refund, newest first (operator only).
+export async function getLedger(token: string): Promise<LedgerEntry[]> {
+  const response = await loggedFetch(API + "/api/ledger", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return readJson(response);
 }

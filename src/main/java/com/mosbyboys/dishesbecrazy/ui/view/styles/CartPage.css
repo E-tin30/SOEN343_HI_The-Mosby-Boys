@@ -90,6 +90,12 @@
   gap: var(--space-5);
 }
 
+.summary-state {
+  color: var(--tomato);
+  font-style: italic;
+  font-family: var(--font-display);
+}
+
 @media (max-width: 640px) {
   .cart-item__controls {
     width: 100%;

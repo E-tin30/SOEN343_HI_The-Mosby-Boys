@@ -6,6 +6,8 @@ import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -39,4 +41,24 @@ public class RestaurantController {
         return ResponseEntity.ok(body);
     }
 
+    // A restaurant pauses itself, or an operator pauses any restaurant (R-DASH-01)
+    @PostMapping("/api/restaurants/{restaurantId}/pause")
+    public ResponseEntity<RestaurantResponse> pauseRestaurant(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID restaurantId) {
+        Restaurant resto = ordFacade.pauseRestaurant(UUID.fromString(jwt.getSubject()), restaurantId);
+        return ResponseEntity.ok(RestaurantResponse.from(resto));
+    }
+
+    // A restaurant opens itself, or an operator opens any paused or closed restaurant (R-DASH-01)
+    @PostMapping("/api/restaurants/{restaurantId}/open")
+    public ResponseEntity<RestaurantResponse> openRestaurant(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID restaurantId) {
+        Restaurant resto = ordFacade.openRestaurant(UUID.fromString(jwt.getSubject()), restaurantId);
+        return ResponseEntity.ok(RestaurantResponse.from(resto));
+    }
+
+    // A restaurant closes itself, or an operator closes any restaurant
+    @PostMapping("/api/restaurants/{restaurantId}/close")
+    public ResponseEntity<RestaurantResponse> closeRestaurant(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID restaurantId) {
+        Restaurant resto = ordFacade.closeRestaurant(UUID.fromString(jwt.getSubject()), restaurantId);
+        return ResponseEntity.ok(RestaurantResponse.from(resto));
+    }
 }

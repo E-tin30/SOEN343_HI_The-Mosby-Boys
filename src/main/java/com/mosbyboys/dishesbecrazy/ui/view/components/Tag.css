@@ -18,6 +18,11 @@
   color: var(--mustard-dark);
 }
 
+.tag--terracotta {
+  background: color-mix(in srgb, var(--terracotta) 15%, transparent);
+  color: var(--terracotta-dark);
+}
+
 .tag--tomato {
   background: color-mix(in srgb, var(--tomato) 15%, transparent);
   color: var(--tomato-dark);

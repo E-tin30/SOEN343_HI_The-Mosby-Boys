@@ -9,7 +9,7 @@ import java.util.stream.Stream;
 
 class OrderStateTest {
 
-    // all legal transitions (phase 2 only)
+    // Legal preparation transitions and the delivered-to-refunded transition.
     static Stream<Arguments> legalMoves() {
         return Stream.of(
             // PlacedState: only accept, reject and cancel are legal
@@ -26,7 +26,8 @@ class OrderStateTest {
             Arguments.of(new PreparingState(), (Function<OrderState, OrderState>) OrderState::cancel, CancelledState.class), // preparing --> cancel
             
             // ReadyState: only cancel is legal
-            Arguments.of(new ReadyState(),(Function<OrderState, OrderState>) OrderState::cancel, CancelledState.class) // ready --> cancel
+            Arguments.of(new ReadyState(),(Function<OrderState, OrderState>) OrderState::cancel, CancelledState.class), // ready --> cancel
+            Arguments.of(new DeliveredState(), (Function<OrderState, OrderState>) OrderState::refund, RefundedState.class)
         );
     }
 
@@ -37,7 +38,7 @@ class OrderStateTest {
         assertInstanceOf(expected, result);
     }
 
-    // All illegal transitions (phase 2 only)
+    // Illegal preparation transitions and attempts to resume or refund an already-refunded order.
     static Stream<Arguments> illegalMoves() {
         return Stream.of(
             // PlacedState: only accept, reject and cancel are legal
@@ -72,7 +73,10 @@ class OrderStateTest {
             Arguments.of(new CancelledState(), "reject", (Function<OrderState, OrderState>) OrderState::reject),
             Arguments.of(new CancelledState(), "startPreparing", (Function<OrderState, OrderState>) OrderState::startPreparing),
             Arguments.of(new CancelledState(), "markReady", (Function<OrderState, OrderState>) OrderState::markReady),
-            Arguments.of(new CancelledState(), "cancel", (Function<OrderState, OrderState>) OrderState::cancel)
+            Arguments.of(new CancelledState(), "cancel", (Function<OrderState, OrderState>) OrderState::cancel),
+
+            Arguments.of(new RefundedState(), "pickUp", (Function<OrderState, OrderState>) OrderState::pickUp),
+            Arguments.of(new RefundedState(), "refund", (Function<OrderState, OrderState>) OrderState::refund)
         );
     }
 

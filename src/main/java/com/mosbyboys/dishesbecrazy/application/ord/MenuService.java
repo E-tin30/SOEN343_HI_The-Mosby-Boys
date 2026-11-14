@@ -55,8 +55,22 @@ public class MenuService {
         menuItemRepo.save(entity);
     }
 
+    @Transactional
+    public UUID getRestaurantId(UUID menuItemId) {
+        return menuItemRepo.findById(menuItemId)
+                .map(MenuItemEntity::getRestaurantId)
+                .orElse(null);
+    }
+
     private MenuItem toDomain(MenuItemEntity e) {
         return new MenuItem(e.getId(), e.getRestaurantId(), e.getName(), e.getPrice(), e.getStockQuantity(),
                 e.getStatus(), e.getDescription(), e.getImageUrl(), e.getCreatedAt());
     }
+
+    @Transactional
+    public MenuItem loadForUpdate(UUID menuItemId) {
+        return menuItemRepo.findByIdForUpdate(menuItemId)
+                .map(this::toDomain)
+                .orElseThrow(() -> new NoSuchElementException("Menu item not found: " + menuItemId));
+}
 }

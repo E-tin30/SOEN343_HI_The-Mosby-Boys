@@ -1,0 +1,120 @@
+/* The map and its markers; shared by the dashboard page and the home page map card. */
+.live-map {
+  width: 100%;
+  height: 100%;
+  isolation: isolate;
+}
+
+.live-map__empty {
+  margin: auto;
+  padding: var(--space-6);
+  text-align: center;
+}
+
+.legend-swatch {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+}
+
+/* Restaurant marker: optional label stacked over a teardrop pin whose tip sits on the location. */
+.restaurant-marker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.restaurant-marker--interactive {
+  cursor: pointer;
+}
+
+.restaurant-marker__label {
+  padding: var(--space-1) var(--space-2);
+  background: var(--porcelain);
+  border: var(--border-width) solid var(--linen);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-card);
+  color: var(--espresso);
+  font-family: var(--font-body);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.restaurant-marker__pin {
+  width: 26px;
+  height: 26px;
+  /* Rotating the square pushes its tip ~5px past the box, so lift it back onto the point. */
+  margin-bottom: 5px;
+  border: var(--border-width-2) solid var(--porcelain);
+  border-radius: 50% 50% 50% 0;
+  box-shadow: 0 2px 6px rgba(42, 29, 23, 0.35);
+  transform: rotate(-45deg);
+}
+
+.restaurant-marker__pin--quiet,
+.legend-swatch--quiet {
+  background: var(--sage-dark);
+}
+
+.restaurant-marker__pin--steady,
+.legend-swatch--steady {
+  background: var(--mustard);
+}
+
+.restaurant-marker__pin--busy,
+.legend-swatch--busy {
+  background: var(--tomato);
+}
+
+.restaurant-marker__pin--paused,
+.legend-swatch--paused {
+  background: var(--terracotta);
+}
+
+/* Closed: the same muted cocoa as the Closed status tag. */
+.restaurant-marker__pin--closed,
+.legend-swatch--closed {
+  background: var(--cocoa);
+}
+
+/* Courier marker: circle when idle, rounded square when assigned, diamond while carrying. */
+.courier-marker {
+  display: block;
+  width: 20px;
+  height: 20px;
+  border: var(--border-width-2) solid var(--porcelain);
+  box-shadow: 0 2px 6px rgba(42, 29, 23, 0.35);
+}
+
+.courier-marker--small {
+  width: 14px;
+  height: 14px;
+  box-shadow: none;
+}
+
+.courier-marker--idle {
+  background: var(--sage-dark);
+  border-radius: 50%;
+}
+
+.courier-marker--assigned {
+  background: var(--mustard);
+  border-radius: 4px;
+}
+
+.courier-marker--carrying {
+  background: var(--navy);
+  border-radius: 4px;
+  transform: rotate(45deg);
+}
+
+/* Fallback for any unexpected state: plain neutral dot rather than an unstyled box. */
+.courier-marker:not(.courier-marker--idle):not(.courier-marker--assigned):not(.courier-marker--carrying) {
+  background: var(--cocoa);
+  border-radius: 50%;
+}

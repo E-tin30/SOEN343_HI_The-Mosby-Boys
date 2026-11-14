@@ -4,6 +4,7 @@ import { useAuth } from "../AuthContext";
 import AppHeader from "../components/AppHeader";
 import Button from "../components/Button";
 import Heading from "../components/Heading";
+import RestaurantStatusControl from "../components/RestaurantStatusControl";
 import Tag from "../components/Tag";
 import {
   acceptOrder,
@@ -120,6 +121,7 @@ export default function RestaurantOrdersPage() {
         <Button variant="secondary" onClick={() => navigate("/restaurant/home")}>
           Back to home
         </Button>
+        <RestaurantStatusControl variant="header" />
       </AppHeader>
 
       <main className="orders-board">
@@ -149,7 +151,7 @@ export default function RestaurantOrdersPage() {
                       {queueOrders.map((order) => (
                         <li key={order.id} className="list-card order-card">
                           <div className="order-card__top">
-                            <Heading level={3}>{`Order #${order.id.slice(0, 6)}`}</Heading>
+                            <Heading level={3}>{`Order #${order.id.slice(-6)}`}</Heading>
                             <span className="meta">{formatTime(order.placedAt)}</span>
                           </div>
 
@@ -160,7 +162,7 @@ export default function RestaurantOrdersPage() {
                           <ul className="order-card__lines">
                             {order.lines.map((line) => (
                               <li key={line.menuItemId}>
-                                <span className="order-card__qty">{line.quantity}×</span> {line.name}
+                                <span className="order-card__qty">{line.quantity}×</span> {line.menuItemName}
                               </li>
                             ))}
                           </ul>

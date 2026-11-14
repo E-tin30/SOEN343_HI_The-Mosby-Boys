@@ -9,10 +9,8 @@ import com.mosbyboys.dishesbecrazy.domain.ord.Order;
 
 import lombok.RequiredArgsConstructor;
 
-/* The queues only live in memory, so on startup put every order that is still waiting back in
-its line, oldest first. Without this, orders placed before a restart can never be first in line
-and can't be accepted or prepared. Orders are accepted in the order they were placed, so placing
-time is also the preparation order. */
+/* Rebuilds the in-memory queues from persisted waiting orders, oldest first.
+Startup and future demo restoration share the same state routing and FIFO rules. */
 @Component
 @RequiredArgsConstructor
 public class OrderQueueLoader implements CommandLineRunner {
@@ -22,7 +20,15 @@ public class OrderQueueLoader implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+        rebuild();
+    }
+    // Startup uses the same replace operation that restoration can invoke later.
+
+    public void rebuild() {
         List<Order> orders = orderService.findInStates(List.of("PlacedState", "AcceptedState", "ReadyState"));
+        queues.clear();
+        // Finish reading persistence before clearing memory so a failed query preserves the current queues.
+
         for (Order order : orders) {
             switch (order.getState().toString()) {
                 case "PlacedState" -> queues.placed(order.getRestaurantId()).enqueue(order.getId());
@@ -32,4 +38,5 @@ public class OrderQueueLoader implements CommandLineRunner {
             }
         }
     }
+    // Call only at startup or while the reset coordinator has paused order/dispatch changes.
 }

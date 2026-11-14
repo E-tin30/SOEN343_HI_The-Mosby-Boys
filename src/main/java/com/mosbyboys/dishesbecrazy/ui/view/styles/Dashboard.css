@@ -1,0 +1,197 @@
+/* Home dashboard grid. Map takes 2/3 of the width and the full height. The right-hand
+   third holds an action card (just tall enough for its button) with the active order
+   card filling the rest. */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  grid-template-rows: 1fr auto;
+  grid-template-areas:
+    "map active"
+    "map action";
+  gap: var(--space-5);
+  height: var(--dashboard-height);
+}
+
+/* The restaurant home puts its menu in the map's slot. */
+.dashboard-card--map,
+.dashboard-card--menu {
+  grid-area: map;
+}
+
+/* Compact menu rows for the restaurant home's menu card. */
+.dashboard-menu {
+  gap: var(--space-2);
+}
+
+.dashboard-menu__item {
+  padding: var(--space-3) var(--space-4);
+}
+
+.dashboard-menu__name {
+  font-weight: 600;
+}
+
+.dashboard-menu .list-card__side {
+  flex-direction: row;
+  align-items: center;
+}
+
+.dashboard-card--active {
+  grid-area: active;
+}
+
+/* Restaurant home: the total number of orders in a hollow ring, coloured like the restaurant's
+   map marker (quiet / steady / busy, see LiveMap.css; steady uses the darker mustard so the
+   number stays readable on the card). */
+.dashboard-orders__total {
+  align-self: center;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  /* Sized so the heading, circle, tag, divider and all four queue lines fit the card without scrolling. */
+  width: 96px;
+  height: 96px;
+  box-sizing: border-box;
+  border: 6px solid var(--load-color);
+  border-radius: 50%;
+  color: var(--load-color);
+  font-family: var(--font-display);
+  font-size: 48px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.dashboard-orders__total--quiet { --load-color: var(--sage-dark); }
+.dashboard-orders__total--steady { --load-color: var(--mustard-dark); }
+.dashboard-orders__total--busy { --load-color: var(--tomato); }
+.dashboard-orders__total--paused { --load-color: var(--terracotta-dark); }
+.dashboard-orders__total--closed { --load-color: var(--cocoa); }
+
+/* Quiet / Steady / Busy / Paused tag, centred under the circle. */
+.dashboard-orders__load {
+  align-self: center;
+}
+
+/* A full-width rule inside a dashboard card; the card's own gap spaces it, so no extra margin. */
+.dashboard-card__divider {
+  align-self: stretch;
+  flex-shrink: 0;
+  margin: 0;
+  border: none;
+  border-top: var(--border-width) solid var(--linen);
+}
+
+/* One line per queue under the total, e.g. "Ready: 2". Line height alone spaces
+   them, which keeps every line in view without scrolling. */
+.dashboard-orders__queues {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dashboard-card--action {
+  grid-area: action;
+}
+
+.dashboard-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-height: 0;
+  overflow: auto;
+  padding: var(--space-5);
+}
+
+/* A little extra room under every home-dashboard card heading, on top of the card's gap. */
+.dashboard-card .heading {
+  padding-bottom: var(--space-2);
+  text-align: center;
+}
+
+.dashboard-card__scroll {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.dashboard-card__map {
+  position: relative;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--linen);
+  border-radius: var(--radius-md);
+}
+
+/* The live map fills the whole area, whatever height the grid gives the card. */
+.dashboard-card__map .live-map {
+  position: absolute;
+  inset: 0;
+}
+
+/* Frosted cover with a centred message, e.g. when there's no delivery to show. */
+.dashboard-card__map-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--porcelain) 70%, transparent);
+  backdrop-filter: blur(3px);
+}
+
+.dashboard-card__map-overlay p {
+  margin: 0;
+  padding: var(--space-2) var(--space-4);
+  background: var(--porcelain);
+  border: var(--border-width) solid var(--linen);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-card);
+  color: var(--cocoa);
+}
+
+/* Pinned to the bottom of the card, centred. */
+.dashboard-card__footer {
+  align-self: center;
+  margin-top: auto;
+}
+
+/* A footer holding a row of buttons, e.g. the restaurant menu card's Add / Edit. */
+.dashboard-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+}
+
+/* Fills the card and centres the message in it. */
+.dashboard-card__empty {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  text-align: center;
+}
+
+/* Phones: stack the cards, map first. */
+@media (max-width: 700px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: var(--dashboard-height) auto auto;
+    grid-template-areas:
+      "map"
+      "active"
+      "action";
+    height: auto;
+  }
+}

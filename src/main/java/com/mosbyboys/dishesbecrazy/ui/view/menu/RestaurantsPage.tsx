@@ -7,13 +7,7 @@ import Heading from "../components/Heading";
 import Tag from "../components/Tag";
 import { getRestaurants } from "./api/menuApi";
 import type { Restaurant } from "./types/menu";
-import "../styles/RestaurantsPage.css";
-
-const STATUS_TAG: Record<Restaurant["status"], { tone: "sage" | "mustard" | "neutral"; label: string }> = {
-  OPEN: { tone: "sage", label: "Open" },
-  PAUSED: { tone: "mustard", label: "Paused" },
-  CLOSED: { tone: "neutral", label: "Closed" },
-};
+import { RESTAURANT_STATUS_TAG } from "./restaurantStatus";
 
 export default function RestaurantsPage() {
   const navigate = useNavigate();
@@ -63,7 +57,7 @@ export default function RestaurantsPage() {
                     <Heading level={3}>{r.name}</Heading>
                     <span className="restaurant-card__cta">View menu →</span>
                   </div>
-                  <Tag tone={STATUS_TAG[r.status].tone}>{STATUS_TAG[r.status].label}</Tag>
+                  <Tag tone={RESTAURANT_STATUS_TAG[r.status].tone}>{RESTAURANT_STATUS_TAG[r.status].label}</Tag>
                 </Link>
               </li>
             ))}

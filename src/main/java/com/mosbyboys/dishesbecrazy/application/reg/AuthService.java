@@ -1,6 +1,9 @@
 package com.mosbyboys.dishesbecrazy.application.reg;
 
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.Collection;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 import org.springframework.stereotype.Service;
@@ -30,8 +33,8 @@ public class AuthService {
             throw new IllegalArgumentException("Operator accounts cannot self-register");
         }
 
-        // only customer and restaurant need an address
-        boolean needsAddress = userRole == Role.CUSTOMER || userRole == Role.RESTAURANT;
+        // Customers, restaurants and couriers need an address
+        boolean needsAddress = userRole == Role.CUSTOMER || userRole == Role.RESTAURANT || userRole == Role.COURIER;
         
         if (needsAddress && (address == null || address.isBlank())) {
             throw new IllegalArgumentException("address is required for " + userRole);
@@ -52,6 +55,13 @@ public class AuthService {
 
     public UserProfile getUserById(UUID id){
         return userRepo.findUserById(id).orElseThrow(() -> new NoSuchElementException("User profile not found"));
+    }
+
+    // "First Last" by user id, for showing who an order belongs to. Ids that no longer exist are left out.
+    public Map<UUID, String> getDisplayNames(Collection<UUID> userIds) {
+        return userRepo.findUsersByIds(userIds).entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey,
+                        e -> e.getValue().firstName() + " " + e.getValue().lastName()));
     }
 
 }

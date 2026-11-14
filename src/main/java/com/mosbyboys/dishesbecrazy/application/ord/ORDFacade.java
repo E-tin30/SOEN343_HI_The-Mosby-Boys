@@ -1,21 +1,32 @@
 package com.mosbyboys.dishesbecrazy.application.ord;
 
+import com.mosbyboys.dishesbecrazy.application.prc.PricingService;
 import com.mosbyboys.dishesbecrazy.domain.ord.Order;
 import com.mosbyboys.dishesbecrazy.domain.ord.OrderLine;
 import com.mosbyboys.dishesbecrazy.domain.ord.PlacedQueue;
 import com.mosbyboys.dishesbecrazy.domain.ord.PreparationQueue;
 import com.mosbyboys.dishesbecrazy.domain.ord.Restaurant;
+import com.mosbyboys.dishesbecrazy.domain.prc.PricingBreakdown;
 import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
+import com.mosbyboys.dishesbecrazy.domain.reg.Role;
 import com.mosbyboys.dishesbecrazy.domain.reg.User;
 import com.mosbyboys.dishesbecrazy.domain.ord.MenuItem;
+import com.mosbyboys.dishesbecrazy.application.dlv.events.OrderReadyEvent;
+import com.mosbyboys.dishesbecrazy.domain.ord.OrderStateChanged;
+import com.mosbyboys.dishesbecrazy.domain.ord.OrderObserver;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.context.ApplicationEventPublisher;
 
+import java.math.BigDecimal;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -28,12 +39,22 @@ No per-request data in fields, Spring only makes one of these. (Singleton) */
 public class ORDFacade {
 
     private final OrderService orderService;
-    private final OrderEventService orderEventService;
+    private final List<OrderObserver> subscribers = new CopyOnWriteArrayList<>();
     private final PermissionPolicy permissionPolicy;
     private final OrderQueues queues;
     private final MenuService menuService;
     private final RestaurantService restaurantService;
+    private final PricingService  pricingService;
     private final REGFacade regFacade;
+    private final ApplicationEventPublisher eventPublisher;
+
+    public void subscribe(OrderObserver observer) {
+        subscribers.add(observer);
+    }
+
+    public void unsubscribe(OrderObserver observer) {
+        subscribers.remove(observer);
+    }
 
     @Transactional
     public List<Restaurant> getRestaurants(User user) {
@@ -106,13 +127,23 @@ public class ORDFacade {
             throw new IllegalArgumentException("Restaurant is not accepting orders");
         }
 
-        Order order = new Order(customer.getUserId(), restaurantId, orderLineItems);
-        order.getOrderLineItems().forEach(this::checkAgainstMenu);
+        orderLineItems.forEach(this::checkAgainstMenu);
+
+        BigDecimal subtotal = BigDecimal.ZERO;
+        for (OrderLine item : orderLineItems) {
+            subtotal = subtotal.add(item.getLineTotal());
+        }
+        // deduct stock first: if there isn't enough stock, this throws before anything is saved
+        // Sorted by item id so concurrent orders always lock menu items in the same order.
+        orderLineItems.stream()
+                .sorted(Comparator.comparing(OrderLine::getMenuItemId))
+                .forEach(this::reserveStock);
+
+        Order order = new Order(customer.getUserId(), restaurantId, orderLineItems, subtotal);
 
         orderService.save(order);
         // record transition change event
-        orderEventService.save(order.getId(), null, order.getState().toString(),
-                user.getUserId(), "PLACE");
+        publishTransition(order, null, user.getUserId(), "PLACE");
         // add to placed queue
         queues.placed(restaurantId).enqueue(order.getId());
 
@@ -127,6 +158,11 @@ public class ORDFacade {
         if (line.getUnitPrice().compareTo(item.getPrice()) != 0) {
             throw new IllegalArgumentException("Price of " + item.getName() + " has changed, please refresh the menu");
         }
+    }
+
+    @Transactional
+    public Order getOrder(UUID orderId) {
+        return orderService.load(orderId);
     }
 
     @Transactional
@@ -149,7 +185,7 @@ public class ORDFacade {
 
         orderService.save(order);
         // record transition change event
-        orderEventService.save(orderId, before, order.getState().toString(), user.getUserId(), "ACCEPT");
+        publishTransition(order, before, user.getUserId(), "ACCEPT");
         // placed queue -> preparation queue (FIFO)
         line.dequeueIfFirst(orderId);
         queues.preparation(order.getRestaurantId()).enqueue(orderId);
@@ -158,7 +194,7 @@ public class ORDFacade {
     @Transactional
     public void rejectOrder(UUID userId, UUID orderId, String reason) {
         User user = regFacade.getCurrentUser(userId);
-        Order order = orderService.load(orderId);
+        Order order = orderService.loadForUpdate(orderId);
         permissionPolicy.checkCanActAsRestaurant(user, order);
         String before = order.getState().toString();
 
@@ -166,7 +202,8 @@ public class ORDFacade {
 
         orderService.save(order);
         // record transition change event
-        orderEventService.save(orderId, before, order.getState().toString(), user.getUserId(), "REJECT");
+        publishTransition(order, before, user.getUserId(), "REJECT");
+        restoreStock(order);
         // remove from placed queue
         queues.placed(order.getRestaurantId()).remove(orderId);
     }
@@ -174,19 +211,24 @@ public class ORDFacade {
     @Transactional
     public void cancelOrder(UUID userId, UUID orderId) {
         User user = regFacade.getCurrentUser(userId);
-        Order order = orderService.load(orderId);
+        Order order = orderService.loadForUpdate(orderId);
         permissionPolicy.checkCanCancel(user, order);
         String before = order.getState().toString();
 
         order.cancel();
 
         orderService.save(order);
-        orderEventService.save(orderId, before, order.getState().toString(), user.getUserId(), "CANCEL");
+        publishTransition(order, before, user.getUserId(), "CANCEL");
+        // food that already left with the courier isn't coming back
+        if (!before.equals("PickedUpState") && !before.equals("DeliveredState")) {
+            restoreStock(order);
+        }
         // the order could be in any line. Remove returns false where it isn't
         UUID restaurantId = order.getRestaurantId();
         queues.placed(restaurantId).remove(orderId);
         queues.preparation(restaurantId).remove(orderId);
         queues.ready(restaurantId).remove(orderId);
+        queues.removeGlobalReady(orderId);
     }
 
     @Transactional
@@ -206,7 +248,7 @@ public class ORDFacade {
         order.startPreparing();
 
         orderService.save(order);
-        orderEventService.save(orderId, before, order.getState().toString(), user.getUserId(), "PREPARING");
+        publishTransition(order, before, user.getUserId(), "PREPARING");
         // get next in line (FIFO)
         line.dequeueIfFirst(orderId);
     }
@@ -221,9 +263,189 @@ public class ORDFacade {
         order.markReady();
 
         orderService.save(order);
-        orderEventService.save(orderId, before, order.getState().toString(), user.getUserId(), "READY");
+        publishTransition(order, before, user.getUserId(), "READY");
+
+        //Enqueue the order in both the individual restaurant queue and global ready queue
         queues.ready(order.getRestaurantId()).enqueue(orderId);
+        queues.enqueueGlobalReady(orderId);
+
+        //Notify the dispatch system to find a courier
+        eventPublisher.publishEvent(new OrderReadyEvent());
     }
 
-    /* other state transitions are out of scope for phase 2 */
+    @Transactional
+    public void pickUpOrder(UUID userId, UUID orderId) {
+        User user = regFacade.getCurrentUser(userId);
+        Order order = orderService.load(orderId);
+        permissionPolicy.checkCanActAsCourier(user, order);
+        String before = order.getState().toString();
+
+        order.pickUp();
+
+        orderService.save(order);
+        publishTransition(order, before, user.getUserId(), "PICKUP");
+    }
+
+    @Transactional
+    public void deliverOrder(UUID userId, UUID orderId) {
+        User user = regFacade.getCurrentUser(userId);
+        Order order = orderService.load(orderId);
+        permissionPolicy.checkCanActAsCourier(user, order);
+        String before = order.getState().toString();
+
+        order.deliver();
+
+        orderService.save(order);
+        publishTransition(order, before, user.getUserId(), "DELIVER");
+    }
+
+    @Transactional
+    public void refundOrder(UUID userId, UUID orderId) {
+        User user = regFacade.getCurrentUser(userId);
+        Order order = orderService.load(orderId);
+        permissionPolicy.checkCanRefund(user, order);
+        String before = order.getState().toString();
+
+        order.refund();
+
+        orderService.save(order);
+        publishTransition(order, before, user.getUserId(), "REFUND");
+    }
+
+    // Order history, scoped by the caller's role, newest first.
+    @Transactional
+    public List<OrderHistoryView> getOrderHistory(User user) {
+        UUID id = user.getUserId();
+
+        List<Order> orders = switch (user.getRole()) {
+            case CUSTOMER   -> orderService.findHistoryForCustomer(id);
+            case RESTAURANT -> orderService.findHistoryForRestaurant(id);
+            case COURIER    -> orderService.findHistoryForCourier(id);
+            case OPERATOR   -> orderService.findHistoryForAll();
+        };
+
+        return toViews(user, orders);
+    }
+
+    // A courier's orders that are still in their hands: offered or accepted (READY) or on the way (PICKEDUP)
+    // History leaves READY orders out, so the courier dashboard reads these instead
+    @Transactional
+    public List<OrderHistoryView> getCourierCurrentOrders(User user) {
+        if (user.getRole() != Role.COURIER) {
+            throw new PermissionDeniedException("Only a courier has current deliveries.");
+        }
+        return toViews(user, orderService.findCurrentForCourier(user.getUserId()));
+    }
+
+    // Wraps orders with the item, restaurant and customer names and the pricing breakdown (visible to every role)
+    private List<OrderHistoryView> toViews(User user, List<Order> orders) {
+        // One query for every item name on the page, same as getRestaurantOrders.
+        Map<UUID, String> itemNames = menuService.getNames(orders.stream()
+                .flatMap(o -> o.getOrderLineItems().stream())
+                .map(OrderLine::getMenuItemId)
+                .collect(Collectors.toSet()));
+
+        // Restaurant names, for every role, in one query.
+        Map<UUID, String> restaurantNames = restaurantService.getNames(orders.stream()
+                .map(Order::getRestaurantId)
+                .collect(Collectors.toSet()));
+
+        // An operator sees every customer's name; a restaurant sees the names of its own customers.
+        boolean seesCustomers = user.getRole() == Role.OPERATOR || user.getRole() == Role.RESTAURANT;
+        Map<UUID, String> customerNames = seesCustomers
+            ? regFacade.getDisplayNames(orders.stream()
+                    .map(Order::getCustomerId)
+                    .collect(Collectors.toSet()))
+            : Map.of();
+
+        return orders.stream()
+            .map(o -> new OrderHistoryView(o, itemNames, restaurantNames, customerNames, priceOf(o)))
+            .toList();
+    }
+
+    // The breakdown for one stored order, from its item subtotal and today's pricing rates.
+    private PricingBreakdown priceOf(Order order) {
+        if (order.getSubtotal() == null) {
+            return null;
+        }
+        return pricingService.calculateTotal(order.getSubtotal());
+    }
+
+    // Builds the event for one transition and hands it to every subscriber.
+    private void publishTransition(Order order, String before, UUID performedBy, String action) {
+        notifySubscribers(new OrderStateChanged(
+                order.getId(), before, order.getState().toString(), performedBy, action));
+    }
+
+    // The template's notifySubscribers: calls update(context) on each subscriber in turn.
+    private void notifySubscribers(OrderStateChanged event) {
+        for (OrderObserver subscriber : subscribers) {
+            subscriber.update(event);
+        }
+    }
+    
+    @Transactional
+    public Restaurant openRestaurant(UUID userId, UUID restaurantId) {
+        Restaurant restaurant = restaurantService.load(restaurantId);
+        User user = regFacade.getCurrentUser(userId);
+        permissionPolicy.checkCanOpen(user, restaurant);
+        restaurant.open();
+        restaurantService.save(restaurant);
+        return restaurant;
+    }
+
+    @Transactional
+    public Restaurant pauseRestaurant(UUID userId, UUID restaurantId) {
+        Restaurant restaurant = restaurantService.load(restaurantId);
+        User user = regFacade.getCurrentUser(userId);
+        permissionPolicy.checkCanPause(user, restaurant);
+        restaurant.pause();
+        restaurantService.save(restaurant);
+        return restaurant;
+    }
+
+    @Transactional
+    public Restaurant closeRestaurant(UUID userId, UUID restaurantId) {
+        Restaurant restaurant = restaurantService.load(restaurantId);
+        User user = regFacade.getCurrentUser(userId);
+        permissionPolicy.checkCanClose(user, restaurant);
+        restaurant.close();
+        restaurantService.save(restaurant);
+        return restaurant;
+    }
+
+    private void reserveStock(OrderLine line) {
+        MenuItem item = menuService.loadForUpdate(line.getMenuItemId());
+        item.decreaseStock(line.getQuantity());
+        menuService.save(item);
+    }
+
+    // Puts an order's quantities back on the menu stock (order was rejected or cancelled before the food left).
+    private void restoreStock(Order order) {
+        List<OrderLine> lines = order.getOrderLineItems().stream()
+                .sorted(Comparator.comparing(OrderLine::getMenuItemId))
+                .toList();
+        for (OrderLine line : lines) {
+            try {
+                MenuItem item = menuService.loadForUpdate(line.getMenuItemId());
+                item.increaseStock(line.getQuantity());
+                menuService.save(item);
+            } catch (NoSuchElementException e) {
+                // the item was removed from the menu; there is no stock to give back
+            }
+        }
+    }
+
+    //save menu item
+    @Transactional
+    public void saveMenuItem(MenuItem item) {
+        menuService.save(item);
+    }
+
+    //get restaurantID from db
+    @Transactional
+    public UUID getRestaurantId(UUID menuItemId) {
+        return menuService.getRestaurantId(menuItemId);
+    }
+
 }

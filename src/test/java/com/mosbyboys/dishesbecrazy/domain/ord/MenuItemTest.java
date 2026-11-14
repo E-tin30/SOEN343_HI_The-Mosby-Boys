@@ -93,4 +93,13 @@ class MenuItemTest {
         assertThrows(IllegalArgumentException.class, () -> new MenuItem(UUID.randomUUID(), null, "X",
                 BigDecimal.ONE, 1, MenuItemStatus.AVAILABLE, null, null, null));
     }
+
+    // restoring stock must not override a restaurant's manual SOLD_OUT
+    @Test
+    void increaseStockKeepsAManualSoldOut() {
+        MenuItem m = item(2, MenuItemStatus.SOLD_OUT);
+        m.increaseStock(1);
+        assertEquals(3, m.getStockQuantity());
+        assertEquals(MenuItemStatus.SOLD_OUT, m.getStatus());
+    }
 }

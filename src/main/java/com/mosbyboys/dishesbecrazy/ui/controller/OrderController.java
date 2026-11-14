@@ -20,7 +20,9 @@ import com.mosbyboys.dishesbecrazy.application.ord.RestaurantOrderView;
 import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
 import com.mosbyboys.dishesbecrazy.domain.ord.Order;
 import com.mosbyboys.dishesbecrazy.domain.ord.OrderLine;
+import com.mosbyboys.dishesbecrazy.domain.prc.PricingBreakdown;
 import com.mosbyboys.dishesbecrazy.domain.reg.User;
+import com.mosbyboys.dishesbecrazy.application.ord.OrderHistoryView;
 
 import lombok.RequiredArgsConstructor;
 
@@ -33,13 +35,13 @@ public class OrderController {
     private final ORDFacade ordFacade;
     private final REGFacade regFacade;
 
-    public record OrderResponse(UUID id, UUID restaurantId, String state, BigDecimal total) {
+    public record OrderResponse(UUID id, UUID restaurantId, String state, BigDecimal subtotal, List<OrderLine> orderLines) {
         static OrderResponse from(Order o) {
-            return new OrderResponse(o.getId(), o.getRestaurantId(), o.getState().toString(), o.getTotal());
+            return new OrderResponse(o.getId(), o.getRestaurantId(), o.getState().toString(), o.getSubtotal(), o.getOrderLineItems());
         }
     }
 
-    public record OrderLineResponse(UUID menuItemId, String name, int quantity, BigDecimal unitPrice) {}
+    public record OrderLineResponse(UUID menuItemId, String menuItemName, int quantity, BigDecimal unitPrice) {}
 
     // status is the state without the "State" suffix ("PreparingState" -> "PREPARING"), which is what the frontend uses.
     public record RestaurantOrderResponse(UUID id, String status, Instant placedAt, List<OrderLineResponse> lines,
@@ -52,7 +54,7 @@ public class OrderController {
                             l.getQuantity(), l.getUnitPrice()))
                     .toList();
             String status = o.getState().toString().replace("State", "").toUpperCase();
-            return new RestaurantOrderResponse(o.getId(), status, o.getPlacedAt(), lines, o.getTotal(),
+            return new RestaurantOrderResponse(o.getId(), status, o.getPlacedAt(), lines, o.getSubtotal(),
                     view.nextToAccept(), view.nextToPrepare());
         }
     }
@@ -73,7 +75,7 @@ public class OrderController {
         User user = regFacade.getCurrentUser(UUID.fromString(jwt.getSubject()));
 
         List<OrderLine> orderLines = request.items().stream()
-                .map(item -> new OrderLine(item.menuItemId(), item.quantity(), item.price()))
+                .map(item -> new OrderLine(item.menuItemId(), item.quantity(), item.price(), item.menuItemName()))
                 .toList();
 
         Order order = ordFacade.placeOrder(user, request.restaurantId(), orderLines);
@@ -105,6 +107,74 @@ public class OrderController {
     @PostMapping("/api/orders/{orderId}/ready")
     public ResponseEntity<Void> markOrderReady(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID orderId) {
         ordFacade.markOrderReady(UUID.fromString(jwt.getSubject()), orderId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/api/orders/{orderId}")
+    public ResponseEntity<OrderResponse> getOrder(
+            @PathVariable UUID orderId) {
+
+        Order order = ordFacade.getOrder(orderId);
+
+        return ResponseEntity.ok(OrderResponse.from(order));
+    }
+
+    // One row of the history page. status is the state without "State" ("DeliveredState" -> "DELIVERED").
+    // total is the item subtotal. rejectionReason is null unless the order was rejected, customerName is
+    // null unless the caller is an operator or restaurant, and pricing is null only for old orders
+    // stored without a subtotal.
+    public record OrderHistoryResponse(UUID id, UUID restaurantId, String restaurantName, String customerName,
+                                    String status, Instant placedAt, List<OrderLineResponse> lines,
+                                    BigDecimal total, PricingBreakdown pricing, String rejectionReason) {
+        static OrderHistoryResponse from(OrderHistoryView view) {
+            Order o = view.order();
+            List<OrderLineResponse> lines = o.getOrderLineItems().stream()
+                    .map(l -> new OrderLineResponse(l.getMenuItemId(),
+                            view.itemNames().getOrDefault(l.getMenuItemId(), "Unknown item"),
+                            l.getQuantity(), l.getUnitPrice()))
+                    .toList();
+            String status = o.getState().toString().replace("State", "").toUpperCase();
+            return new OrderHistoryResponse(
+                    o.getId(),
+                    o.getRestaurantId(),
+                    view.restaurantNames().getOrDefault(o.getRestaurantId(), "Unknown restaurant"),
+                    view.customerNames().get(o.getCustomerId()),
+                    status, o.getPlacedAt(), lines,
+                    o.getSubtotal(), view.pricing(), o.getRejectionReason());
+        }
+    }
+
+    // The logged-in courier's offered, accepted and in-progress orders, in the same shape as history.
+    @GetMapping("/api/orders/courier/current")
+    public ResponseEntity<List<OrderHistoryResponse>> getCourierCurrentOrders(@AuthenticationPrincipal Jwt jwt) {
+        User user = regFacade.getCurrentUser(UUID.fromString(jwt.getSubject()));
+        List<OrderHistoryResponse> body = ordFacade.getCourierCurrentOrders(user).stream()
+                .map(OrderHistoryResponse::from)
+                .toList();
+        return ResponseEntity.ok(body);
+    }
+
+    // The logged-in user's order history. What they see depends on their role (R-PRC-04).
+    @GetMapping("/api/orders/history")
+    public ResponseEntity<List<OrderHistoryResponse>> getOrderHistory(@AuthenticationPrincipal Jwt jwt) {
+        User user = regFacade.getCurrentUser(UUID.fromString(jwt.getSubject()));
+        List<OrderHistoryResponse> body = ordFacade.getOrderHistory(user).stream()
+                .map(OrderHistoryResponse::from)
+                .toList();
+        return ResponseEntity.ok(body);
+    }
+
+    // Customer cancels a placed order, or an operator cancels one (checked by PermissionPolicy).
+    @PostMapping("/api/orders/{orderId}/cancel")
+    public ResponseEntity<Void> cancelOrder(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID orderId) {
+        ordFacade.cancelOrder(UUID.fromString(jwt.getSubject()), orderId);
+        return ResponseEntity.noContent().build();
+    }
+
+    // Operator refunds a delivered order.
+    @PostMapping("/api/orders/{orderId}/refund")
+    public ResponseEntity<Void> refundOrder(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID orderId) {
+        ordFacade.refundOrder(UUID.fromString(jwt.getSubject()), orderId);
         return ResponseEntity.noContent().build();
     }
 }

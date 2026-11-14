@@ -36,9 +36,27 @@ a:hover {
 }
 
 /* Page shell: Cream page with a centred content column. */
+/* App shell: exactly the window's height, with the pages scrolling in .app-scroll and the output
+   console docked underneath (main.tsx), so the page's scrollbar stops at the console. */
+#root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh; /* tracks mobile browser bars where supported */
+}
+
+.app-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* Full height of the scroll area, not the window, so a short page doesn't scroll by the console's height. */
 .page {
-  min-height: 100vh;
+  min-height: 100%;
   padding: var(--space-4);
+  /* Extra room at the end of a long page so the last card doesn't sit right on the output console. */
+  padding-bottom: calc(var(--space-6) + var(--space-4));
 }
 
 .page__content {
@@ -48,6 +66,11 @@ a:hover {
   width: 100%;
   max-width: var(--card-width-2);
   margin: 0 auto;
+}
+
+/* For pages that need room for side-by-side cards, e.g. the dashboard map and its details panel. */
+.page__content--wide {
+  max-width: var(--card-width-3);
 }
 
 .page__intro {
@@ -125,4 +148,64 @@ a:hover {
 
 .meta {
   color: var(--cocoa);
+}
+
+/* Intro card at the top of a page: caption, heading, a line of text and optional actions. */
+.intro-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.intro-card .caption,
+.intro-card__text {
+  margin: 0;
+}
+
+.intro-card > .btn {
+  margin-top: var(--space-2);
+}
+
+/* A full-width rule between the intro text and what follows, e.g. the restaurant's status bar. */
+.intro-card__divider {
+  align-self: stretch;
+  margin: var(--space-2) 0;
+  border: none;
+  border-top: var(--border-width) solid var(--linen);
+}
+
+/* A row of buttons plus a status tag, e.g. the courier's Start Driving / Go Offline. */
+.intro-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+/* A restaurant row that is itself the link or button, e.g. on the restaurants page and the dashboard list. */
+.restaurant-card {
+  text-decoration: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.restaurant-card:hover {
+  color: var(--espresso);
+  border-color: var(--cocoa);
+  box-shadow: var(--shadow-card);
+}
+
+.restaurant-card__cta {
+  color: var(--navy);
+  font-weight: 500;
+}
+
+.restaurant-card:hover .restaurant-card__cta {
+  color: var(--navy-dark);
+  text-decoration: underline;
+}
+
+.margin-top {
+  margin-top: 1rem;
 }

@@ -1,39 +1,154 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useCart } from "../CartContext";
-import { useAuth } from "../AuthContext";
-import { log } from "../outputLog";
+import { useOrderAvailability } from "./useOrderAvailability";
+import { loggedFetch, readJson, RequestError } from "../api/loggedFetch";
+import {useEffect, useRef, useState} from "react";
+import {useNavigate} from "react-router-dom";
+import {useCart} from "../CartContext";
+import {useAuth} from "../AuthContext";
+import {log, logError} from "../outputLog";
 import AppHeader from "../components/AppHeader";
 import Button from "../components/Button";
 import Heading from "../components/Heading";
 import "../styles/CartPage.css";
+import {Elements} from "@stripe/react-stripe-js";
+import {loadStripe} from "@stripe/stripe-js";
+import StripePaymentForm, {StripePaymentFormHandle} from "../components/StripePaymentForm";
+import {PricingBreakdown} from "../orders/types/PricingBreakdown";
+
+const stripePromise = loadStripe(
+    import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
+);
 
 export default function CartPage() {
     const navigate = useNavigate();
     const {
         cart,
         itemCount,
-        subtotal,
         updateQuantity,
         removeItem,
         clearCart,
     } = useCart();
-    const { accessToken, user } = useAuth();
+    const {accessToken, user} = useAuth();
+    const paymentFormRef = useRef<StripePaymentFormHandle>(null);
 
     const [placingOrder, setPlacingOrder] = useState(false);
     const [orderError, setOrderError] = useState("");
+    const [checkout, setCheckout] = useState(false);
+    const [clientSecret, setClientSecret] = useState<string>();
+    // Types the checkout value returned by the shared JSON reader without changing its use.
+    const [pricing, setPricing] = useState<PricingBreakdown | null>(null);
+    const [pricingError, setPricingError] = useState("");
 
     const isEmpty = !cart || cart.items.length === 0;
+    const availability = useOrderAvailability(cart, accessToken);
+    const isOrderDisabled = !availability.allowed || placingOrder || isEmpty;
+    const canRetryAvailability = !availability.allowed && !availability.checking;
+    // Applies availability to Place Order and offers retry only after a check has finished.
+
+    useEffect(() => {
+        if (!cart || cart.items.length === 0 || !accessToken) {
+            setPricing(null);
+            return;
+        }
+
+        setPricing(null);
+        setPricingError("");
+        // Clears the previous pricing display before loading the current selection.
+        const controller = new AbortController();
+
+        const fetchPricing = async () => {
+            try {
+                const response = await loggedFetch(
+                    "http://localhost:8080/payments/breakdown",
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${accessToken}`,
+                        },
+                        body: JSON.stringify({
+                            items: cart.items.map((item) => ({
+                                menuItemId: item.menuItem.id,
+                                quantity: item.quantity,
+                                price: item.menuItem.price,
+                            })),
+                        }),
+                        signal: controller.signal,
+                    }
+                );
+
+                const data = await readJson<PricingBreakdown>(response);
+                // Routes pricing request and JSON errors through the existing application console.
+                if (controller.signal.aborted) return;
+                // Prevents an obsolete pricing response from updating the current cart display.
+                setPricing(data);
+                setPricingError("");
+            } catch (error) {
+                if (!controller.signal.aborted) {
+                    logError(error, "Could not load the pricing breakdown.");
+                    setPricingError("Could not load the pricing breakdown.");
+                }
+                // Shows/logs genuine pricing failures while ignoring deliberate request cancellation.
+            }
+        };
+
+        fetchPricing();
+
+        return () => controller.abort();
+
+    }, [cart, accessToken]);
+
+    const proceedToCheckout = async () => {
+        if (!cart || !accessToken) return;
+        setOrderError("");
+        log("command", "Continue to checkout");
+        // Records the local checkout action; availability does not add a restriction to this step.
+        try {
+            const response = await loggedFetch("http://localhost:8080/payments/create-payment-intent", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+                body: JSON.stringify({
+                    userId: user?.id,
+                    restaurantId: cart.restaurantId,
+                    items: cart.items.map((item) => ({ menuItemId: item.menuItem.id, quantity: item.quantity, price: item.menuItem.price })),
+                }),
+            });
+            const data = await readJson<{ clientSecret: string }>(response);
+            setClientSecret(data.clientSecret);
+            setCheckout(true);
+            // Keeps the existing checkout flow while logging payment-intent request and parsing failures.
+        } catch (error) {
+            logError(error, "Could not start checkout.");
+            setOrderError("Could not start checkout. Please try again.");
+            // Exposes checkout errors in the page and console without printing the client secret.
+        }
+    };
+
+    const handleRetryAvailability = () => {
+        log("command", "Refresh order availability");
+        void availability.refreshAvailability();
+    };
+    // Starts a customer-requested retry; the hook handles lookup errors and updates the disabled state.
 
     const placeOrder = async () => {
-        if (!cart || !accessToken) return;
+        if (!cart || !accessToken || isOrderDisabled) {
+            return;
+        }
+        // Stops placement when the current selection/session is missing or R-DASH-04 blocks the order.
 
         setPlacingOrder(true);
         setOrderError("");
 
+        log("command", "Pay and place order");
+        // Records the user action separately from its subsequent backend request.
         try {
-            log("command", "POST /placeOrder");
-            const response = await fetch("http://localhost:8080/placeOrder", {
+            const canPlaceOrder = await availability.refreshAvailability();
+            if (!canPlaceOrder) {
+                return;
+            }
+            // Rechecks immediately before placement in case availability changed after rendering.
+            paymentFormRef.current?.submitPayment();
+
+            const response = await loggedFetch("http://localhost:8080/placeOrder", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -44,22 +159,26 @@ export default function CartPage() {
                     restaurantId: cart.restaurantId,
                     items: cart.items.map((item) => ({
                         menuItemId: item.menuItem.id,
+                        menuItemName: item.menuItem.name,
                         quantity: item.quantity,
                         price: item.menuItem.price,
                     })),
                 }),
             });
 
-            if (!response.ok) {
-                throw new Error(await response.text() || "Failed to place order.");
-            }
-
+            const order = await readJson<{ id: string }>(response);
+            // Uses the shared parser so an unreadable order confirmation is also logged.
             clearCart();
             alert("Order placed successfully!");
+            navigate(`/order-summary/${order.id}`);
         } catch (error) {
-            const message = error instanceof Error ? error.message : "Something went wrong.";
-            log("error", `POST /placeOrder: ${message}`);
-            setOrderError(message);
+            logError(error, "Could not place the order.");
+            setOrderError(error instanceof RequestError
+                ? error.message
+                : "Could not place the order. Please refresh availability and try again.");
+            // Shows the request helper's safe explanation while retaining generic feedback for unexpected failures.
+            void availability.refreshAvailability();
+            // Reports placement failure and refreshes the disabled state after a possible backend rejection.
         } finally {
             setPlacingOrder(false);
         }
@@ -113,41 +232,44 @@ export default function CartPage() {
 
                                     <div className="cart-item__controls">
                                         <div className="cart-qty">
-                                            <button
+                                            {!checkout && <button
                                                 type="button"
                                                 className="cart-qty__btn"
                                                 aria-label={`Decrease ${item.menuItem.name}`}
                                                 onClick={() =>
                                                     updateQuantity(item.menuItem.id, item.quantity - 1)
                                                 }
+                                                disabled={checkout}
                                             >
                                                 −
-                                            </button>
+                                            </button>}
                                             <span className="cart-qty__value" aria-live="polite">
                                                 {item.quantity}
                                             </span>
-                                            <button
+                                            {!checkout && <button
                                                 type="button"
                                                 className="cart-qty__btn"
                                                 aria-label={`Increase ${item.menuItem.name}`}
                                                 onClick={() =>
                                                     updateQuantity(item.menuItem.id, item.quantity + 1)
                                                 }
+                                                disabled={checkout}
                                             >
                                                 +
-                                            </button>
+                                            </button>}
                                         </div>
 
                                         <div className="list-card__side cart-item__side">
                                             <span className="list-card__price">
                                                 ${(item.menuItem.price * item.quantity).toFixed(2)}
                                             </span>
-                                            <Button
+                                            {!checkout && <Button
                                                 variant="link"
                                                 onClick={() => removeItem(item.menuItem.id)}
+                                                disabled={checkout}
                                             >
                                                 Remove
-                                            </Button>
+                                            </Button>}
                                         </div>
                                     </div>
                                 </li>
@@ -155,10 +277,80 @@ export default function CartPage() {
                         </ul>
 
                         <section className="cart-summary" aria-label="Order summary">
-                            <div className="cart-summary__row">
-                                <span className="caption meta">Subtotal</span>
-                                <span className="cart-summary__amount">${subtotal.toFixed(2)}</span>
-                            </div>
+                            <Heading level={3}>Order Summary</Heading>
+
+                            {pricing ? (
+                                <>
+                                    <div className="cart-summary__row">
+                                        <span className="caption meta">Subtotal</span>
+                                        <span>${pricing.subtotal.toFixed(2)}</span>
+                                    </div>
+
+                                    <div className="cart-summary__row">
+                                        <span className="caption meta">Delivery Fee</span>
+                                        <span>${pricing.deliveryFee.toFixed(2)}</span>
+                                    </div>
+
+                                    <div className="cart-summary__row">
+                                        <span className="caption meta">Service Fee</span>
+                                        <span>${pricing.serviceFee.toFixed(2)}</span>
+                                    </div>
+
+                                    {pricing.smallOrderSurcharge > 0 && (
+                                        <div className="cart-summary__row">
+                                            <span className="caption meta">
+                                                Small Order Surcharge
+                                            </span>
+                                            <span>
+                                                ${pricing.smallOrderSurcharge.toFixed(2)}
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    <div className="cart-summary__row">
+                                        <span className="caption meta">Taxable Subtotal</span>
+                                        <span>${pricing.taxableSubtotal.toFixed(2)}</span>
+                                    </div>
+
+                                    <div className="cart-summary__row">
+                                        <span className="caption meta">GST</span>
+                                        <span>${pricing.gst.toFixed(2)}</span>
+                                    </div>
+
+                                    <div className="cart-summary__row">
+                                        <span className="caption meta">QST</span>
+                                        <span>${pricing.qst.toFixed(2)}</span>
+                                    </div>
+
+                                    <div className="cart-summary__row">
+                                        <strong>Total</strong>
+                                        <strong className="cart-summary__amount">
+                                            ${pricing.total.toFixed(2)}
+                                        </strong>
+                                    </div>
+                                </>
+                            ) : (
+                                <p className="meta">
+                                    {pricingError || "Calculating order total..."}
+                                </p>
+                            )}
+
+                            {availability.reason && (
+                                <p id="order-availability" className="page__status" role="status">
+                                    {availability.reason}
+                                </p>
+                            )}
+                            {/* Explains the current Place Order restriction and announces updates accessibly. */}
+                            {canRetryAvailability && (
+                                <Button
+                                    variant="secondary"
+                                    onClick={handleRetryAvailability}
+                                    disabled={placingOrder}
+                                >
+                                    Retry availability
+                                </Button>
+                            )}
+                            {/* Lets the customer rerun a completed blocked/failed check and logs that command. */}
 
                             {orderError && (
                                 <p className="page__status page__status--error" role="alert">
@@ -166,15 +358,63 @@ export default function CartPage() {
                                 </p>
                             )}
 
-                            <div className="cart-summary__actions">
-                                <Button variant="secondary" onClick={clearCart} disabled={placingOrder}>
+                            {!checkout && <div className="cart-summary__actions">
+                                <Button variant="secondary" onClick={clearCart} disabled={placingOrder && checkout}>
                                     Clear cart
                                 </Button>
-                                <Button onClick={placeOrder} disabled={placingOrder}>
-                                    {placingOrder ? "Placing order…" : "Pay and place order"}
+                                <Button onClick={proceedToCheckout} disabled={placingOrder && checkout}>
+                                    Continue to Checkout
                                 </Button>
-                            </div>
+                            </div>}
                         </section>
+
+                        {checkout && (
+                            <section className="cart-summary" aria-label="Checkout">
+                                <Elements
+                                    stripe={stripePromise}
+                                    options={{
+                                        clientSecret: clientSecret,
+                                        appearance: {
+                                            theme: "stripe",
+                                            variables: {
+                                                colorBackground: "#F6EEDF",
+                                                colorText: "#333333",
+                                                colorPrimary: "#333333",
+                                                borderRadius: "8px",
+                                            },
+                                            rules: {
+                                                ".Input": {
+                                                    backgroundColor: "#FBF5EA",
+                                                    border: "1px solid #D8D2C2",
+                                                },
+                                                ".Input:focus": {
+                                                    border: "1px solid #333333",
+                                                    boxShadow: "none",
+                                                },
+                                            }
+                                        },
+                                    }}
+
+                                >
+                                    <StripePaymentForm ref={paymentFormRef}/>
+                                </Elements>
+
+                                <div className="cart-summary__actions">
+                                    <Button variant="secondary" onClick={() => {
+                                        log("command", "Back to cart");
+                                        // Records this local action while preserving the existing return-to-cart flow.
+                                        setCheckout(false);
+                                        setClientSecret(undefined);
+                                    }} disabled={placingOrder}>
+                                        Back to Cart
+                                    </Button>
+                                    <Button onClick={placeOrder} disabled={isOrderDisabled} aria-describedby={availability.reason ? "order-availability" : undefined}>
+                                        {placingOrder ? "Placing Order…" : "Pay and Place Order"}
+                                    </Button>
+                                    {/* Only Place Order receives the availability restriction and its explanatory text. */}
+                                </div>
+                            </section>
+                        )}
                     </>
                 )}
             </main>

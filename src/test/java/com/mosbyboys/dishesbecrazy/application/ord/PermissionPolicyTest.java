@@ -1,6 +1,7 @@
 package com.mosbyboys.dishesbecrazy.application.ord;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.math.BigDecimal;
@@ -15,6 +16,7 @@ import com.mosbyboys.dishesbecrazy.domain.ord.OrderLine;
 import com.mosbyboys.dishesbecrazy.domain.ord.Restaurant;
 import com.mosbyboys.dishesbecrazy.domain.ord.RestaurantStatus;
 import com.mosbyboys.dishesbecrazy.domain.reg.Courier;
+import com.mosbyboys.dishesbecrazy.domain.reg.CourierState;
 import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
 import com.mosbyboys.dishesbecrazy.domain.reg.Operator;
 import com.mosbyboys.dishesbecrazy.domain.ord.Location;
@@ -38,12 +40,12 @@ public class PermissionPolicyTest {
 
     private Courier courier() {
         return new Courier(UUID.randomUUID(), OffsetDateTime.now(), "A", "B", "a@b.c", "ab", "hash",
-                "OFF_DUTY", new Location(45.5, -73.6));
+                CourierState.OFFLINE, new Location(45.5, -73.6));
     }
 
     private Order orderFor(UUID customerId, UUID restaurantId) {
-        OrderLine line = new OrderLine(UUID.randomUUID(), 1, new BigDecimal("10.00"));
-        return new Order(customerId, restaurantId, List.of(line));
+        OrderLine line = new OrderLine(UUID.randomUUID(), 1, new BigDecimal("10.00"), null);
+        return new Order(customerId, restaurantId, List.of(line), new BigDecimal("10.00"));
     }
 
     // check that any customer can place an order
@@ -228,5 +230,116 @@ public class PermissionPolicyTest {
         Restaurant open = restaurantWithStatus(UUID.randomUUID(), RestaurantStatus.OPEN);
 
         assertThrows(PermissionDeniedException.class, () -> policy.checkCanBrowseMenu(null, open));
+    }
+
+    // check that an operator can pause any restaurant
+    @Test
+    void operatorCanPauseAnyRestaurant() {
+        Operator op = operator();
+        Restaurant restaurant = restaurantWithStatus(UUID.randomUUID(), RestaurantStatus.OPEN);
+        assertDoesNotThrow(() -> policy.checkCanPause(op, restaurant));
+    }
+
+    // check that a restaurant can pause itself (caller and target have the same id)
+    @Test
+    void ownerCanPauseOwnRestaurant() {
+        Restaurant restaurant = restaurantWithStatus(UUID.randomUUID(), RestaurantStatus.OPEN);
+        assertDoesNotThrow(() -> policy.checkCanPause(restaurant, restaurant));
+    }
+
+    // check that a restaurant cannot pause another restaurant (two different ids)
+    @Test
+    void ownerCannotPauseOtherRestaurant() {
+        Restaurant restaurant1 = restaurantWithStatus(UUID.randomUUID(), RestaurantStatus.OPEN);
+        Restaurant restaurant2 = restaurantWithStatus(UUID.randomUUID(), RestaurantStatus.OPEN);
+        assertThrows(PermissionDeniedException.class, () -> policy.checkCanPause(restaurant1, restaurant2));
+    }
+
+    // check that customers cannot pause a restaurant
+    @Test
+    void customerCannotPauseRestaurant() {
+        Restaurant restaurant = restaurantWithStatus(UUID.randomUUID(), RestaurantStatus.OPEN);
+        assertThrows(PermissionDeniedException.class, () -> policy.checkCanPause(customer(UUID.randomUUID()), restaurant));
+    }
+
+    // check that couriers cannot pause a restaurant
+    @Test
+    void courierCannotPauseRestaurant() {
+        Restaurant restaurant = restaurantWithStatus(UUID.randomUUID(), RestaurantStatus.OPEN);
+        assertThrows(PermissionDeniedException.class, () -> policy.checkCanPause(courier(), restaurant));
+    }
+
+    // check that a restaurant can close itself
+    @Test
+    void ownerCanCloseOwnRestaurant() {
+        Restaurant restaurant = restaurantWithStatus(UUID.randomUUID(), RestaurantStatus.OPEN);
+        assertDoesNotThrow(() -> policy.checkCanClose(restaurant, restaurant));
+    }
+
+    // check that a restaurant cannot close another restaurant
+    @Test
+    void ownerCannotCloseOtherRestaurant() {
+        Restaurant restaurant1 = restaurantWithStatus(UUID.randomUUID(), RestaurantStatus.OPEN);
+        Restaurant restaurant2 = restaurantWithStatus(UUID.randomUUID(), RestaurantStatus.OPEN);
+        assertThrows(PermissionDeniedException.class, () -> policy.checkCanClose(restaurant1, restaurant2));
+    }
+
+    // check that customers cannot close a restaurant
+    @Test
+    void customerCannotCloseRestaurant() {
+        Restaurant restaurant = restaurantWithStatus(UUID.randomUUID(), RestaurantStatus.OPEN);
+        assertThrows(PermissionDeniedException.class, () -> policy.checkCanClose(customer(UUID.randomUUID()), restaurant));
+    }
+
+    // check that a null caller cannot pause a restaurant
+    @Test
+    void nullCallerCannotPause() {
+        Restaurant restaurant = restaurantWithStatus(UUID.randomUUID(), RestaurantStatus.OPEN);
+        assertThrows(PermissionDeniedException.class, () -> policy.checkCanPause(null, restaurant));
+
+    }
+
+    // check that an operator can open any restaurant
+    @Test
+    void operatorCanOpenAnyRestaurant() {
+        Operator op = operator();
+        Restaurant restaurant = restaurantWithStatus(UUID.randomUUID(), RestaurantStatus.PAUSED);
+        assertDoesNotThrow(() -> policy.checkCanOpen(op, restaurant));
+    }
+
+    // check that a restaurant can open itself (caller and target have the same id)
+    @Test
+    void ownerCanOpenOwnRestaurant() {
+        Restaurant restaurant = restaurantWithStatus(UUID.randomUUID(), RestaurantStatus.PAUSED);
+        assertDoesNotThrow(() -> policy.checkCanOpen(restaurant, restaurant));
+    }
+
+    // check that a restaurant cannot open another restaurant (two different ids)
+    @Test
+    void ownerCannotOpenOtherRestaurant() {
+        Restaurant restaurant1 = restaurantWithStatus(UUID.randomUUID(), RestaurantStatus.PAUSED);
+        Restaurant restaurant2 = restaurantWithStatus(UUID.randomUUID(), RestaurantStatus.PAUSED);
+        assertThrows(PermissionDeniedException.class, () -> policy.checkCanOpen(restaurant1, restaurant2));
+    }
+
+    // check that customers cannot open a restaurant
+    @Test
+    void customerCannotOpenRestaurant() {
+        Restaurant restaurant = restaurantWithStatus(UUID.randomUUID(), RestaurantStatus.PAUSED);
+        assertThrows(PermissionDeniedException.class, () -> policy.checkCanOpen(customer(UUID.randomUUID()), restaurant));
+    }
+
+    // check that couriers cannot open a restaurant
+    @Test
+    void courierCannotOpenRestaurant() {
+        Restaurant restaurant = restaurantWithStatus(UUID.randomUUID(), RestaurantStatus.PAUSED);
+        assertThrows(PermissionDeniedException.class, () -> policy.checkCanOpen(courier(), restaurant));
+    }
+
+    // check that a null caller cannot open a restaurant
+    @Test
+    void nullCallerCannotOpen() {
+        Restaurant restaurant = restaurantWithStatus(UUID.randomUUID(), RestaurantStatus.PAUSED);
+        assertThrows(PermissionDeniedException.class, () -> policy.checkCanOpen(null, restaurant));
     }
 }

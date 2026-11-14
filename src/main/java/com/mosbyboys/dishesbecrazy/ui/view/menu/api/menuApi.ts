@@ -1,26 +1,42 @@
+import { loggedFetch, readJson } from "../../api/loggedFetch";
 import type { Restaurant, MenuItem } from "../types/menu";
-import { log } from "../../outputLog";
 
 const API = "http://localhost:8080";
 
-async function get<T>(path: string, token: string): Promise<T> {
-  log("command", `GET ${path}`);
-  const response = await fetch(API + path, {
+async function get<T>(path: string, token: string, signal?: AbortSignal): Promise<T> {
+  const response = await loggedFetch(API + path, {
+    headers: { Authorization: `Bearer ${token}` },
+    signal,
+  });
+  // Logs menu/restaurant reads through the shared helper and allows obsolete checks to be canceled.
+  return readJson(response);
+  // Reports JSON parsing failures through the same output console as request failures.
+}
+
+async function post<T>(path: string, token: string): Promise<T> {  
+  const response = await loggedFetch(API + path, {
+    method: "POST",
     headers: { Authorization: `Bearer ${token}` },
   });
-
-  if (!response.ok) {
-    const message = (await response.text()) || `Request failed (${response.status})`;
-    log("error", `GET ${path} → ${response.status}: ${message}`);
-    throw new Error(message);
-  }
-  return response.json();
+  return readJson(response);
 }
 
-export function getRestaurants(token: string): Promise<Restaurant[]> {
-  return get("/api/restaurants", token);
+export function getRestaurants(token: string, signal?: AbortSignal): Promise<Restaurant[]> {
+  return get("/api/restaurants", token, signal);
 }
 
-export function getMenu(token: string, restaurantId: string): Promise<MenuItem[]> {
-  return get(`/api/restaurants/${restaurantId}/menu`, token);
+export function getMenu(token: string, restaurantId: string, signal?: AbortSignal): Promise<MenuItem[]> {
+  return get(`/api/restaurants/${restaurantId}/menu`, token, signal);
+}
+
+export function pauseRestaurant(token: string, restaurantId: string): Promise<Restaurant> {
+  return post(`/api/restaurants/${restaurantId}/pause`, token);
+}
+
+export function openRestaurant(token: string, restaurantId: string): Promise<Restaurant> {
+  return post(`/api/restaurants/${restaurantId}/open`, token);
+}
+
+export function closeRestaurant(token: string, restaurantId: string): Promise<Restaurant> {
+  return post(`/api/restaurants/${restaurantId}/close`, token);
 }

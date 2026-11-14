@@ -1,0 +1,51 @@
+.op-couriers__avatar {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--tomato) 18%, var(--porcelain));
+  color: var(--tomato-dark);
+  font-weight: 600;
+}
+
+.op-couriers__item + .op-couriers__item {
+  border-top: var(--border-width) solid var(--linen);
+}
+
+.op-couriers__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-5);
+  border-top: var(--border-width) solid var(--linen);
+  background: var(--porcelain);
+}
+
+.op-couriers__panel .caption {
+  margin: var(--space-2) 0 0;
+}
+
+.op-couriers__options {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.op-couriers__option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+}
+
+.op-couriers__option--suggested {
+  background: var(--cream);
+}
+
+.op-couriers__option .btn {
+  flex-shrink: 0;
+  margin: 0;
+}

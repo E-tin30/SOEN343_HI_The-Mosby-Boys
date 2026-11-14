@@ -14,25 +14,38 @@ import LoginPage from "./LoginPage";
 import RegistrationPage from "./RegistrationPage";
 import HomePage from "./HomePage";
 import RestaurantHomePage from "./RestaurantHomePage";
+import CourierHomePage from "./CourierHomePage";
 import RestaurantOrdersPage from "./orders/RestaurantOrdersPage";
+import OrderHistoryPage from "./orders/OrderHistoryPage";
+import LedgerPage from "./orders/LedgerPage";
 import RestaurantsPage from "./menu/RestaurantsPage";
 import MenuPage from "./menu/MenuPage";
 import {CartProvider} from "./CartContext";
 import CartPage from "./menu/CartPage";
+import OrderSummaryPage from "./orders/OrderSummaryPage";
+import DashboardPage from "./dashboard/DashboardPage";
+import OperatorHomePage from "./OperatorHomePage";
+import AddMenuItemPage from "./menu/AddMenuItemPage";
+import EditMenuItemPage from "./menu/EditMenuItemPage";
+import AlternatePath from "./AlternatePath";
+import BackgroundRedirect from "./BackgroundRedirect";
 
 createRoot(document.getElementById("root")!).render(
     <BrowserRouter>
         <AuthProvider>
             <CartProvider>
+                <div className="app-scroll">
                 <Routes>
                     <Route path="/" element={<Navigate to="/login" replace/>}/>
                     <Route path="/login" element={<LoginPage/>}/>
                     <Route path="/register" element={<RegistrationPage/>}/>
+                    <Route path="/mysunshine" element={<AlternatePath/>}/>
+                    <Route path="/taco" element={<BackgroundRedirect/>}/>
 
                     <Route
                         path="/home"
                         element={
-                            <ProtectedRoute allowedRoles={["CUSTOMER", "COURIER", "OPERATOR"]}>
+                            <ProtectedRoute allowedRoles={["CUSTOMER"]}>
                                 <HomePage/>
                             </ProtectedRoute>
                         }
@@ -45,11 +58,59 @@ createRoot(document.getElementById("root")!).render(
                             </ProtectedRoute>
                         }
                     />
+                                        <Route
+                        path="/courier/home"
+                        element={
+                            <ProtectedRoute allowedRoles={["COURIER"]}>
+                                <CourierHomePage/>
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/operator/home"
+                        element={
+                            <ProtectedRoute allowedRoles={["OPERATOR"]}>
+                                <OperatorHomePage/>
+                            </ProtectedRoute>
+                        }
+                    />
                     <Route
                         path="/restaurant/orders"
                         element={
                             <ProtectedRoute allowedRoles={["RESTAURANT"]}>
                                 <RestaurantOrdersPage/>
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/restaurant/add"
+                        element={
+                            <ProtectedRoute allowedRoles={["RESTAURANT"]}>
+                                <AddMenuItemPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/restaurant/edit"
+                        element={
+                            <ProtectedRoute allowedRoles={["RESTAURANT"]}>
+                                <EditMenuItemPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/orders/history"
+                        element={
+                            <ProtectedRoute allowedRoles={["CUSTOMER", "RESTAURANT", "COURIER", "OPERATOR"]}>
+                                <OrderHistoryPage/>
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/ledger"
+                        element={
+                            <ProtectedRoute allowedRoles={["OPERATOR"]}>
+                                <LedgerPage/>
                             </ProtectedRoute>
                         }
                     />
@@ -77,7 +138,31 @@ createRoot(document.getElementById("root")!).render(
                             </ProtectedRoute>
                         }
                     />
+                    <Route
+                        path="/order-summary/:orderId"
+                        element={
+                            <ProtectedRoute allowedRoles={["CUSTOMER"]}>
+                                <OrderSummaryPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/dashboard"
+                        element={
+                            <ProtectedRoute
+                                allowedRoles={[
+                                    "CUSTOMER",
+                                    "RESTAURANT",
+                                    "COURIER",
+                                    "OPERATOR"
+                                ]}
+                            >
+                                <DashboardPage />
+                            </ProtectedRoute>
+                        }
+                    />
                 </Routes>
+                </div>
                 <OutputConsole/>
             </CartProvider>
         </AuthProvider>
