@@ -96,8 +96,9 @@ final class DemoOrderFixtureValidator {
             pickedUp |= "PICKUP".equals(event.action());
         }
         Assert.isTrue(state.toString().equals(order.state()), "Event history must end at the order's current state.");
-        Assert.isTrue(pickedUp || order.courierUsername() == null,
-                "A seeded courier reference requires pickup history.");
+        // A READY order may already be accepted by its courier (a stalled delivery the operator can reassign)
+        Assert.isTrue(pickedUp || order.courierUsername() == null || "ReadyState".equals(order.state()),
+                "A seeded courier reference requires pickup history or a READY order.");
     }
     // Replays domain transitions rather than maintaining a second list of legal state changes.
 

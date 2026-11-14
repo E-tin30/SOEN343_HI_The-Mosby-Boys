@@ -26,7 +26,7 @@
     "lastName": "Demo",
     "username": "demo_courier",
     "role": "COURIER",
-    "state": "OFFLINE",
+    "state": "ASSIGNED",
     "latitude": 45.5200,
     "longitude": -73.5800
   },
@@ -36,9 +36,19 @@
     "lastName": "Demo",
     "username": "demo_courier2",
     "role": "COURIER",
-    "state": "OFFLINE",
+    "state": "IDLE",
     "latitude": 45.4700,
     "longitude": -73.6200
+  },
+  {
+    "email": "courier3.demo@example.com",
+    "firstName": "Morgan",
+    "lastName": "Demo",
+    "username": "demo_courier3",
+    "role": "COURIER",
+    "state": "IDLE",
+    "latitude": 45.4950,
+    "longitude": -73.5550
   },
   {
     "email": "operator.demo@example.com",

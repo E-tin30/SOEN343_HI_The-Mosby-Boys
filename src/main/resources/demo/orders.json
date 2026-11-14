@@ -528,5 +528,57 @@
       }
     ],
     "courierUsername": "demo_courier"
+  },
+  {
+    "id": "34310000-0000-4000-8000-000000000215",
+    "customerUsername": "demo_customer",
+    "restaurantUsername": "demo_restaurant",
+    "state": "ReadyState",
+    "placedAt": "2026-01-15T19:00:00Z",
+    "subtotal": 12.00,
+    "lines": [
+      {
+        "id": "34320000-0000-4000-8000-000000000215",
+        "menuItemId": "34300000-0000-4000-8000-000000000103",
+        "menuItemName": "Pierogi (6)",
+        "quantity": 1,
+        "unitPrice": 12.00
+      }
+    ],
+    "events": [
+      {
+        "id": "34330000-0000-4000-8000-000000002151",
+        "action": "PLACE",
+        "previousState": null,
+        "newState": "PlacedState",
+        "createdAt": "2026-01-15T19:00:00Z",
+        "performedByUsername": "demo_customer"
+      },
+      {
+        "id": "34330000-0000-4000-8000-000000002152",
+        "action": "ACCEPT",
+        "previousState": "PlacedState",
+        "newState": "AcceptedState",
+        "createdAt": "2026-01-15T19:01:00Z",
+        "performedByUsername": "demo_restaurant"
+      },
+      {
+        "id": "34330000-0000-4000-8000-000000002153",
+        "action": "PREPARING",
+        "previousState": "AcceptedState",
+        "newState": "PreparingState",
+        "createdAt": "2026-01-15T19:05:00Z",
+        "performedByUsername": "demo_restaurant"
+      },
+      {
+        "id": "34330000-0000-4000-8000-000000002154",
+        "action": "READY",
+        "previousState": "PreparingState",
+        "newState": "ReadyState",
+        "createdAt": "2026-01-15T19:15:00Z",
+        "performedByUsername": "demo_restaurant"
+      }
+    ],
+    "courierUsername": "demo_courier"
   }
 ]

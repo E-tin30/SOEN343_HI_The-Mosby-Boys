@@ -33,6 +33,8 @@ import com.mosbyboys.dishesbecrazy.domain.ord.Order;
 import com.mosbyboys.dishesbecrazy.domain.ord.state.OrderStates;
 import com.mosbyboys.dishesbecrazy.technical.security.DemoStateAccess;
 import com.mosbyboys.dishesbecrazy.domain.reg.Role;
+import com.mosbyboys.dishesbecrazy.domain.reg.CourierState;
+import com.mosbyboys.dishesbecrazy.application.dlv.CourierData;
 import com.mosbyboys.dishesbecrazy.domain.reg.User;
 
 import tools.jackson.databind.json.JsonMapper;
@@ -80,8 +82,13 @@ class ResetServiceIntegrationTest {
                     row.getString("rejection_reason"), row.getBigDecimal("subtotal")));
         });
         queues = new OrderQueues();
-        // No courier is online, so every READY order goes back in the global ready queue.
-        var dispatchQueue = new DispatchQueueLoader(orders, queues, mock(CourierService.class), mock(DispatchService.class));
+        // Couriers are read from the restored rows, so an accepted READY order stays out of the global ready queue.
+        var couriers = mock(CourierService.class);
+        when(couriers.getOnlineCouriers()).thenAnswer(call -> jdbc.query("""
+                SELECT user_id, state, latitude, longitude FROM public."Courier" WHERE state <> 'OFFLINE'
+                """, (row, index) -> new CourierData(row.getObject("user_id", UUID.class),
+                CourierState.valueOf(row.getString("state")), row.getDouble("latitude"), row.getDouble("longitude"))));
+        var dispatchQueue = new DispatchQueueLoader(orders, queues, couriers, mock(DispatchService.class));
         reset = new ResetService(registration, database, new OrderQueueLoader(orders, queues), dispatchQueue, new DemoStateAccess(), mock(LedgerService.class));
     }
     // Restoration and queue rebuilding are real; only caller lookup and the OrderService read boundary use test adapters.
@@ -113,7 +120,7 @@ class ResetServiceIntegrationTest {
         assertEquals(10, jdbc.queryForObject("SELECT stock_quantity FROM public.\"MenuItem\" WHERE id = ?",
                 Integer.class, progressed.lines().getFirst().menuItemId()));
         assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM public.\"Order\" WHERE id = ?", Integer.class, extraOrder));
-        assertEquals(35, jdbc.queryForObject("SELECT COUNT(*) FROM public.\"Event\"", Integer.class));
+        assertEquals(39, jdbc.queryForObject("SELECT COUNT(*) FROM public.\"Event\"", Integer.class));
         assertEquals(0, retainedPlaced.size());
         assertEquals(0, retainedReady.size());
         assertEquals(0, retainedPreparation.size());
@@ -170,7 +177,7 @@ class ResetServiceIntegrationTest {
         restore();
 
         List<UUID> baselineReady = jdbc.queryForList(
-                "SELECT id FROM public.\"Order\" WHERE state = 'ReadyState' ORDER BY created_at ASC", UUID.class);
+                "SELECT id FROM public.\"Order\" WHERE state = 'ReadyState' AND courier_id IS NULL ORDER BY created_at ASC", UUID.class);
         assertEquals(baselineReady, queues.globalReadySnapshot());
     }
     // An ID left over from before Reset would make the next dispatch fail to load its order.
@@ -192,7 +199,8 @@ class ResetServiceIntegrationTest {
 
         assertBaselineQueues();
         assertEquals("AcceptedState", state(progressed.id()));
-        assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM public.\"Order\" WHERE state IN ('ReadyState', 'PickedUpState')", Integer.class));
+        int baselineReady = (int) baseline.orders().stream().filter(order -> order.state().equals("ReadyState")).count();
+        assertEquals(baselineReady, jdbc.queryForObject("SELECT COUNT(*) FROM public.\"Order\" WHERE state IN ('ReadyState', 'PickedUpState')", Integer.class));
         var initial = baseline.accounts().stream().filter(account -> account.role() == Role.COURIER).findFirst().orElseThrow();
         var restored = jdbc.queryForMap("SELECT state, latitude, longitude FROM public.\"Courier\" WHERE user_id = ?", courier);
         assertEquals(initial.state(), restored.get("state"));
@@ -223,7 +231,8 @@ class ResetServiceIntegrationTest {
             for (var order : expected) assertTrue(queues.preparation(id).contains(order.id()));
             if (!expected.isEmpty()) assertEquals(expected.getFirst().id(), queues.preparation(id).peek());
             assertEquals(0, queues.placed(id).size());
-            assertEquals(0, queues.ready(id).size());
+            assertEquals(baseline.orders().stream().filter(order -> order.restaurantUsername().equals(account.username())
+                    && order.state().equals("ReadyState")).count(), queues.ready(id).size());
         }
     }
 }

@@ -73,8 +73,9 @@ Password for all of them: `DEMO_SEED_PASSWORD` from `.env`.
 | Home cook - Sam's Family Kitchen | `restaurant.demo@example.com` |
 | Home cook - Robin's Sunday Kitchen | `restaurant2.demo@example.com` |
 | Home cook - Casey's Home Kitchen | `restaurant3.demo@example.com` |
-| Courier - Jo (near the kitchens) | `courier.demo@example.com` |
-| Courier - Riley (farther away) | `courier2.demo@example.com` |
+| Courier - Jo (assigned to a stalled order) | `courier.demo@example.com` |
+| Courier - Riley (idle, far away) | `courier2.demo@example.com` |
+| Courier - Morgan (idle, near Sam's) | `courier3.demo@example.com` |
 | Operator | `operator.demo@example.com` |
 
 Run initial setup from `src/main/resources/demo/` using the database configured in `.env`:
@@ -89,7 +90,7 @@ The seed profile runs without an HTTP server and exits after the runners finish.
 ./mvnw spring-boot:run
 ```
 
-For the starting data, the four scenario scripts and a manual results checklist, see [Phase III demo walkthroughs](docs/demo-walkthroughs.md). Reset restores the fixture starting state globally: it clears everyone's order activity, removes accounts and menus outside the fixtures (including non-fixture Auth users), restores fixture values and history, and rebuilds both restaurant and dispatch queues. The six fixture Auth accounts keep their IDs and logins; deleted accounts' emails can be registered again. Use the fixture accounts after Reset.
+For the starting data, the four scenario scripts and a manual results checklist, see [Phase III demo walkthroughs](docs/demo-walkthroughs.md). Reset restores the fixture starting state globally: it clears everyone's order activity, removes accounts and menus outside the fixtures (including non-fixture Auth users), restores fixture values and history, and rebuilds both restaurant and dispatch queues. The eight fixture Auth accounts keep their IDs and logins; deleted accounts' emails can be registered again. Use the fixture accounts after Reset.
 
 ## Tests
 
