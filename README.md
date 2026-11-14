@@ -68,7 +68,8 @@ Password for all of them: `DEMO_SEED_PASSWORD` from `.env`.
 | Home cook - Sam's Family Kitchen | `restaurant.demo@example.com` |
 | Home cook - Robin's Sunday Kitchen | `restaurant2.demo@example.com` |
 | Home cook - Casey's Home Kitchen | `restaurant3.demo@example.com` |
-| Courier | `courier.demo@example.com` |
+| Courier - Jo (near the kitchens) | `courier.demo@example.com` |
+| Courier - Riley (farther away) | `courier2.demo@example.com` |
 | Operator | `operator.demo@example.com` |
 
 Run initial setup from `src/main/resources/demo/` using the database configured in `.env`:

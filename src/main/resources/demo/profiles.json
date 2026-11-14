@@ -31,6 +31,16 @@
     "longitude": -73.5800
   },
   {
+    "email": "courier2.demo@example.com",
+    "firstName": "Riley",
+    "lastName": "Demo",
+    "username": "demo_courier2",
+    "role": "COURIER",
+    "state": "OFFLINE",
+    "latitude": 45.4700,
+    "longitude": -73.6200
+  },
+  {
     "email": "operator.demo@example.com",
     "firstName": "Pat",
     "lastName": "Demo",

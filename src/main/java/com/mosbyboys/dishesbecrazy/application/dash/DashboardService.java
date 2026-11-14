@@ -36,5 +36,10 @@ public class DashboardService {
     public List<CourierData> getOnlineCouriers(){
         return dlvFacade.getOnlineCouriers();
     }
+
+    // Ready orders no courier has accepted yet, so the operator can be alerted (No Courier Available scenario)
+    public int getDispatchQueueLength() {
+        return orderQueues.globalReadySnapshot().size();
+    }
 }
 

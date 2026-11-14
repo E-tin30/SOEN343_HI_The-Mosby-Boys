@@ -292,9 +292,9 @@ class DemoDataRestorerTest {
         assertEquals(users.size(), jdbc.queryForObject("SELECT COUNT(*) FROM auth.users", Integer.class));
         assertEquals(users.values().stream().sorted().toList(),
                 jdbc.queryForList("SELECT id FROM auth.users", UUID.class).stream().sorted().toList());
-        assertEquals(6, count("User"));
+        assertEquals(7, count("User"));
         assertEquals(1, count("Customer"));
-        assertEquals(1, count("Courier"));
+        assertEquals(2, count("Courier"));
         assertEquals(3, count("Restaurant"));
         assertEquals(12, count("MenuItem"));
         assertEquals(13, count("Order"));
@@ -350,7 +350,7 @@ class DemoDataRestorerTest {
                     SELECT COUNT(*) FROM public."Order" WHERE restaurant_id = ? AND state = 'AcceptedState'
                     """, Integer.class, users.get(entry.getKey())));
         }
-        assertEquals("OFFLINE", jdbc.queryForObject("SELECT state FROM public.\"Courier\"", String.class));
+        assertEquals(List.of("OFFLINE"), jdbc.queryForList("SELECT DISTINCT state FROM public.\"Courier\"", String.class));
     }
 
     private UUID unrelatedOrder() {

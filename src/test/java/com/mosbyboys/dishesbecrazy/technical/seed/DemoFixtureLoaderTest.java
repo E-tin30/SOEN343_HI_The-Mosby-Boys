@@ -33,7 +33,7 @@ class DemoFixtureLoaderTest {
     void loadsDemoProfilesWithoutExternalServices() throws Exception {
         DemoFixtures fixtures = loader.load();
 
-        assertEquals(6, fixtures.accounts().size());
+        assertEquals(7, fixtures.accounts().size());
         assertEquals(Role.CUSTOMER, fixtures.accounts().getFirst().role());
         assertEquals("demo_customer", fixtures.accounts().getFirst().username());
         var restaurants = fixtures.accounts().stream().filter(a -> a.role() == Role.RESTAURANT).toList();
