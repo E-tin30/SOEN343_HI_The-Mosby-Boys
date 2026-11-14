@@ -8,7 +8,7 @@ import Tag from "./Tag";
 import "./OperatorRestaurantList.css";
 import "./OperatorCourierList.css";
 
-const shortId = (id: string) => `Courier ${id.slice(0, 8)}`;
+const shortId = (id: string) => `Courier ID ${id.slice(0, 8)}`;
 
 // Rough km between two points, good enough at city scale
 const distanceKm = (a: IdleCourier, b: CourierData) => {
@@ -69,7 +69,7 @@ export default function OperatorCourierList() {
                 </span>
                 <span className="op-restaurants__meta">{distanceKm(idle, from).toFixed(1)} km from current courier</span>
             </div>
-            <Button variant={suggested ? "secondary" : "link"} disabled={saving} onClick={() => assign(from.id, idle.id)}>
+            <Button variant="secondary" disabled={saving} onClick={() => assign(from.id, idle.id)}>
                 Assign
             </Button>
         </li>
