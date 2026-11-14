@@ -5,6 +5,7 @@ import Button from "./components/Button";
 import DemoResetControl from "./components/DemoResetControl";
 import Heading from "./components/Heading";
 import OperatorRestaurantList from "./components/OperatorRestaurantList"
+import OperatorCourierList from "./components/OperatorCourierList";
 
 export default function OperatorHomePage() {
   const navigate = useNavigate();
@@ -45,6 +46,7 @@ export default function OperatorHomePage() {
           </div>
         </section>
         <OperatorRestaurantList />
+        <OperatorCourierList />
       </main>
     </div>
   );

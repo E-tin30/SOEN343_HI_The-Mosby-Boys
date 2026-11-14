@@ -63,11 +63,11 @@ public class OrderQueues {
         if (orderId == null) {
             throw new IllegalArgumentException("Order ID cannot be null");
         }
-        
+
         if (globalReady.contains(orderId)) {
             throw new IllegalArgumentException("Order already queued");
         }
-        
+
         globalReady.add(orderId);
     }
 

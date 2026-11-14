@@ -1,6 +1,7 @@
 package com.mosbyboys.dishesbecrazy.ui.controller;
 
 import java.util.UUID;
+import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +16,7 @@ import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
 import com.mosbyboys.dishesbecrazy.domain.ord.Order;
 import com.mosbyboys.dishesbecrazy.domain.reg.CourierState;
 import com.mosbyboys.dishesbecrazy.domain.reg.Role;
+import com.mosbyboys.dishesbecrazy.application.dlv.CourierData;
 
 import lombok.RequiredArgsConstructor;
 
@@ -127,6 +129,32 @@ public class CourierController {
     public ResponseEntity<Void> confirmDelivery(@AuthenticationPrincipal Jwt jwt,@PathVariable UUID orderId) {
         UUID courierId = getCourierId(jwt);
         dlvFacade.confirmDelivery(courierId, orderId);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    private void checkOperator(Jwt jwt) {
+        UUID userId = UUID.fromString(jwt.getSubject());
+
+        if (regFacade.getCurrentUser(userId).getRole() != Role.OPERATOR) {
+            throw new ResponseStatusException(
+                HttpStatus.FORBIDDEN,
+                "Only operators can perform this action"
+            );
+        }
+    }
+
+    @GetMapping("/{courierId}/idle")
+    public ResponseEntity<List<CourierData>> getOtherUnofferedIdleCouriers(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID courierId) {
+        checkOperator(jwt);
+        return ResponseEntity.ok(dlvFacade.getOtherUnofferedIdleCouriers(courierId));
+    }
+
+    @PostMapping("/{oldCourierId}/swap/{newCourierId}")
+    public ResponseEntity<Void> swapCourier(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID oldCourierId,@PathVariable UUID newCourierId) {
+        checkOperator(jwt);
+
+        dlvFacade.reassignCourier(oldCourierId, newCourierId);
 
         return ResponseEntity.noContent().build();
     }
