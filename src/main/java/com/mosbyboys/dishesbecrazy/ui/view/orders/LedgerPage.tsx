@@ -29,8 +29,6 @@ export default function LedgerPage() {
             .catch((e: Error) => setError(e.message));
     }, [accessToken]);
 
-    const balance = entries?.reduce((sum, e) => sum + e.amount, 0) ?? 0;
-
     return (
         <div className="page">
             <AppHeader>
@@ -65,7 +63,7 @@ export default function LedgerPage() {
                                         <td>
                                             <strong>{e.restaurantName}</strong>
                                             <span className="meta ledger__sub">
-                                                #{e.orderId.slice(0, 8)} · placed {time(e.placedAt)}
+                                                #{e.orderId.slice(-6)} · placed {time(e.placedAt)}
                                             </span>
                                         </td>
                                         <td>
@@ -80,12 +78,6 @@ export default function LedgerPage() {
                                     </tr>
                                 ))}
                             </tbody>
-                            <tfoot>
-                                <tr>
-                                    <td colSpan={4}>Net</td>
-                                    <td className="ledger__amount">{money(balance)}</td>
-                                </tr>
-                            </tfoot>
                         </table>
                     </section>
                 )}

@@ -15,7 +15,7 @@ export default function ActiveOrderDetails({ order }: ActiveOrderDetailsProps) {
             </Tag>
 
             <div className="active-order__top">
-                <span className="caption meta">{`Order #${order.id.slice(0, 6)}`}</span>
+                <span className="caption meta">{`Order #${order.id.slice(-6)}`}</span>
                 <span className="active-order__restaurant">{order.restaurantName}</span>
             </div>
 

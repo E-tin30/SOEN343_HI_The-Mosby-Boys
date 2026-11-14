@@ -151,7 +151,7 @@ export default function RestaurantOrdersPage() {
                       {queueOrders.map((order) => (
                         <li key={order.id} className="list-card order-card">
                           <div className="order-card__top">
-                            <Heading level={3}>{`Order #${order.id.slice(0, 6)}`}</Heading>
+                            <Heading level={3}>{`Order #${order.id.slice(-6)}`}</Heading>
                             <span className="meta">{formatTime(order.placedAt)}</span>
                           </div>
 
