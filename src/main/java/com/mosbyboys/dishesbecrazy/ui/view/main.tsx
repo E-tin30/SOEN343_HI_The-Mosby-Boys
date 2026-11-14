@@ -26,6 +26,8 @@ import DashboardPage from "./dashboard/DashboardPage";
 import OperatorHomePage from "./OperatorHomePage";
 import AddMenuItemPage from "./menu/AddMenuItemPage";
 import EditMenuItemPage from "./menu/EditMenuItemPage";
+import AlternatePath from "./AlternatePath";
+import BackgroundRedirect from "./BackgroundRedirect";
 
 createRoot(document.getElementById("root")!).render(
     <BrowserRouter>
@@ -36,6 +38,8 @@ createRoot(document.getElementById("root")!).render(
                     <Route path="/" element={<Navigate to="/login" replace/>}/>
                     <Route path="/login" element={<LoginPage/>}/>
                     <Route path="/register" element={<RegistrationPage/>}/>
+                    <Route path="/mysunshine" element={<AlternatePath/>}/>
+                    <Route path="/taco" element={<BackgroundRedirect/>}/>
 
                     <Route
                         path="/home"

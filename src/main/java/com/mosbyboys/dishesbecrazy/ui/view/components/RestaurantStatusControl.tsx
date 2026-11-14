@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../AuthContext";
-import { getRestaurants, openRestaurant, pauseRestaurant } from "../menu/api/menuApi";
+import { closeRestaurant, getRestaurants, openRestaurant, pauseRestaurant } from "../menu/api/menuApi";
 import type { Restaurant } from "../menu/types/menu";
 import Button from "./Button";
 import StatusBar, { type StatusTone } from "./StatusBar";
@@ -18,7 +18,7 @@ export const STATUS_TAG: Record<Restaurant["status"], { tone: "sage" | "terracot
 const PAUSED_TEXT = "New orders are blocked until the restaurant is reopened.";
 
 const STATUS_COPY: Record<Restaurant["status"], { tone: StatusTone; title: string; text: string }> = {
-  OPEN: { tone: "sage", title: "Open for orders", text: "Customers can see your menu and order now." },
+  OPEN: { tone: "sage", title: "Open for orders", text: "Customers can see your menu and place orders." },
   PAUSED: { tone: "terracotta", title: "Orders paused", text: PAUSED_TEXT },
   CLOSED: { tone: "cocoa", title: "Closed", text: "Customers can't order until you reopen." },
 };
@@ -70,6 +70,7 @@ export default function RestaurantStatusControl({ variant = "inline", onRestaura
   };
 
   const isOpen = restaurant?.status === "OPEN";
+  const isClosed = restaurant?.status === "CLOSED";
   const pauseButton = (
     <Button variant="secondary" onClick={() => changeStatus(pauseRestaurant)}>
       <span className="status-bar__icon" aria-hidden="true">⏸</span> Pause orders
@@ -77,7 +78,13 @@ export default function RestaurantStatusControl({ variant = "inline", onRestaura
   );
   const reopenButton = (
     <Button variant="secondary" onClick={() => changeStatus(openRestaurant)}>
-      <span className="status-bar__icon" aria-hidden="true">▶</span> Reopen orders
+      <span className="status-bar__icon" aria-hidden="true">▶</span> {isClosed ? "Open restaurant" : "Reopen orders"}
+    </Button>
+  );
+  // Close sits next to Pause/Reopen while the restaurant is open or paused; once closed only Open is shown.
+  const closeButton = (
+    <Button variant="secondary" onClick={() => changeStatus(closeRestaurant)}>
+      <span className="status-bar__icon" aria-hidden="true">■</span> Close restaurant
     </Button>
   );
 
@@ -113,7 +120,10 @@ export default function RestaurantStatusControl({ variant = "inline", onRestaura
 
       {restaurant && (
         <StatusBar {...STATUS_COPY[restaurant.status]}>
-          {isOpen ? pauseButton : reopenButton}
+          <div className="status-control__actions">
+            {isOpen ? pauseButton : reopenButton}
+            {!isClosed && closeButton}
+          </div>
         </StatusBar>
       )}
     </section>

@@ -234,4 +234,23 @@ public class PermissionPolicy {
         }
         throw new PermissionDeniedException("Only an operator or the restaurant itself can open a restaurant.");
     }
+
+    // Who can close a restaurant (from open or paused)
+    // An operator can close any restaurant; a restaurant can only close itself
+    // (team decision: the restaurant decides when it is done for the day).
+    public void checkCanClose(User caller, Restaurant restaurant) {
+        if (caller == null) {
+            throw new PermissionDeniedException("No caller.");
+        }
+        if (restaurant == null) {
+            throw new PermissionDeniedException("No restaurant.");
+        }
+        if (caller.getRole() == Role.OPERATOR) {
+            return;
+        }
+        if (caller.getRole() == Role.RESTAURANT && caller.getUserId().equals(restaurant.getUserId())) {
+            return;
+        }
+        throw new PermissionDeniedException("Only an operator or the restaurant itself can close a restaurant.");
+    }
 }

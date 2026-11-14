@@ -82,6 +82,9 @@ export default function DashboardPage() {
                                 <span className="dashboard-map__legend-item">
                                     <span className="legend-swatch legend-swatch--paused" /> Paused
                                 </span>
+                                <span className="dashboard-map__legend-item">
+                                    <span className="legend-swatch legend-swatch--closed" /> Closed
+                                </span>
                             </div>
                             <div className="dashboard-map__legend-group">
                                 <span className="caption meta">Couriers</span>

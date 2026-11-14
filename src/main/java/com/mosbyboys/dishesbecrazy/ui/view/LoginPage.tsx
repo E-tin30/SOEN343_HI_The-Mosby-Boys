@@ -1,6 +1,6 @@
 import { loggedFetch, readJson, RequestError } from "./api/loggedFetch";
 
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type KeyboardEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth, type LoginTokens } from "./AuthContext";
 import { getHomeRoute } from "./roleRoutes";
@@ -9,6 +9,7 @@ import Button from "./components/Button";
 import Heading from "./components/Heading";
 import Input from "./components/Input";
 import TextLogo from "./components/TextLogo";
+import ClickableHotspot from "./components/ClickableHotspot";
 import "./styles/LoginPage.css";
 
 export default function LoginPage() {
@@ -17,6 +18,20 @@ export default function LoginPage() {
 
     const navigate = useNavigate();
     const { completeLogin } = useAuth();
+
+    // Easter egg
+    const handleKeyDown = (e: KeyboardEvent<HTMLFormElement>) => {
+        if (e.key !== "Enter") return;
+
+        const formData = new FormData(e.currentTarget);
+        const email = String(formData.get("email") ?? "").trim().toLowerCase();
+        const password = String(formData.get("password") ?? "");
+
+        if (email === "mysunshine" && password === "zaydenandjalen") {
+            e.preventDefault();
+            navigate("/mysunshine");
+        }
+    };
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -61,7 +76,8 @@ export default function LoginPage() {
 
     return (
         <main className="login-page">
-            <form className="login-card card" onSubmit={handleSubmit}>
+            <ClickableHotspot />
+            <form className="login-card card" onSubmit={handleSubmit} onKeyDown={handleKeyDown}>
                 <header className="login-card__header">
                     <TextLogo layout="stacked" />
                     <Heading level={2}>Welcome ~back.~</Heading>

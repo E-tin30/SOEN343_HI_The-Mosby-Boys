@@ -54,4 +54,11 @@ public class RestaurantController {
         Restaurant resto = ordFacade.openRestaurant(UUID.fromString(jwt.getSubject()), restaurantId);
         return ResponseEntity.ok(RestaurantResponse.from(resto));
     }
+
+    // A restaurant closes itself, or an operator closes any restaurant
+    @PostMapping("/api/restaurants/{restaurantId}/close")
+    public ResponseEntity<RestaurantResponse> closeRestaurant(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID restaurantId) {
+        Restaurant resto = ordFacade.closeRestaurant(UUID.fromString(jwt.getSubject()), restaurantId);
+        return ResponseEntity.ok(RestaurantResponse.from(resto));
+    }
 }

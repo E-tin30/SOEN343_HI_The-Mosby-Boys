@@ -66,6 +66,7 @@
 .dashboard-orders__total--steady { --load-color: var(--mustard-dark); }
 .dashboard-orders__total--busy { --load-color: var(--tomato); }
 .dashboard-orders__total--paused { --load-color: var(--terracotta-dark); }
+.dashboard-orders__total--closed { --load-color: var(--cocoa); }
 
 /* Quiet / Steady / Busy / Paused tag, centred under the circle. */
 .dashboard-orders__load {
