@@ -2,8 +2,8 @@ import type { ReactNode } from "react";
 import "./Tag.css";
 
 type TagProps = {
-    // sage: fresh/success, mustard: popular, tomato: scarcity, navy: info, neutral: inactive
-    tone?: "sage" | "mustard" | "tomato" | "navy" | "neutral";
+    // sage: fresh/success, mustard: popular, terracotta: paused, tomato: scarcity, navy: info, neutral: inactive
+    tone?: "sage" | "mustard" | "terracotta" | "tomato" | "navy" | "neutral";
     className?: string;
     children: ReactNode;
 };

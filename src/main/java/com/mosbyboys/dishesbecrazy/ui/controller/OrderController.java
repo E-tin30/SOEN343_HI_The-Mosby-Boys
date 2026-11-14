@@ -121,8 +121,8 @@ public class OrderController {
 
     // One row of the history page. status is the state without "State" ("DeliveredState" -> "DELIVERED").
     // total is the item subtotal. rejectionReason is null unless the order was rejected, customerName is
-    // null unless the caller is an operator or restaurant, and pricing is null unless the caller is a
-    // customer or operator.
+    // null unless the caller is an operator or restaurant, and pricing is null only for old orders
+    // stored without a subtotal.
     public record OrderHistoryResponse(UUID id, UUID restaurantId, String restaurantName, String customerName,
                                     String status, Instant placedAt, List<OrderLineResponse> lines,
                                     BigDecimal total, PricingBreakdown pricing, String rejectionReason) {

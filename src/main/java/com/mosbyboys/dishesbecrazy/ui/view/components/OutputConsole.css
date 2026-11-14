@@ -1,9 +1,6 @@
+/* Docked under the page's scroll area (see #root in base.css) rather than floating over the page. */
 .output-console {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 10;
+  flex: none;
   background: var(--espresso);
   color: var(--porcelain);
   font-size: var(--text-caption);
@@ -26,9 +23,4 @@
 
 .output-console__error {
   color: var(--mustard);
-}
-
-/* keep page content from hiding behind the open console */
-body:has(.output-console[open]) {
-  padding-bottom: 25vh;
 }

@@ -1,4 +1,3 @@
-/* not using home-card here, it shrinks everything to content width */
 .op-restaurants {
   display: flex;
   flex-direction: column;
@@ -95,7 +94,7 @@
 }
 
 .op-restaurants__row--paused {
-  --status-color: var(--mustard-dark);
+  --status-color: var(--terracotta-dark);
   background: var(--cream);
 }
 

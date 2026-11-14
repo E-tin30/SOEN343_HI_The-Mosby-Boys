@@ -14,7 +14,6 @@ import "./styles/Dashboard.css";
 // Statuses for an order that hasn't reached the customer yet.
 const IN_PROGRESS: HistoryStatus[] = ["PLACED", "ACCEPTED", "PREPARING", "READY", "PICKEDUP"];
 import DemoResetControl from "./components/DemoResetControl";
-import "./styles/HomePage.css";
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -77,6 +76,7 @@ export default function HomePage() {
           <p className="intro-card__text meta">
             Find home cooks and restaurants near you.
           </p>
+          <hr className="intro-card__divider" />
           <Button onClick={() => navigate("/restaurants")}>
             Browse restaurants
           </Button>

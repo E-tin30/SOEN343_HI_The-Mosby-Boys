@@ -19,7 +19,8 @@ export default function ActiveOrderDetails({ order }: ActiveOrderDetailsProps) {
                 <span className="active-order__restaurant">{order.restaurantName}</span>
             </div>
 
-            <ul className="active-order__lines">
+            {/* Only the lines scroll on a big order, so the card's heading, total and footer stay in view. */}
+            <ul className="active-order__lines dashboard-card__scroll">
                 {order.lines.map((line) => (
                     <li key={line.menuItemId}>
                         <span className="active-order__qty">{line.quantity}×</span> {line.menuItemName}
