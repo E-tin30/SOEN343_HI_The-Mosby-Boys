@@ -13,7 +13,7 @@ A food-ordering platform where local Montreal home cooks sell their homemade mea
 - Ashton Levine 40306341 - Product Manager
 - Adrian Charbonneau 40310777 - Prompt Engineer
 - Yana Vassilyev 40270779 - DevOps
-- Jalen Brayne 40319433 - QA
+- Jalen Bayne 40319433 - QA
 
 ## Requirements
 
