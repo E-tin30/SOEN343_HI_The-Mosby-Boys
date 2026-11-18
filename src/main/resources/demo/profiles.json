@@ -52,7 +52,7 @@
   },
   {
     "email": "operator.demo@example.com",
-    "firstName": "Pat",
+    "firstName": "Diego",
     "lastName": "Demo",
     "username": "demo_operator",
     "role": "OPERATOR"
