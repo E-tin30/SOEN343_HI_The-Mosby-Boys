@@ -29,6 +29,7 @@ import AddMenuItemPage from "./menu/AddMenuItemPage";
 import EditMenuItemPage from "./menu/EditMenuItemPage";
 import AlternatePath from "./AlternatePath";
 import BackgroundRedirect from "./BackgroundRedirect";
+import ScrollPage from "./menu/ScrollPage";
 
 createRoot(document.getElementById("root")!).render(
     <BrowserRouter>
@@ -158,6 +159,16 @@ createRoot(document.getElementById("root")!).render(
                                 ]}
                             >
                                 <DashboardPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/feed"
+                        element={
+                            <ProtectedRoute
+                                allowedRoles={["CUSTOMER"]}
+                            >
+                                <ScrollPage />
                             </ProtectedRoute>
                         }
                     />

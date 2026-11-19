@@ -1,0 +1,196 @@
+
+.scroll-page {
+    min-height: 100vh;
+}
+
+.scroll-page__content {
+    width: 100%;
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 24px 16px 60px;
+}
+
+.scroll-page__intro {
+    text-align: center;
+    margin-bottom: 28px;
+}
+
+.scroll-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+}
+
+.scroll-post {
+    background: var(--porcelain);
+    border: 1px solid var(--cream);
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.scroll-post:hover {
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.09);
+    transform: translateY(-2px);
+}
+
+.scroll-post:focus-visible {
+    outline: 3px solid var(--navy);
+    outline-offset: 3px;
+}
+
+.scroll-post--sold-out {
+    cursor: default;
+}
+
+.scroll-post--sold-out:hover {
+    transform: none;
+}
+
+.scroll-post__header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+}
+
+.scroll-post__avatar {
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--cream);
+    color: var(--sage-dark);
+    font-weight: 700;
+    font-size: 18px;
+}
+
+.scroll-post__title {
+    flex: 1;
+    min-width: 0;
+}
+
+.scroll-post__title h3 {
+    margin: 0;
+}
+
+.scroll-post__title .meta {
+    font-size: 12px;
+}
+
+.scroll-post__image-container {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    position: relative;
+    overflow: hidden;
+    background: var(--porcelain);
+}
+
+.scroll-post__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s ease;
+}
+
+.scroll-post:not(.scroll-post--sold-out):hover
+.scroll-post__image {
+    transform: scale(1.025);
+}
+
+.scroll-post__image-placeholder {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--linen);
+}
+
+.scroll-post__overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0);
+    color: var(--porcelain);
+    font-weight: 600;
+    opacity: 0;
+    transition: all 0.2s ease;
+}
+
+.scroll-post:hover .scroll-post__overlay {
+    background: rgba(0, 0, 0, 0.3);
+    opacity: 1;
+}
+
+.scroll-post__sold-out-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.45);
+    color: var(--porcelain);
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: 3px;
+}
+
+.scroll-post__body {
+    padding: 14px 16px 18px;
+}
+
+.scroll-post__actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.scroll-post__price {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.scroll-post__add {
+    font-size: 13px;
+    font-weight: 600;
+    color: #426b43;
+}
+
+.scroll-post__description {
+    margin: 0;
+    line-height: 1.5;
+    color: #444;
+    white-space: pre-wrap;
+}
+
+@media (max-width: 600px) {
+    .scroll-page__content {
+        padding: 16px 0 40px;
+    }
+
+    .scroll-page__intro {
+        padding: 0 16px;
+    }
+
+    .scroll-feed {
+        gap: 16px;
+    }
+
+    .scroll-post {
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+    }
+
+    .scroll-post__image-container {
+        aspect-ratio: 1 / 1;
+    }
+}
