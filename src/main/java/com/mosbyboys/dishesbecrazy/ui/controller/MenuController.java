@@ -14,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.http.MediaType;
 import com.mosbyboys.dishesbecrazy.application.ord.ORDFacade;
 import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
 import com.mosbyboys.dishesbecrazy.domain.ord.MenuItem;
@@ -28,11 +30,11 @@ public class MenuController {
     private final ORDFacade ordFacade;
     private final REGFacade regFacade;
 
-    public record MenuItemResponse(UUID id, String name, BigDecimal price, String status, String description, int stockQuantity) {
+    public record MenuItemResponse(UUID id, String name, BigDecimal price, String status, String description, int stockQuantity, String menuUrl) {
         static MenuItemResponse from(MenuItem m) {
             String availability = (m.isAvailable() ? MenuItemStatus.AVAILABLE : MenuItemStatus.SOLD_OUT).name();
             // Exposes ORD's existing availability rule, including zero stock, in the menu status field.
-            return new MenuItemResponse(m.getId(), m.getName(), m.getPrice(), availability, m.getDescription(), m.getStockQuantity());
+            return new MenuItemResponse(m.getId(), m.getName(), m.getPrice(), availability, m.getDescription(), m.getStockQuantity(), m.getImageUrl());
         }
     }
 
@@ -63,24 +65,37 @@ public class MenuController {
         return ResponseEntity.ok(menuItems);
     }
 
-    @PostMapping("/menu/add")
-    public ResponseEntity<MenuItem> addMenuItem(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody AddMenuItemRequest request) {
-        UUID restaurantId = regFacade.getCurrentUser(UUID.fromString(jwt.getSubject())).getUserId();
+    @PostMapping(value = "/menu/add", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<MenuItem> addMenuItem(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam String name,
+            @RequestParam BigDecimal price,
+            @RequestParam Integer stockQuantity,
+            @RequestParam String description,
+            @RequestPart(required = false) MultipartFile image
+    ) {
 
-        MenuItemStatus status = request.stockQuantity() > 0
+        UUID restaurantId = regFacade
+                .getCurrentUser(UUID.fromString(jwt.getSubject()))
+                .getUserId();
+
+        MenuItemStatus status = stockQuantity > 0
                 ? MenuItemStatus.AVAILABLE
                 : MenuItemStatus.SOLD_OUT;
 
+        // TODO: Upload image and retrieve its URL
+        String imageUrl = "";
+
         MenuItem item = new MenuItem(
-                UUID.randomUUID(), //give it a new random UUID
+                UUID.randomUUID(),
                 restaurantId,
-                request.name(),
-                request.price(),
-                request.stockQuantity(),
+                name,
+                price,
+                stockQuantity,
                 status,
-                request.description(),
-                "",// temporarily until imageURL is added
-                null //createdAt is done automatically so don't need to do it here
+                description,
+                imageUrl,
+                null
         );
 
         ordFacade.saveMenuItem(item);
@@ -109,7 +124,7 @@ public class MenuController {
                 request.stockQuantity(),
                 status,
                 request.description(),
-                "",// temporarily until imageURL is added
+                request.imageUrl,
                 null //created at. won't be updated anyways
         );
 

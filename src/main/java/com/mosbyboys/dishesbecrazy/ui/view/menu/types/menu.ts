@@ -11,4 +11,5 @@ export type MenuItem = {
   stockQuantity: number;
   status: "AVAILABLE" | "SOLD_OUT";
   description: string | null;
+  imageUrl: string;
 };

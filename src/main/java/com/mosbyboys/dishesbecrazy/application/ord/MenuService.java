@@ -72,5 +72,5 @@ public class MenuService {
         return menuItemRepo.findByIdForUpdate(menuItemId)
                 .map(this::toDomain)
                 .orElseThrow(() -> new NoSuchElementException("Menu item not found: " + menuItemId));
-}
+    }
 }
