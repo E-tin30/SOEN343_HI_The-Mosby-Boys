@@ -1,9 +1,11 @@
 package com.mosbyboys.dishesbecrazy.ui.controller;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 import java.math.BigDecimal;
 
+import com.mosbyboys.dishesbecrazy.application.ord.MenuImageService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
@@ -29,6 +31,7 @@ public class MenuController {
 
     private final ORDFacade ordFacade;
     private final REGFacade regFacade;
+    private final MenuImageService menuImageService; //TODO: remove once ORDFacade is refactored
 
     public record MenuItemResponse(UUID id, String name, BigDecimal price, String status, String description, int stockQuantity, String menuUrl) {
         static MenuItemResponse from(MenuItem m) {
@@ -38,21 +41,13 @@ public class MenuController {
         }
     }
 
-    public record AddMenuItemRequest(
-            @NotBlank String name,
-            @NotNull @DecimalMin("0.01") BigDecimal price,
-            @NotNull @Min(0) Integer stockQuantity,
-            String description//,
-            //String imageUrl
-    ) {}
-
     public record EditMenuItemRequest(
             @NotNull UUID id,
             @NotBlank String name,
             @NotNull @DecimalMin("0.01") BigDecimal price,
             @NotNull @Min(0) Integer stockQuantity,
-            String description//,
-            //String imageUrl
+            String description,
+            String imageUrl
     ) {}
 
     @GetMapping("/api/restaurants/{restaurantId}/menu")
@@ -83,11 +78,20 @@ public class MenuController {
                 ? MenuItemStatus.AVAILABLE
                 : MenuItemStatus.SOLD_OUT;
 
-        // TODO: Upload image and retrieve its URL
+        UUID menuItemId = UUID.randomUUID();
+
         String imageUrl = "";
 
+        if(image != null) {
+            try {
+                imageUrl = menuImageService.save(menuItemId, image.getBytes(), image.getContentType());
+            } catch (IOException e) {
+                imageUrl = "";
+            }
+        }
+
         MenuItem item = new MenuItem(
-                UUID.randomUUID(),
+                menuItemId,
                 restaurantId,
                 name,
                 price,
@@ -124,8 +128,8 @@ public class MenuController {
                 request.stockQuantity(),
                 status,
                 request.description(),
-                request.imageUrl,
-                null //created at. won't be updated anyways
+                request.imageUrl(),
+                null //created at. won't be updated anyway
         );
 
         ordFacade.saveMenuItem(item);
