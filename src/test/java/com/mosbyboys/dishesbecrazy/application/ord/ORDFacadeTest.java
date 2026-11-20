@@ -9,14 +9,17 @@ import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.time.Instant;
+import java.util.function.Consumer;
 
 import com.mosbyboys.dishesbecrazy.application.prc.PricingService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.context.ApplicationEventPublisher;
 
 import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
@@ -682,5 +685,74 @@ class ORDFacadeTest {
 
         assertEquals(1, item.getStockQuantity());
         assertEquals(MenuItemStatus.AVAILABLE, item.getStatus());
+    }
+
+    // Characterisation tests: cancel + stock (pinned before replacing the state-name string check)
+
+    private Order storedOrderIn(String stateName) {
+        Order order = storedOrder();
+        List<Consumer<Order>> steps = List.of(
+                Order::accept, Order::startPreparing, Order::markReady, Order::pickUp, Order::deliver);
+        for (Consumer<Order> step : steps) {
+            if (order.getState().toString().equals(stateName)) {
+                break;
+            }
+            step.accept(order);
+        }
+        assertEquals(stateName, order.getState().toString(), "test setup did not reach " + stateName);
+        return order;
+    }
+
+    private Operator operatorLoggedIn() {
+        Operator operator = operator();
+        when(regFacade.getCurrentUser(operator.getUserId())).thenReturn(operator);
+        return operator;
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"PlacedState", "AcceptedState", "PreparingState", "ReadyState"})
+    void cancellingBeforeTheFoodLeavesGivesTheStockBack(String stateName) {
+        MenuItem item = realItem(3);
+        Order order = storedOrderIn(stateName); // one unit of the item
+
+        facade.cancelOrder(operatorLoggedIn().getUserId(), order.getId());
+
+        assertEquals(4, item.getStockQuantity());
+        verify(menuService).save(item);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"PickedUpState", "DeliveredState"})
+    void cancellingAfterTheFoodLeftKeepsStockAndReportsTheOldStateName(String stateName) {
+        MenuItem item = realItem(3);
+        Order order = storedOrderIn(stateName);
+        Operator operator = operatorLoggedIn();
+
+        facade.cancelOrder(operator.getUserId(), order.getId());
+
+        assertEquals(3, item.getStockQuantity());
+        verify(menuService, never()).loadForUpdate(any());
+        verify(menuService, never()).save(any());
+        verify(orderService).save(order);
+        verify(subscriber).update(new OrderStateChanged(
+                order.getId(), stateName, "CancelledState", operator.getUserId(), "CANCEL"));
+    }
+
+    @Test
+    void cancellingSkipsADeletedItemAndStillRestoresTheOthers() {
+        MenuItem kept = realItem(3);
+        UUID deletedItemId = UUID.randomUUID();
+        when(menuService.loadForUpdate(deletedItemId))
+                .thenThrow(new NoSuchElementException("deleted"));
+        Order order = new Order(customerId, restaurantId,
+                List.of(line(), new OrderLine(deletedItemId, 2, new BigDecimal("5.00"), null)),
+                new BigDecimal("20.00"));
+        when(orderService.loadForUpdate(order.getId())).thenReturn(order);
+
+        facade.cancelOrder(operatorLoggedIn().getUserId(), order.getId());
+
+        assertEquals(4, kept.getStockQuantity());
+        verify(menuService).save(kept);
+        verify(menuService).loadForUpdate(deletedItemId);
     }
 }
