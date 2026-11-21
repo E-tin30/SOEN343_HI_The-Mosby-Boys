@@ -1,0 +1,169 @@
+R2 - PermissionPolicy: Duplicated Code -> Extract Method
+Issue: https://github.com/E-tin30/SOEN343_HI_The-Mosby-Boys/issues/115
+Date: 2026-11-21 (America/Toronto)
+Author responsible for review: Ashton Levine
+Branch: refactor/115-ashton-permission-policy
+
+TARGET AND MOTIVATION
+
+Class: application/ord/PermissionPolicy.java.
+Primary smell: Duplicated Code. Repeated rules also create a Divergent Change
+maintenance concern: changing one common validation/management rule currently
+requires changing several public methods together.
+
+The baseline has 12 public permission checks, including 12 copies of the caller
+null guard, seven order null guards and four restaurant null guards. Pause, open
+and close repeat the same operator/restaurant-identity decision. Their denial
+messages differ, so the three methods are not completely identical.
+
+Selected optional module: NTF, confirmed by issue #121, assigned to E-tin30:
+https://github.com/E-tin30/SOEN343_HI_The-Mosby-Boys/issues/121
+The connection is limited: common caller validation can be reused if notification
+access checks are added to PermissionPolicy. This refactor does not create a
+notification subscription, delivery or ownership-check extension point.
+canManageRestaurant is a restaurant-management rule, not a notification rule.
+The report should describe the actual NTF integration after it is implemented.
+
+AI TOOL AND PROMPTS
+
+Tool: OpenAI Codex. Model family: GPT-6 (the identity supplied to this session).
+Record the exact model label shown in the Codex UI if a more specific label is
+needed in the report; none is inferred here.
+
+Original user prompt (spacing, HTML entities and typographic punctuation normalized):
+
+Phase 3 baseline scan is done. Here are the 5 hotspot classes I'd put in the report. I think the top 3 are the ones to refactor
+
+1. ORDFacade.java: Large Class + Divergent Change <- Im down to do this one
+
+Does way too much: placing orders, state changes, restaurant open/pause/close, history, pricing, stock. Every command repeats the same template. It also switches on role (duplicating PermissionPolicy) and checks states by string name ("PickedUpState"). -> Extract Class (restaurant controls, history views), Extract Method (the command template), and replace the string checks with instanceof.
+
+2. PermissionPolicy.java: Duplicated Code + Divergent Change
+
+About 20 small guard methods that repeat the same null checks. checkCanPause, checkCanOpen and checkCanClose are identical. Easiest one to test. -> Extract Method for the null guards, plus a shared canManageRestaurant().
+
+3. DispatchService.java: Complex Conditional + Long Method
+
+findNearestIdleCourier has a tangled condition, and reassignCourier mixes validation, lookup and state changes. Most relevant if we're doing NTF. -> Decompose Conditional, Extract Method.
+
+4. CartPage.tsx: Large Class + Duplicated Code
+
+A huge component (pricing, checkout, placing the order, rendering). The cart-to-payload mapping is written 3 times. Matters if we're doing PROMO. Heads up: it might place the order without waiting for the payment result, so someone should check that.
+
+5. Order.java: in the table but not worth refactoring
+
+State pattern is already applied, and its complexity is low. Reminders for whoever picks one: Write characterisation tests before refactoring (they need to pass before and after) One commit per refactoring: refactor(R1): Large Class -> Extract Class Save your AI prompt + what you accepted or rejected, because it goes in the refactoring log
+
+i am going to be doing this refactor:
+
+1. PermissionPolicy.java: Duplicated Code + Divergent Change About 20 small guard methods that repeat the same null checks. checkCanPause, checkCanOpen and checkCanClose are identical. Easiest one to test. -> Extract Method for the null guards, plus a shared canManageRestaurant().
+
+can you help me do it? walk me through.
+
+Follow-up instructions:
+- "Make the edits and explain each step."
+- "look into the github issues, take a look and which issues are assigned to who."
+- "for the refactor, please create a new branch and create isolated commits as directed in the previous chat"
+
+PROPOSAL AND IMPLEMENTATION VERDICT
+
+Catalogue refactoring: Extract Method, applied to one hotspot as team refactoring R2.
+
+Implemented with modifications to the initial proposal:
+1. Extract private requireCaller(User), requireOrder(Order) and
+   requireRestaurant(Restaurant). Keep each call in its original validation order.
+2. Extract private boolean canManageRestaurant(User, Restaurant). It returns true
+   for an operator, or a restaurant-role caller whose id matches the target id.
+   Public entry points validate null inputs before invoking this predicate.
+3. Keep checkCanPause/Open/Close as public entry points, preserving their existing
+   signatures and action-specific PermissionDeniedException messages.
+
+Choices considered and not used:
+- Objects.requireNonNull: it would throw NullPointerException instead of the
+  existing PermissionDeniedException, changing observable behavior.
+- One generic management-denial message: it would lose the pause/open/close
+  messages that callers already receive.
+- A new public canManageRestaurant API or separate policy hierarchy: four private
+  helpers remove this repetition without changing callers or adding new types.
+- Extra restaurant-status validation in the permission policy: these checks only
+  authorize the caller; restaurant state-transition rules remain in the domain.
+
+The agent checked the source, existing tests, new characterization tests, and the
+final diff. The implementation verdict above records the agent's choices; Ashton
+must read the tests and confirm the final report verdict in their own words.
+
+WALKTHROUGH
+
+1. Test first. A separate test-only commit adds
+   PermissionPolicyCharacterizationTest and README test instructions. Production
+   PermissionPolicy is byte-for-byte unchanged from its parent commit.
+   Test-only commit: 90a2d8fba93f275a1d2c1b6edbdcafa5680eef6a.
+   Starting commit: bd78c1060a8c01758b5ccea9f03c18711649533b (phase-4).
+
+2. Replace each repeated null block with its named helper. For example,
+   checkCanCancel starts with requireCaller(caller), then requireOrder(order).
+   This preserves "No caller." when both inputs are null and "No order." before
+   role checks when only the order is null. Re-run the same tests.
+
+3. Replace the duplicated management decision with canManageRestaurant. Boolean
+   short-circuiting preserves the operator bypass of the id comparison. An owner
+   is matched by UUID, not by Java object identity. Leave each public method's
+   existing throw statement in place. Re-run the tests and facade regression tests.
+
+4. Commit the production change and this log together as:
+   refactor(R2): Duplicated Code -> Extract Method
+   The parent commit already contains the tests; no tests change in the refactor.
+
+CHARACTERIZATION COVERAGE AND RESULTS
+
+Original PermissionPolicyTest: 37 cases, all passing before editing production.
+New PermissionPolicyCharacterizationTest: 43 parameterized/test invocations:
+- Missing caller for all 12 public methods.
+- Missing order for all seven order-based methods, before role validation.
+- Missing restaurant for all four restaurant-based methods, before role validation.
+- Both inputs null: caller error takes precedence in all 11 two-argument methods.
+- Pause/open/close: operators and matching restaurant ids allowed; customers,
+  couriers and other restaurant owners denied with the exact action message.
+- Management cases exercise OPEN, PAUSED and CLOSED targets and assert that
+  permission checks do not change their status.
+
+Each invocation of the management cases checks all three target statuses; some
+also check several denied callers. Test counts refer to JUnit invocations.
+
+Verified results (zero failures, errors or skipped cases):
+- Before extraction, test-only code: 80 tests passed.
+- After extracting null guards: 80 tests passed.
+- After the complete extraction: 80 permission tests passed.
+- Complete extraction plus ORDFacadeTest: 121 tests passed (80 + 41).
+
+Normal repeatable command, also documented in README:
+./mvnw -Dtest=PermissionPolicyTest,PermissionPolicyCharacterizationTest test
+
+Command used for the before/null-guard stages in the restricted agent environment:
+./mvnw -o -Daether.syncContext.named.factory=rwlock-local -Dtest=PermissionPolicyTest,PermissionPolicyCharacterizationTest test
+
+Final regression command used in this environment (Mockito is already cached):
+./mvnw -o -Daether.syncContext.named.factory=rwlock-local "-DargLine=-javaagent:${HOME}/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar" -Dtest=PermissionPolicyTest,PermissionPolicyCharacterizationTest,ORDFacadeTest test
+
+Environment notes: the default Maven file lock cannot write to the sandboxed
+cache, so the commands select local JVM locks. ORDFacadeTest initially could not
+initialize Mockito because JVM self-attachment is restricted. Supplying the
+existing Mockito agent at startup resolved that failure. No dependency, pom.xml,
+database, network service or payment workflow was changed for validation.
+The entire backend suite and live application flows were not run.
+
+For the demo, run the permission-test command on the test-only commit and on its
+R2 child commit. Inspect the refactoring with git show <R2-commit>.
+
+DESIGN EFFECT AND METRICS FOLLOW-UP
+
+There is now one implementation of each null guard and one implementation of the
+management decision. Twelve public signatures and all existing referenced types
+remain; four private helper methods are added. This reduces repeated rule edits,
+but does not eliminate every reason PermissionPolicy might change.
+
+These are structural observations, not a replacement for the team's tool output.
+The official phase3 / phase4-refactored / phase4 metrics remain under issue #112.
+Use the existing baseline tool, version and configuration; do not claim that
+adding methods necessarily lowers every complexity metric.
+The team should tag phase4-refactored after all planned refactorings are merged.
