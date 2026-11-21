@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /* Runs the ORD use cases (place, accept, reject, prepare, ready, cancel).
@@ -179,13 +180,7 @@ public class ORDFacade {
             throw new IllegalStateException("Order " + orderId + " is not next in line");
         }
 
-        String before = order.getState().toString();
-
-        order.accept();
-
-        orderService.save(order);
-        // record transition change event
-        publishTransition(order, before, user.getUserId(), "ACCEPT");
+        applyTransition(order, user, Order::accept, "ACCEPT");
         // placed queue -> preparation queue (FIFO)
         line.dequeueIfFirst(orderId);
         queues.preparation(order.getRestaurantId()).enqueue(orderId);
@@ -196,13 +191,7 @@ public class ORDFacade {
         User user = regFacade.getCurrentUser(userId);
         Order order = orderService.loadForUpdate(orderId);
         permissionPolicy.checkCanActAsRestaurant(user, order);
-        String before = order.getState().toString();
-
-        order.reject(reason);
-
-        orderService.save(order);
-        // record transition change event
-        publishTransition(order, before, user.getUserId(), "REJECT");
+        applyTransition(order, user, o -> o.reject(reason), "REJECT");
         restoreStock(order);
         // remove from placed queue
         queues.placed(order.getRestaurantId()).remove(orderId);
@@ -213,13 +202,8 @@ public class ORDFacade {
         User user = regFacade.getCurrentUser(userId);
         Order order = orderService.loadForUpdate(orderId);
         permissionPolicy.checkCanCancel(user, order);
-        String before = order.getState().toString();
         boolean foodHasLeft = order.foodHasLeftRestaurant();
-
-        order.cancel();
-
-        orderService.save(order);
-        publishTransition(order, before, user.getUserId(), "CANCEL");
+        applyTransition(order, user, Order::cancel, "CANCEL");
         if (!foodHasLeft) {
             restoreStock(order);
         }
@@ -243,12 +227,7 @@ public class ORDFacade {
             throw new IllegalStateException("Order " + orderId + " is not next in line");
         }
 
-        String before = order.getState().toString();
-
-        order.startPreparing();
-
-        orderService.save(order);
-        publishTransition(order, before, user.getUserId(), "PREPARING");
+        applyTransition(order, user, Order::startPreparing, "PREPARING");
         // get next in line (FIFO)
         line.dequeueIfFirst(orderId);
     }
@@ -258,12 +237,7 @@ public class ORDFacade {
         User user = regFacade.getCurrentUser(userId);
         Order order = orderService.load(orderId);
         permissionPolicy.checkCanActAsRestaurant(user, order);
-        String before = order.getState().toString();
-
-        order.markReady();
-
-        orderService.save(order);
-        publishTransition(order, before, user.getUserId(), "READY");
+        applyTransition(order, user, Order::markReady, "READY");
 
         //Enqueue the order in both the individual restaurant queue and global ready queue
         queues.ready(order.getRestaurantId()).enqueue(orderId);
@@ -278,12 +252,7 @@ public class ORDFacade {
         User user = regFacade.getCurrentUser(userId);
         Order order = orderService.load(orderId);
         permissionPolicy.checkCanActAsCourier(user, order);
-        String before = order.getState().toString();
-
-        order.pickUp();
-
-        orderService.save(order);
-        publishTransition(order, before, user.getUserId(), "PICKUP");
+        applyTransition(order, user, Order::pickUp, "PICKUP");
     }
 
     @Transactional
@@ -291,12 +260,7 @@ public class ORDFacade {
         User user = regFacade.getCurrentUser(userId);
         Order order = orderService.load(orderId);
         permissionPolicy.checkCanActAsCourier(user, order);
-        String before = order.getState().toString();
-
-        order.deliver();
-
-        orderService.save(order);
-        publishTransition(order, before, user.getUserId(), "DELIVER");
+        applyTransition(order, user, Order::deliver, "DELIVER");
     }
 
     @Transactional
@@ -304,12 +268,7 @@ public class ORDFacade {
         User user = regFacade.getCurrentUser(userId);
         Order order = orderService.load(orderId);
         permissionPolicy.checkCanRefund(user, order);
-        String before = order.getState().toString();
-
-        order.refund();
-
-        orderService.save(order);
-        publishTransition(order, before, user.getUserId(), "REFUND");
+        applyTransition(order, user, Order::refund, "REFUND");
     }
 
     // Order history, scoped by the caller's role, newest first.
@@ -369,6 +328,14 @@ public class ORDFacade {
             return null;
         }
         return pricingService.calculateTotal(order.getSubtotal());
+    }
+
+    // Every transition saves first, then publishes exactly one event.
+    private void applyTransition(Order order, User user, Consumer<Order> change, String action) {
+        String before = order.getState().toString();
+        change.accept(order);
+        orderService.save(order);
+        publishTransition(order, before, user.getUserId(), action);
     }
 
     // Builds the event for one transition and hands it to every subscriber.
