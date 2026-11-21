@@ -214,13 +214,13 @@ public class ORDFacade {
         Order order = orderService.loadForUpdate(orderId);
         permissionPolicy.checkCanCancel(user, order);
         String before = order.getState().toString();
+        boolean foodHasLeft = order.foodHasLeftRestaurant();
 
         order.cancel();
 
         orderService.save(order);
         publishTransition(order, before, user.getUserId(), "CANCEL");
-        // food that already left with the courier isn't coming back
-        if (!before.equals("PickedUpState") && !before.equals("DeliveredState")) {
+        if (!foodHasLeft) {
             restoreStock(order);
         }
         // the order could be in any line. Remove returns false where it isn't

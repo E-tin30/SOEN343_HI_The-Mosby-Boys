@@ -636,7 +636,7 @@ class ORDFacadeTest {
     @Test
     void rejectingAnOrderGivesItsStockBack() {
         MenuItem item = realItem(3);
-        Order order = storedOrder(); // one unit of the item
+        Order order = storedOrder();
         queues.placed(restaurantId).enqueue(order.getId());
 
         facade.rejectOrder(restaurantId, order.getId(), "Out of ingredients");
@@ -687,8 +687,6 @@ class ORDFacadeTest {
         assertEquals(MenuItemStatus.AVAILABLE, item.getStatus());
     }
 
-    // Characterisation tests: cancel + stock (pinned before replacing the state-name string check)
-
     private Order storedOrderIn(String stateName) {
         Order order = storedOrder();
         List<Consumer<Order>> steps = List.of(
@@ -713,7 +711,7 @@ class ORDFacadeTest {
     @ValueSource(strings = {"PlacedState", "AcceptedState", "PreparingState", "ReadyState"})
     void cancellingBeforeTheFoodLeavesGivesTheStockBack(String stateName) {
         MenuItem item = realItem(3);
-        Order order = storedOrderIn(stateName); // one unit of the item
+        Order order = storedOrderIn(stateName);
 
         facade.cancelOrder(operatorLoggedIn().getUserId(), order.getId());
 
