@@ -174,50 +174,61 @@ public class DispatchService {
         UUID oldCourierId, UUID newCourierId) {
 
         Order order = inNewTransaction(() -> {
-
-            //Verify that the old courier is assigned
-            if (courierService.getState(oldCourierId) != CourierState.ASSIGNED) {
-                throw new IllegalStateException(
-                    "Old courier must be ASSIGNED"
-                );
-            }
-
-            //Verify that the new courier is idle
-            if (courierService.getState(newCourierId)!= CourierState.IDLE) {
-                throw new IllegalStateException(
-                    "New courier must be IDLE"
-                );
-            }
-
-            //Verify that the new courier isn't already holding an offer
-            //NOTE: Even though the original check accounts for it, offers may occur after the page is loaded
-            if (getPendingOffer(newCourierId) != null) {
-                throw new IllegalStateException("New courier already has a pending offer");
-            }
-
-            //Find the order associated with the old courier
-            Order currentOrder = orderService
-                .findCurrentForCourier(oldCourierId)
-                .stream()
-                .filter(o -> o.getState() instanceof ReadyState)
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException(
-                    "No ready order found for the old courier"
-                ));
-
-            //Replace the courier ID and save the order
-            currentOrder.assignCourier(newCourierId);
-            orderService.save(currentOrder);
-
-            //Release the old courier
-            courierService.release(oldCourierId);
-
+            validateReassignment(oldCourierId, newCourierId);
+            Order currentOrder = findReadyOrderOf(oldCourierId);
+            handOverOrder(currentOrder, oldCourierId, newCourierId);
             return currentOrder;
         });
 
-        //Add the order back to the global ready queue
-        if (!queues.globalReadySnapshot().contains(order.getId())) {
-            queues.enqueueGlobalReady(order.getId());
+        // Outside the transaction, so it only runs once the hand-over is committed
+        putBackInReadyQueue(order.getId());
+    }
+
+    private void validateReassignment(UUID oldCourierId, UUID newCourierId) {
+        //Verify that the old courier is assigned
+        if (courierService.getState(oldCourierId) != CourierState.ASSIGNED) {
+            throw new IllegalStateException(
+                "Old courier must be ASSIGNED"
+            );
+        }
+
+        //Verify that the new courier is idle
+        if (courierService.getState(newCourierId)!= CourierState.IDLE) {
+            throw new IllegalStateException(
+                "New courier must be IDLE"
+            );
+        }
+
+        //Verify that the new courier isn't already holding an offer
+        //NOTE: Even though the original check accounts for it, offers may occur after the page is loaded
+        if (hasPendingOffer(newCourierId)) {
+            throw new IllegalStateException("New courier already has a pending offer");
+        }
+    }
+
+    //Find the order associated with the old courier
+    private Order findReadyOrderOf(UUID oldCourierId) {
+        return orderService
+            .findCurrentForCourier(oldCourierId)
+            .stream()
+            .filter(o -> o.getState() instanceof ReadyState)
+            .findFirst()
+            .orElseThrow(() -> new IllegalStateException(
+                "No ready order found for the old courier"
+            ));
+    }
+
+    //Replace the courier ID and save the order, then release the old courier
+    private void handOverOrder(Order order, UUID oldCourierId, UUID newCourierId) {
+        order.assignCourier(newCourierId);
+        orderService.save(order);
+        courierService.release(oldCourierId);
+    }
+
+    //Add the order back to the global ready queue
+    private void putBackInReadyQueue(UUID orderId) {
+        if (!queues.globalReadySnapshot().contains(orderId)) {
+            queues.enqueueGlobalReady(orderId);
         }
     }
 
