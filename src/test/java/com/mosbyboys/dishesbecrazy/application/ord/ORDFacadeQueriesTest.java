@@ -65,7 +65,9 @@ class ORDFacadeQueriesTest {
 
     private ORDFacade newFacade() {
         return new ORDFacade(orderService, new PermissionPolicy(), queues, menuService,
-                restaurantService, pricingService, regFacade, mock(ApplicationEventPublisher.class));
+                restaurantService,
+                new OrderQueries(orderService, queues, menuService, restaurantService, pricingService, regFacade),
+                regFacade, mock(ApplicationEventPublisher.class));
     }
 
 

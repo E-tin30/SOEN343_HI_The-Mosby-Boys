@@ -71,7 +71,9 @@ class ORDFacadeTest {
         eventPublisher = mock(ApplicationEventPublisher.class);
         // same order as the fields in ORDFacade
         facade = new ORDFacade(orderService, new PermissionPolicy(),
-                queues, menuService, restaurantService, pricingService, regFacade, eventPublisher);
+                queues, menuService, restaurantService,
+                new OrderQueries(orderService, queues, menuService, restaurantService, pricingService, regFacade),
+                regFacade, eventPublisher);
         facade.subscribe(subscriber);
         // The facade looks the caller up through REGFacade, so tell the mock who each id is.
         when(regFacade.getCurrentUser(customerId)).thenReturn(customer());

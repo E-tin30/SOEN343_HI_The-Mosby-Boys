@@ -20,7 +20,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.context.ApplicationEventPublisher;
 
-import com.mosbyboys.dishesbecrazy.application.prc.PricingService;
 import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
 import com.mosbyboys.dishesbecrazy.domain.ord.Location;
 import com.mosbyboys.dishesbecrazy.domain.ord.MenuItem;
@@ -69,7 +68,7 @@ class ORDFacadeTransitionsTest {
         eventPublisher = mock(ApplicationEventPublisher.class);
         queues = new OrderQueues();
         facade = new ORDFacade(orderService, new PermissionPolicy(), queues, menuService,
-                mock(RestaurantService.class), mock(PricingService.class), regFacade, eventPublisher);
+                mock(RestaurantService.class), mock(OrderQueries.class), regFacade, eventPublisher);
         facade.subscribe(subscriber);
 
         when(regFacade.getCurrentUser(customerId)).thenReturn(customer(customerId));
