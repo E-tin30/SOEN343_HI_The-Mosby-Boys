@@ -108,34 +108,27 @@ public class DispatchService {
         }
     }
 
+    // Creates a stream of all idle couriers, filters out those with pending offers, and returns the nearest courier.
     private CourierData findNearestIdleCourier(Location location) {
+        return courierService.getIdleCouriers().stream()
+                // Filters for couriers without a pending offer
+                .filter(courier -> !hasPendingOffer(courier.id()))
+                // Picks the closest remaining courier to the given location, ties broken by courier ID (UUID order)
+                .min(Comparator.comparingDouble((CourierData courier) -> squaredDistance(location, courier))
+                        .thenComparing(CourierData::id))
+                // Returns null if no eligible courier is found
+                .orElse(null);
+    }
 
-        CourierData nearestCourier = null;
-        double minDistance = Double.POSITIVE_INFINITY;
+    private boolean hasPendingOffer(UUID courierId) {
+        return getPendingOffer(courierId) != null;
+    }
 
-        //Loop through all online couriers
-        for (CourierData courier : courierService.getIdleCouriers()) {
-            //Check if the courier already has an offer
-             if (getPendingOffer(courier.id()) != null) {
-                continue;
-            }
-
-            //Calculate squared Euclidean distance
-            double latDiff = location.latitude() - courier.latitude();
-            double lonDiff = location.longitude() - courier.longitude();
-
-            double distance = latDiff * latDiff + lonDiff * lonDiff;
-
-            //Check if closer, or tied with a smaller courier ID
-            if (nearestCourier == null || 
-            Double.compare(distance, minDistance) < 0 || 
-            (Double.compare(distance, minDistance) == 0 && courier.id().compareTo(nearestCourier.id()) < 0)) {
-                nearestCourier = courier;
-                minDistance = distance;
-            }
-        }
-
-        return nearestCourier;
+    // Squared Euclidean distance. Only used to compare couriers, so the square root is skipped
+    private static double squaredDistance(Location location, CourierData courier) {
+        double latDiff = location.latitude() - courier.latitude();
+        double lonDiff = location.longitude() - courier.longitude();
+        return latDiff * latDiff + lonDiff * lonDiff;
     }
 
     @Transactional
