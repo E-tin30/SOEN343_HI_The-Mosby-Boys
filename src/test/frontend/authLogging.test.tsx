@@ -1,6 +1,6 @@
 import { afterEach, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { AuthProvider, useAuth } from "../../main/java/com/mosbyboys/dishesbecrazy/ui/view/AuthContext";
+import { AuthProvider, useAuth } from "../../main/java/com/mosbyboys/dishesbecrazy/ui/view/context/AuthContext";
 import OutputConsole from "../../main/java/com/mosbyboys/dishesbecrazy/ui/view/components/OutputConsole";
 import { getEntries } from "../../main/java/com/mosbyboys/dishesbecrazy/ui/view/outputLog";
 

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import AppHeader from "../components/AppHeader";
 import Button from "../components/Button";
 import Heading from "../components/Heading";
-import { useAuth } from "../AuthContext";
+import { useAuth } from "../context/AuthContext";
 import Input from "../components/Input";
 import { loggedFetch } from "../api/loggedFetch";
 import "../styles/ImportImages.css";

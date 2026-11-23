@@ -1,7 +1,7 @@
 import {useEffect, useState} from "react";
 import {useNavigate, useParams} from "react-router-dom";
-import {useAuth} from "../AuthContext";
-import {useCart} from "../CartContext";
+import {useAuth} from "../context/AuthContext";
+import {useCart} from "../context/CartContext";
 import AppHeader from "../components/AppHeader";
 import Button from "../components/Button";
 import Heading from "../components/Heading";

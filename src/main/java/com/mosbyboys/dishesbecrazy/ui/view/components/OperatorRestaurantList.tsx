@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuth } from "../AuthContext";
+import { useAuth } from "../context/AuthContext";
 import { openRestaurant, pauseRestaurant } from "../menu/api/menuApi";
 import { useDashboardData } from "../dashboard/useDashboardData";
 import { restaurantLoad } from "../dashboard/LiveMap";

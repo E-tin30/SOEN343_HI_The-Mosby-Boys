@@ -1,19 +1,19 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "./AuthContext";
-import { useCart } from "./CartContext";
-import AppHeader from "./components/AppHeader";
-import ActiveOrderDetails from "./components/ActiveOrderDetails";
-import Button from "./components/Button";
-import Heading from "./components/Heading";
-import { MapCard } from "./dashboard/LiveMap";
-import { getOrderHistory } from "./orders/api/ordersApi";
-import type { ActiveOrderSummary, HistoryStatus } from "./orders/types/order";
-import "./styles/Dashboard.css";
+import { useAuth } from "../context/AuthContext";
+import { useCart } from "../context/CartContext";
+import AppHeader from "../components/AppHeader";
+import ActiveOrderDetails from "../components/ActiveOrderDetails";
+import Button from "../components/Button";
+import Heading from "../components/Heading";
+import { MapCard } from "../dashboard/LiveMap";
+import { getOrderHistory } from "../orders/api/ordersApi";
+import type { ActiveOrderSummary, HistoryStatus } from "../orders/types/order";
+import "../styles/Dashboard.css";
 
 // Statuses for an order that hasn't reached the customer yet.
 const IN_PROGRESS: HistoryStatus[] = ["PLACED", "ACCEPTED", "PREPARING", "READY", "PICKEDUP"];
-import DemoResetControl from "./components/DemoResetControl";
+import DemoResetControl from "../components/DemoResetControl";
 
 export default function HomePage() {
   const navigate = useNavigate();

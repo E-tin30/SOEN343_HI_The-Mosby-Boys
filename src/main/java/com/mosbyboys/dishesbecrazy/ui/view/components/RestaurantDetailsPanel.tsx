@@ -1,6 +1,6 @@
 import { useState, type MouseEventHandler } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../AuthContext";
+import { useAuth } from "../context/AuthContext";
 import { openRestaurant, pauseRestaurant } from "../menu/api/menuApi";
 import { RESTAURANT_STATUS_TAG } from "../menu/restaurantStatus";
 import type { Restaurant } from "../menu/types/menu";

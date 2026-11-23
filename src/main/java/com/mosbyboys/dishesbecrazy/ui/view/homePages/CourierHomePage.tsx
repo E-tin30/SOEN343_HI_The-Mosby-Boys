@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "./AuthContext";
-import AppHeader from "./components/AppHeader";
-import Button from "./components/Button";
-import Heading from "./components/Heading";
-import ActiveOrderDetails from "./components/ActiveOrderDetails";
-import StatusBar, { type StatusTone } from "./components/StatusBar";
-import { MapCard } from "./dashboard/LiveMap";
+import { useAuth } from "../context/AuthContext";
+import AppHeader from "../components/AppHeader";
+import Button from "../components/Button";
+import Heading from "../components/Heading";
+import ActiveOrderDetails from "../components/ActiveOrderDetails";
+import StatusBar, { type StatusTone } from "../components/StatusBar";
+import { MapCard } from "../dashboard/LiveMap";
 import {
   acceptOffer,
   declineOffer,
@@ -18,9 +18,9 @@ import {
   goOnline,
   pickUpOrder,
   type CourierState,
-} from "./orders/api/courierApi";
-import type { ActiveDelivery, HistoryOrder } from "./orders/types/order";
-import "./styles/Dashboard.css";
+} from "../orders/api/courierApi";
+import type { ActiveDelivery, HistoryOrder } from "../orders/types/order";
+import "../styles/Dashboard.css";
 
 // How often an on-duty courier rechecks the backend for offers and changes to their delivery.
 const POLL_MS = 5000;
