@@ -108,34 +108,27 @@ public class DispatchService {
         }
     }
 
+    // Creates a stream of all idle couriers, filters out those with pending offers, and returns the nearest courier.
     private CourierData findNearestIdleCourier(Location location) {
+        return courierService.getIdleCouriers().stream()
+                // Filters for couriers without a pending offer
+                .filter(courier -> !hasPendingOffer(courier.id()))
+                // Picks the closest remaining courier to the given location, ties broken by courier ID (UUID order)
+                .min(Comparator.comparingDouble((CourierData courier) -> squaredDistance(location, courier))
+                        .thenComparing(CourierData::id))
+                // Returns null if no eligible courier is found
+                .orElse(null);
+    }
 
-        CourierData nearestCourier = null;
-        double minDistance = Double.POSITIVE_INFINITY;
+    private boolean hasPendingOffer(UUID courierId) {
+        return getPendingOffer(courierId) != null;
+    }
 
-        //Loop through all online couriers
-        for (CourierData courier : courierService.getIdleCouriers()) {
-            //Check if the courier already has an offer
-             if (getPendingOffer(courier.id()) != null) {
-                continue;
-            }
-
-            //Calculate squared Euclidean distance
-            double latDiff = location.latitude() - courier.latitude();
-            double lonDiff = location.longitude() - courier.longitude();
-
-            double distance = latDiff * latDiff + lonDiff * lonDiff;
-
-            //Check if closer, or tied with a smaller courier ID
-            if (nearestCourier == null || 
-            Double.compare(distance, minDistance) < 0 || 
-            (Double.compare(distance, minDistance) == 0 && courier.id().compareTo(nearestCourier.id()) < 0)) {
-                nearestCourier = courier;
-                minDistance = distance;
-            }
-        }
-
-        return nearestCourier;
+    // Squared Euclidean distance. Only used to compare couriers, so the square root is skipped
+    private static double squaredDistance(Location location, CourierData courier) {
+        double latDiff = location.latitude() - courier.latitude();
+        double lonDiff = location.longitude() - courier.longitude();
+        return latDiff * latDiff + lonDiff * lonDiff;
     }
 
     @Transactional
@@ -181,50 +174,61 @@ public class DispatchService {
         UUID oldCourierId, UUID newCourierId) {
 
         Order order = inNewTransaction(() -> {
-
-            //Verify that the old courier is assigned
-            if (courierService.getState(oldCourierId) != CourierState.ASSIGNED) {
-                throw new IllegalStateException(
-                    "Old courier must be ASSIGNED"
-                );
-            }
-
-            //Verify that the new courier is idle
-            if (courierService.getState(newCourierId)!= CourierState.IDLE) {
-                throw new IllegalStateException(
-                    "New courier must be IDLE"
-                );
-            }
-
-            //Verify that the new courier isn't already holding an offer
-            //NOTE: Even though the original check accounts for it, offers may occur after the page is loaded
-            if (getPendingOffer(newCourierId) != null) {
-                throw new IllegalStateException("New courier already has a pending offer");
-            }
-
-            //Find the order associated with the old courier
-            Order currentOrder = orderService
-                .findCurrentForCourier(oldCourierId)
-                .stream()
-                .filter(o -> o.getState() instanceof ReadyState)
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException(
-                    "No ready order found for the old courier"
-                ));
-
-            //Replace the courier ID and save the order
-            currentOrder.assignCourier(newCourierId);
-            orderService.save(currentOrder);
-
-            //Release the old courier
-            courierService.release(oldCourierId);
-
+            validateReassignment(oldCourierId, newCourierId);
+            Order currentOrder = findReadyOrderOf(oldCourierId);
+            handOverOrder(currentOrder, oldCourierId, newCourierId);
             return currentOrder;
         });
 
-        //Add the order back to the global ready queue
-        if (!queues.globalReadySnapshot().contains(order.getId())) {
-            queues.enqueueGlobalReady(order.getId());
+        // Outside the transaction, so it only runs once the hand-over is committed
+        putBackInReadyQueue(order.getId());
+    }
+
+    private void validateReassignment(UUID oldCourierId, UUID newCourierId) {
+        //Verify that the old courier is assigned
+        if (courierService.getState(oldCourierId) != CourierState.ASSIGNED) {
+            throw new IllegalStateException(
+                "Old courier must be ASSIGNED"
+            );
+        }
+
+        //Verify that the new courier is idle
+        if (courierService.getState(newCourierId)!= CourierState.IDLE) {
+            throw new IllegalStateException(
+                "New courier must be IDLE"
+            );
+        }
+
+        //Verify that the new courier isn't already holding an offer
+        //NOTE: Even though the original check accounts for it, offers may occur after the page is loaded
+        if (hasPendingOffer(newCourierId)) {
+            throw new IllegalStateException("New courier already has a pending offer");
+        }
+    }
+
+    //Find the order associated with the old courier
+    private Order findReadyOrderOf(UUID oldCourierId) {
+        return orderService
+            .findCurrentForCourier(oldCourierId)
+            .stream()
+            .filter(o -> o.getState() instanceof ReadyState)
+            .findFirst()
+            .orElseThrow(() -> new IllegalStateException(
+                "No ready order found for the old courier"
+            ));
+    }
+
+    //Replace the courier ID and save the order, then release the old courier
+    private void handOverOrder(Order order, UUID oldCourierId, UUID newCourierId) {
+        order.assignCourier(newCourierId);
+        orderService.save(order);
+        courierService.release(oldCourierId);
+    }
+
+    //Add the order back to the global ready queue
+    private void putBackInReadyQueue(UUID orderId) {
+        if (!queues.globalReadySnapshot().contains(orderId)) {
+            queues.enqueueGlobalReady(orderId);
         }
     }
 

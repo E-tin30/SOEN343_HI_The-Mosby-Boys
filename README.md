@@ -100,6 +100,16 @@ npm run build                 # TypeScript and production build
 ./mvnw test
 ```
 
+Run the PermissionPolicy characterisation tests for Phase IV refactoring R2.1 (#115):
+
+```sh
+./mvnw -Dtest=PermissionPolicyTest,PermissionPolicyCharacterizationTest test
+```
+
+These isolated tests check permission decisions, error messages and null-validation order;
+they do not need a running backend or database. Run the same command on the test-only
+commit immediately before R2.1 and on the R2.1 refactoring commit.
+
 Fixture, seeding and restoration checks use isolated in-memory databases and mocked services:
 
 ```sh

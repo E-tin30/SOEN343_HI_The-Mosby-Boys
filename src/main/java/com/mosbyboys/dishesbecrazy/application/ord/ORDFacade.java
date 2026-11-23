@@ -1,14 +1,11 @@
 package com.mosbyboys.dishesbecrazy.application.ord;
 
-import com.mosbyboys.dishesbecrazy.application.prc.PricingService;
 import com.mosbyboys.dishesbecrazy.domain.ord.Order;
 import com.mosbyboys.dishesbecrazy.domain.ord.OrderLine;
 import com.mosbyboys.dishesbecrazy.domain.ord.PlacedQueue;
 import com.mosbyboys.dishesbecrazy.domain.ord.PreparationQueue;
 import com.mosbyboys.dishesbecrazy.domain.ord.Restaurant;
-import com.mosbyboys.dishesbecrazy.domain.prc.PricingBreakdown;
 import com.mosbyboys.dishesbecrazy.domain.reg.Customer;
-import com.mosbyboys.dishesbecrazy.domain.reg.Role;
 import com.mosbyboys.dishesbecrazy.domain.reg.User;
 import com.mosbyboys.dishesbecrazy.domain.ord.MenuItem;
 import com.mosbyboys.dishesbecrazy.application.dlv.events.OrderReadyEvent;
@@ -25,10 +22,9 @@ import org.springframework.context.ApplicationEventPublisher;
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.UUID;
-import java.util.stream.Collectors;
+import java.util.function.Consumer;
 
 /* Runs the ORD use cases (place, accept, reject, prepare, ready, cancel).
 Every command: load, check permission, change the order's state, save it, record an event,
@@ -44,7 +40,7 @@ public class ORDFacade {
     private final OrderQueues queues;
     private final MenuService menuService;
     private final RestaurantService restaurantService;
-    private final PricingService  pricingService;
+    private final OrderQueries orderQueries;
     private final REGFacade regFacade;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -83,33 +79,9 @@ public class ORDFacade {
         return menuService.getMenu(restaurantId); 
     }
 
-    // States that still show on a restaurant's queue screen.
-    private static final List<String> QUEUE_STATES =
-            List.of("PlacedState", "AcceptedState", "PreparingState", "ReadyState");
-
     @Transactional
     public List<RestaurantOrderView> getRestaurantOrders(User user) {
-        // A restaurant account is exactly one restaurant, so it only ever sees its own orders.
-        if (!(user instanceof Restaurant restaurant)) {
-            throw new PermissionDeniedException("Only a restaurant can view its order queues.");
-        }
-        UUID restaurantId = restaurant.getUserId();
-
-        List<Order> orders = orderService.findForRestaurant(restaurantId, QUEUE_STATES);
-        Map<UUID, String> itemNames = menuService.getNames(orders.stream()
-                .flatMap(o -> o.getOrderLineItems().stream())
-                .map(OrderLine::getMenuItemId)
-                .collect(Collectors.toSet()));
-
-        PlacedQueue placed = queues.placed(restaurantId);
-        UUID nextAccept = placed.size() > 0 ? placed.peek() : null;
-        PreparationQueue line = queues.preparation(restaurantId);
-        UUID next = line.size() > 0 ? line.peek() : null;
-
-        return orders.stream()
-                .map(o -> new RestaurantOrderView(o, itemNames,
-                        o.getId().equals(nextAccept), o.getId().equals(next)))
-                .toList();
+        return orderQueries.getRestaurantOrders(user);
     }
 
     @Transactional
@@ -179,13 +151,7 @@ public class ORDFacade {
             throw new IllegalStateException("Order " + orderId + " is not next in line");
         }
 
-        String before = order.getState().toString();
-
-        order.accept();
-
-        orderService.save(order);
-        // record transition change event
-        publishTransition(order, before, user.getUserId(), "ACCEPT");
+        applyTransition(order, user, Order::accept, "ACCEPT");
         // placed queue -> preparation queue (FIFO)
         line.dequeueIfFirst(orderId);
         queues.preparation(order.getRestaurantId()).enqueue(orderId);
@@ -196,13 +162,7 @@ public class ORDFacade {
         User user = regFacade.getCurrentUser(userId);
         Order order = orderService.loadForUpdate(orderId);
         permissionPolicy.checkCanActAsRestaurant(user, order);
-        String before = order.getState().toString();
-
-        order.reject(reason);
-
-        orderService.save(order);
-        // record transition change event
-        publishTransition(order, before, user.getUserId(), "REJECT");
+        applyTransition(order, user, o -> o.reject(reason), "REJECT");
         restoreStock(order);
         // remove from placed queue
         queues.placed(order.getRestaurantId()).remove(orderId);
@@ -213,14 +173,9 @@ public class ORDFacade {
         User user = regFacade.getCurrentUser(userId);
         Order order = orderService.loadForUpdate(orderId);
         permissionPolicy.checkCanCancel(user, order);
-        String before = order.getState().toString();
-
-        order.cancel();
-
-        orderService.save(order);
-        publishTransition(order, before, user.getUserId(), "CANCEL");
-        // food that already left with the courier isn't coming back
-        if (!before.equals("PickedUpState") && !before.equals("DeliveredState")) {
+        boolean foodHasLeft = order.foodHasLeftRestaurant();
+        applyTransition(order, user, Order::cancel, "CANCEL");
+        if (!foodHasLeft) {
             restoreStock(order);
         }
         // the order could be in any line. Remove returns false where it isn't
@@ -243,12 +198,7 @@ public class ORDFacade {
             throw new IllegalStateException("Order " + orderId + " is not next in line");
         }
 
-        String before = order.getState().toString();
-
-        order.startPreparing();
-
-        orderService.save(order);
-        publishTransition(order, before, user.getUserId(), "PREPARING");
+        applyTransition(order, user, Order::startPreparing, "PREPARING");
         // get next in line (FIFO)
         line.dequeueIfFirst(orderId);
     }
@@ -258,12 +208,7 @@ public class ORDFacade {
         User user = regFacade.getCurrentUser(userId);
         Order order = orderService.load(orderId);
         permissionPolicy.checkCanActAsRestaurant(user, order);
-        String before = order.getState().toString();
-
-        order.markReady();
-
-        orderService.save(order);
-        publishTransition(order, before, user.getUserId(), "READY");
+        applyTransition(order, user, Order::markReady, "READY");
 
         //Enqueue the order in both the individual restaurant queue and global ready queue
         queues.ready(order.getRestaurantId()).enqueue(orderId);
@@ -278,12 +223,7 @@ public class ORDFacade {
         User user = regFacade.getCurrentUser(userId);
         Order order = orderService.load(orderId);
         permissionPolicy.checkCanActAsCourier(user, order);
-        String before = order.getState().toString();
-
-        order.pickUp();
-
-        orderService.save(order);
-        publishTransition(order, before, user.getUserId(), "PICKUP");
+        applyTransition(order, user, Order::pickUp, "PICKUP");
     }
 
     @Transactional
@@ -291,12 +231,7 @@ public class ORDFacade {
         User user = regFacade.getCurrentUser(userId);
         Order order = orderService.load(orderId);
         permissionPolicy.checkCanActAsCourier(user, order);
-        String before = order.getState().toString();
-
-        order.deliver();
-
-        orderService.save(order);
-        publishTransition(order, before, user.getUserId(), "DELIVER");
+        applyTransition(order, user, Order::deliver, "DELIVER");
     }
 
     @Transactional
@@ -304,71 +239,25 @@ public class ORDFacade {
         User user = regFacade.getCurrentUser(userId);
         Order order = orderService.load(orderId);
         permissionPolicy.checkCanRefund(user, order);
-        String before = order.getState().toString();
-
-        order.refund();
-
-        orderService.save(order);
-        publishTransition(order, before, user.getUserId(), "REFUND");
+        applyTransition(order, user, Order::refund, "REFUND");
     }
 
-    // Order history, scoped by the caller's role, newest first.
     @Transactional
     public List<OrderHistoryView> getOrderHistory(User user) {
-        UUID id = user.getUserId();
-
-        List<Order> orders = switch (user.getRole()) {
-            case CUSTOMER   -> orderService.findHistoryForCustomer(id);
-            case RESTAURANT -> orderService.findHistoryForRestaurant(id);
-            case COURIER    -> orderService.findHistoryForCourier(id);
-            case OPERATOR   -> orderService.findHistoryForAll();
-        };
-
-        return toViews(user, orders);
+        return orderQueries.getOrderHistory(user);
     }
 
-    // A courier's orders that are still in their hands: offered or accepted (READY) or on the way (PICKEDUP)
-    // History leaves READY orders out, so the courier dashboard reads these instead
     @Transactional
     public List<OrderHistoryView> getCourierCurrentOrders(User user) {
-        if (user.getRole() != Role.COURIER) {
-            throw new PermissionDeniedException("Only a courier has current deliveries.");
-        }
-        return toViews(user, orderService.findCurrentForCourier(user.getUserId()));
+        return orderQueries.getCourierCurrentOrders(user);
     }
 
-    // Wraps orders with the item, restaurant and customer names and the pricing breakdown (visible to every role)
-    private List<OrderHistoryView> toViews(User user, List<Order> orders) {
-        // One query for every item name on the page, same as getRestaurantOrders.
-        Map<UUID, String> itemNames = menuService.getNames(orders.stream()
-                .flatMap(o -> o.getOrderLineItems().stream())
-                .map(OrderLine::getMenuItemId)
-                .collect(Collectors.toSet()));
-
-        // Restaurant names, for every role, in one query.
-        Map<UUID, String> restaurantNames = restaurantService.getNames(orders.stream()
-                .map(Order::getRestaurantId)
-                .collect(Collectors.toSet()));
-
-        // An operator sees every customer's name; a restaurant sees the names of its own customers.
-        boolean seesCustomers = user.getRole() == Role.OPERATOR || user.getRole() == Role.RESTAURANT;
-        Map<UUID, String> customerNames = seesCustomers
-            ? regFacade.getDisplayNames(orders.stream()
-                    .map(Order::getCustomerId)
-                    .collect(Collectors.toSet()))
-            : Map.of();
-
-        return orders.stream()
-            .map(o -> new OrderHistoryView(o, itemNames, restaurantNames, customerNames, priceOf(o)))
-            .toList();
-    }
-
-    // The breakdown for one stored order, from its item subtotal and today's pricing rates.
-    private PricingBreakdown priceOf(Order order) {
-        if (order.getSubtotal() == null) {
-            return null;
-        }
-        return pricingService.calculateTotal(order.getSubtotal());
+    // Every transition saves first, then publishes exactly one event.
+    private void applyTransition(Order order, User user, Consumer<Order> change, String action) {
+        String before = order.getState().toString();
+        change.accept(order);
+        orderService.save(order);
+        publishTransition(order, before, user.getUserId(), action);
     }
 
     // Builds the event for one transition and hands it to every subscriber.
