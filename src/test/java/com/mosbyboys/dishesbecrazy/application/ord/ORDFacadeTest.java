@@ -46,6 +46,7 @@ class ORDFacadeTest {
     private OrderService orderService;
     private OrderObserver subscriber;
     private MenuService menuService;
+    private MenuImageService menuImageService;
     private RestaurantService restaurantService;
     private PricingService pricingService;
     private REGFacade regFacade;
@@ -62,6 +63,7 @@ class ORDFacadeTest {
         orderService = mock(OrderService.class);
         subscriber = mock(OrderObserver.class);
         menuService = mock(MenuService.class);
+        menuImageService = mock(MenuImageService.class);
         restaurantService = mock(RestaurantService.class);
         pricingService = mock(PricingService.class);
         // Supplies the existing pricing dependency so history tests can run alongside placement guards.
@@ -71,7 +73,7 @@ class ORDFacadeTest {
         eventPublisher = mock(ApplicationEventPublisher.class);
         // same order as the fields in ORDFacade
         facade = new ORDFacade(orderService, new PermissionPolicy(),
-                queues, menuService, restaurantService,
+                queues, menuService, menuImageService, restaurantService,
                 new OrderQueries(orderService, queues, menuService, restaurantService, pricingService, regFacade),
                 regFacade, eventPublisher);
         facade.subscribe(subscriber);
@@ -187,7 +189,7 @@ class ORDFacadeTest {
     // a real item (not a mock) so the stock arithmetic is actually exercised
     private MenuItem realItem(int stock) {
         MenuItem item = new MenuItem(menuItemId, restaurantId, "Pizza", new BigDecimal("10.00"), stock,
-                MenuItemStatus.AVAILABLE, "Cheese", null, Instant.now());
+                MenuItemStatus.AVAILABLE, "Cheese", null, null, Instant.now());
         when(menuService.load(menuItemId)).thenReturn(item);
         when(menuService.loadForUpdate(menuItemId)).thenReturn(item);
         return item;

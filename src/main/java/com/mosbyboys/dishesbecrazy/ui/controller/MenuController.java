@@ -31,7 +31,6 @@ public class MenuController {
 
     private final ORDFacade ordFacade;
     private final REGFacade regFacade;
-    private final MenuImageService menuImageService; //TODO: remove once ORDFacade is refactored
 
     public record MenuItemResponse(UUID id, String name, BigDecimal price, String status, String description, int stockQuantity, String menuUrl) {
         static MenuItemResponse from(MenuItem m) {
@@ -47,6 +46,7 @@ public class MenuController {
             @NotNull @DecimalMin("0.01") BigDecimal price,
             @NotNull @Min(0) Integer stockQuantity,
             String description,
+            String postDescription,
             String imageUrl
     ) {}
 
@@ -67,6 +67,7 @@ public class MenuController {
             @RequestParam BigDecimal price,
             @RequestParam Integer stockQuantity,
             @RequestParam String description,
+            @RequestParam String postDescription, //TODO: maybe remove if not posting directly when adding an item
             @RequestPart(required = false) MultipartFile image
     ) {
 
@@ -84,7 +85,7 @@ public class MenuController {
 
         if(image != null) {
             try {
-                imageUrl = menuImageService.save(menuItemId, image.getBytes(), image.getContentType());
+                imageUrl = ordFacade.saveMenuItemImage(menuItemId, image.getBytes(), image.getContentType());
             } catch (IOException e) {
                 imageUrl = "";
             }
@@ -98,6 +99,7 @@ public class MenuController {
                 stockQuantity,
                 status,
                 description,
+                postDescription,
                 imageUrl,
                 null
         );
@@ -128,6 +130,7 @@ public class MenuController {
                 request.stockQuantity(),
                 status,
                 request.description(),
+                request.postDescription(),
                 request.imageUrl(),
                 null //created at. won't be updated anyway
         );

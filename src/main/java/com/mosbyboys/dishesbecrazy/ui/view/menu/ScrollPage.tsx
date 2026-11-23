@@ -1,21 +1,21 @@
-import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { useAuth } from "../AuthContext";
-import { useCart } from "../CartContext";
+import {useEffect, useState} from "react";
+import {useNavigate, useParams} from "react-router-dom";
+import {useAuth} from "../AuthContext";
+import {useCart} from "../CartContext";
 import AppHeader from "../components/AppHeader";
 import Button from "../components/Button";
 import Heading from "../components/Heading";
 import Tag from "../components/Tag";
-import { getMenu } from "./api/menuApi";
-import type { MenuItem } from "./types/menu";
+import {getMenu} from "./api/menuApi";
+import type {MenuItem} from "./types/menu";
 import "../styles/ScrollPage.css";
 
 export default function ScrollPage() {
     const navigate = useNavigate();
-    const { restaurantId } = useParams<{ restaurantId: string }>();
+    const {restaurantId} = useParams<{ restaurantId: string }>();
 
-    const { accessToken, user } = useAuth();
-    const { addItem, itemCount } = useCart();
+    const {accessToken, user} = useAuth();
+    const {addItem, itemCount} = useCart();
 
     const [items, setItems] = useState<MenuItem[] | null>(null);
     const [error, setError] = useState("");
@@ -30,8 +30,10 @@ export default function ScrollPage() {
             .catch((e: Error) => setError(e.message));
     }, [accessToken, restaurantId]);
 
-    // Only display menu items that have been posted.
-    const posts = items?.filter((item) => item.isPosted === true) ?? [];
+    // Only display menu items that have been posted (ie has a description)
+    const posts = items?.filter(
+        (item) => item.postDescription?.trim()
+    ) ?? [];
 
     const handlePostClick = (item: MenuItem) => {
         if (!restaurantId || item.status === "SOLD_OUT" || !isCustomer) {
@@ -116,8 +118,8 @@ export default function ScrollPage() {
                                         <div className="scroll-post__title">
                                             <Heading level={3}>{item.name}</Heading>
                                             <span className="meta">
-                        Today's special
-                      </span>
+                                                Today's special
+                                            </span>
                                         </div>
 
                                         {soldOut && <Tag>Sold out</Tag>}
@@ -154,13 +156,13 @@ export default function ScrollPage() {
                                     {/* Post description */}
                                     <div className="scroll-post__body">
                                         <div className="scroll-post__actions">
-                      <span className="scroll-post__price">
-                        ${item.price.toFixed(2)}
-                      </span>
+                                          <span className="scroll-post__price">
+                                            ${item.price.toFixed(2)}
+                                          </span>
                                             {isCustomer && !soldOut && (
                                                 <span className="scroll-post__add">
-                          + Add to cart
-                        </span>
+                                                  + Add to cart
+                                                </span>
                                             )}
                                         </div>
 

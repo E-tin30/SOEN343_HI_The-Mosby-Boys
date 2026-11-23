@@ -64,7 +64,7 @@ public class MenuService {
 
     private MenuItem toDomain(MenuItemEntity e) {
         return new MenuItem(e.getId(), e.getRestaurantId(), e.getName(), e.getPrice(), e.getStockQuantity(),
-                e.getStatus(), e.getDescription(), e.getImageUrl(), e.getCreatedAt());
+                e.getStatus(), e.getDescription(), e.getPostDescription(), e.getImageUrl(), e.getCreatedAt());
     }
 
     @Transactional

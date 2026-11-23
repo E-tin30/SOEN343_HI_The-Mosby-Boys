@@ -76,7 +76,7 @@ export default function EditMenuItemPage() {
 
     const handleSubmit = async (
         e: FormEvent<HTMLFormElement>,
-        itemId: string, imageUrl: string
+        itemId: string, imageUrl: string, postDescription: string
     ) => {
         e.preventDefault();
         setError("");
@@ -106,6 +106,7 @@ export default function EditMenuItemPage() {
             price: Number(formData.price),
             stockQuantity: Number(formData.stockQuantity),
             description: formData.description.trim(),
+            postDescription: postDescription,
             imageUrl: imageUrl
         };
 
@@ -212,7 +213,7 @@ export default function EditMenuItemPage() {
                                         <form
                                             className="menu-item__edit-form"
                                             onSubmit={e =>
-                                                handleSubmit(e, item.id, item.imageUrl)
+                                                handleSubmit(e, item.id, item.imageUrl, item.postDescription)
                                             }
                                         >
                                             <div className="menu-item__edit-fields">

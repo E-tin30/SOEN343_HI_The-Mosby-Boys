@@ -39,6 +39,7 @@ public class ORDFacade {
     private final PermissionPolicy permissionPolicy;
     private final OrderQueues queues;
     private final MenuService menuService;
+    private final MenuImageService menuImageService;
     private final RestaurantService restaurantService;
     private final OrderQueries orderQueries;
     private final REGFacade regFacade;
@@ -330,6 +331,10 @@ public class ORDFacade {
     public void saveMenuItem(MenuItem item) {
         menuService.save(item);
     }
+
+    //save menu item image
+    @Transactional
+    public String saveMenuItemImage(UUID itemId, byte[] image, String contentType) { return menuImageService.save(itemId, image, contentType); }
 
     //get restaurantID from db
     @Transactional

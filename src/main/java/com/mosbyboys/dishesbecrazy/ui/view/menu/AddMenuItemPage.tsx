@@ -104,6 +104,7 @@ export default function AddMenuItemPage() {
         data.append("price", formData.price);
         data.append("stockQuantity", formData.stockQuantity);
         data.append("description", formData.description.trim());
+        data.append("postDescription", "");
 
         if (image) {
             data.append("image", image);
