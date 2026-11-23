@@ -12,5 +12,10 @@ public class DeliveredState extends OrderState {
     public OrderState refund() {
         return new RefundedState();
     }
+
+    @Override
+    public boolean foodHasLeftRestaurant() {
+        return true;
+    }
     // Refunding a completed delivery ends its lifecycle instead of returning it to pickup readiness.
 }

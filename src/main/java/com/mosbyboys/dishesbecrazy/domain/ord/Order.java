@@ -94,6 +94,10 @@ public class Order {
         this.state = this.state.cancel();
     }
 
+    public boolean foodHasLeftRestaurant() {
+        return state.foodHasLeftRestaurant();
+    }
+
     public void startPreparing(){
         this.state = this.state.startPreparing();
     }

@@ -85,4 +85,24 @@ class OrderStateTest {
     void illegalMoveThrows(OrderState start, String actionName, Function<OrderState, OrderState> action) {
         assertThrows(IllegalTransitionException.class, () -> action.apply(start));
     }
+
+    static Stream<Arguments> foodHasLeft() {
+        return Stream.of(
+            Arguments.of(new PlacedState(), false),
+            Arguments.of(new AcceptedState(), false),
+            Arguments.of(new PreparingState(), false),
+            Arguments.of(new ReadyState(), false),
+            Arguments.of(new PickedUpState(), true),
+            Arguments.of(new DeliveredState(), true),
+            Arguments.of(new RejectedState(), false),
+            Arguments.of(new CancelledState(), false),
+            Arguments.of(new RefundedState(), false)
+        );
+    }
+
+    @ParameterizedTest(name = "{0} food has left: {1}")
+    @MethodSource("foodHasLeft")
+    void foodHasLeftOnlyOncePickedUp(OrderState state, boolean expected) {
+        assertEquals(expected, state.foodHasLeftRestaurant());
+    }
 }
