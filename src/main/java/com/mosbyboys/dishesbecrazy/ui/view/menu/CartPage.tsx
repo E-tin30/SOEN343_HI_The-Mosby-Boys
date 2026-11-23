@@ -146,7 +146,11 @@ export default function CartPage() {
                 return;
             }
             // Rechecks immediately before placement in case availability changed after rendering.
-            paymentFormRef.current?.submitPayment();
+            if (!paymentFormRef.current) {
+                throw new Error("Payment form is not ready.");
+            }
+
+            await paymentFormRef.current.submitPayment();
 
             const response = await loggedFetch("http://localhost:8080/placeOrder", {
                 method: "POST",

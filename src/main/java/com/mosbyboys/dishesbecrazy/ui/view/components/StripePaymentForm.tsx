@@ -5,56 +5,62 @@ import {
     useElements
 } from "@stripe/react-stripe-js";
 
-import {type FormEvent, forwardRef, useImperativeHandle, useRef, useState} from "react";
+import {
+    forwardRef,
+    useImperativeHandle,
+    useState
+} from "react";
 
 export type StripePaymentFormHandle = {
-    submitPayment: () => void;
+    submitPayment: () => Promise<void>;
 };
 
 const StripePaymentForm = forwardRef<StripePaymentFormHandle>((params, ref) => {
     const stripe = useStripe();
     const elements = useElements();
-    const formRef = useRef<HTMLFormElement>(null);
 
     const [error, setError] = useState("");
 
-    useImperativeHandle(ref, () => ({
-        submitPayment: () => formRef.current?.requestSubmit()
-    }));
-
-    async function handleSubmit(e: FormEvent<HTMLFormElement>) {
-        e.preventDefault();
-
-        log("command", "Confirm payment");
-        // Records the existing SDK action without changing the payment submission contract.
+    const submitPayment = async (): Promise<void> => {
         if (!stripe || !elements) {
-            log("error", "Payment form is not ready.");
-            // Makes the existing early return visible in the application console.
-            return;
+            throw new Error("Payment form is not ready.");
         }
 
         setError("");
+        log("command", "Confirm payment");
 
         try {
-            const { error } = await stripe.confirmPayment({
+            const { error, paymentIntent } = await stripe.confirmPayment({
                 elements,
                 redirect: "if_required",
             });
+
             if (error) {
-                log("error", "Payment confirmation failed.");
-                // Logs a safe description instead of exposing payment details from the SDK error.
-                setError(error.message ?? "Payment failed.");
+                throw new Error(error.message || "Payment failed.");
             }
+
+            if (paymentIntent?.status !== "succeeded") {
+                throw new Error("Payment has not been completed.");
+            }
+
         } catch (error) {
             logError(error, "Payment confirmation failed.");
-            setError("Payment failed.");
-        }
-        // Reports thrown SDK/network failures through the same console as application requests.
 
-    }
+            const message = error instanceof Error
+                ? error.message
+                : "Payment failed.";
+
+            setError(message);
+            throw error;
+        }
+    };
+
+    useImperativeHandle(ref, () => ({
+        submitPayment
+    }), [submitPayment]);
 
     return (
-        <form onSubmit={handleSubmit}>
+        <div>
             <PaymentElement />
 
             {error && (
@@ -62,8 +68,7 @@ const StripePaymentForm = forwardRef<StripePaymentFormHandle>((params, ref) => {
                     {error}
                 </p>
             )}
-
-        </form>
+        </div>
     );
 });
 
