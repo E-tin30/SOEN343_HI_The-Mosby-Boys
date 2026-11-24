@@ -81,7 +81,7 @@ public class MenuController {
 
         UUID menuItemId = UUID.randomUUID();
 
-        String imageUrl = null;
+        String imageUrl = "https://zmlykiviyssjacfuione.supabase.co/storage/v1/object/public/menu-images/default_menu_item_image.png";
 
         if (image != null && !image.isEmpty()) {
             try {
@@ -91,7 +91,7 @@ public class MenuController {
                         image.getContentType()
                 );
             } catch (IOException e) {
-                imageUrl = null;
+                imageUrl = "https://zmlykiviyssjacfuione.supabase.co/storage/v1/object/public/menu-images/default_menu_item_image.png";
             }
         }
 

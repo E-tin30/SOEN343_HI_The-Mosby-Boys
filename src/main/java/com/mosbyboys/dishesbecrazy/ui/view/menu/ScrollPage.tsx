@@ -47,20 +47,20 @@ export default function ScrollPage() {
     return (
         <div className="page scroll-page">
             <AppHeader>
-                {isCustomer && (
-                    <Button
-                        variant="secondary"
-                        onClick={() => navigate("/cart")}
-                    >
-                        View cart ({itemCount})
-                    </Button>
-                )}
+                {/*{isCustomer && (*/}
+                {/*    <Button*/}
+                {/*        variant="secondary"*/}
+                {/*        onClick={() => navigate("/cart")}*/}
+                {/*    >*/}
+                {/*        View cart ({itemCount})*/}
+                {/*    </Button>*/}
+                {/*)}*/}
 
                 <Button
                     variant="secondary"
-                    onClick={() => navigate(`/restaurants/${restaurantId}/menu`)}
+                    onClick={() => navigate(`/home`)}
                 >
-                    View menu
+                    Back Home
                 </Button>
             </AppHeader>
 

@@ -28,7 +28,7 @@ public record DemoFixtures(List<Account> accounts, List<MenuSeed> menuItems, Lis
     // Preserves the existing profile JSON fields; passwords remain in environment configuration.
 
     public record MenuSeed(UUID id, String restaurantUsername, String name, BigDecimal price,
-                           int stockQuantity, MenuItemStatus status, String description) {
+                           int stockQuantity, MenuItemStatus status, String description, String imageUrl, String postDescription ) {
     }
 
     public record OrderSeed(UUID id, String customerUsername, String restaurantUsername,

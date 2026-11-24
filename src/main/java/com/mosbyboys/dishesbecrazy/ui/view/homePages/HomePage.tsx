@@ -77,9 +77,14 @@ export default function HomePage() {
             Find home cooks and restaurants near you.
           </p>
           <hr className="intro-card__divider" />
+            <div className="dashboard-card__actions">
           <Button onClick={() => navigate("/restaurants")}>
-            Browse restaurants
+            Browse Restaurants
           </Button>
+            <Button onClick={() => navigate("/feed")}>
+                Browse Feed
+            </Button>
+            </div>
         </section>
 
         <div className="dashboard-grid">
