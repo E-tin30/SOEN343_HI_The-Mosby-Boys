@@ -29,6 +29,13 @@ jobs:
       # DishesBeCrazyApplicationTests boots the whole app and needs the Supabase and Stripe
       # secrets from .env, so it is left out here. Every other test runs with no external services.
       - name: Run unit tests
+        env:
+            SUPABASE_URL: https://example.supabase.co
+            SUPABASE_PUBLISHABLE_KEY: dummy
+            SUPABASE_DB_URL: jdbc:postgresql://localhost:5432/dummy
+            SUPABASE_DB_USER: dummy
+            SUPABASE_DB_PASSWORD: dummy
+            STRIPE_SECRET_KEY: dummy
         run: ./mvnw -B -ntp test -Dtest='!DishesBeCrazyApplicationTests'
 
       - name: Upload test reports
