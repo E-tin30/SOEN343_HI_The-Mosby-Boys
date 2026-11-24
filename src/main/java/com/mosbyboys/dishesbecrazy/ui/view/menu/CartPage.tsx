@@ -1,7 +1,7 @@
 import { useOrderAvailability } from "./useOrderAvailability";
 import { loggedFetch, readJson, RequestError } from "../api/loggedFetch";
 import {useEffect, useRef, useState} from "react";
-import {useNavigate} from "react-router-dom";
+import {useLocation, useNavigate} from "react-router-dom";
 import {useCart} from "../context/CartContext";
 import {useAuth} from "../context/AuthContext";
 import {log, logError} from "../outputLog";
@@ -20,6 +20,8 @@ const stripePromise = loadStripe(
 
 export default function CartPage() {
     const navigate = useNavigate();
+    const location = useLocation();
+    const isFromFeed = Boolean(location.state?.isFromFeed);
     const {
         cart,
         itemCount,
@@ -188,18 +190,42 @@ export default function CartPage() {
         }
     };
 
+    const handleBackToFeed = () => {
+        clearCart();
+        navigate("/feed");
+    };
+
+    const handleBackToRestaurants = () => {
+        clearCart();
+        navigate("/restaurants");
+    };
+
+    const handleBackToMenu = () => {
+        navigate(`/restaurants/${cart?.restaurantId}/menu`);
+    };
+
     return (
         <div className="page">
             <AppHeader>
-                {cart ? (
+                {isFromFeed ? (
                     <Button
                         variant="secondary"
-                        onClick={() => navigate(`/restaurants/${cart.restaurantId}/menu`)}
+                        onClick={handleBackToFeed}
+                    >
+                        Back to feed
+                    </Button>
+                ) : cart ? (
+                    <Button
+                        variant="secondary"
+                        onClick={handleBackToMenu}
                     >
                         Back to menu
                     </Button>
                 ) : (
-                    <Button variant="secondary" onClick={() => navigate("/restaurants")}>
+                    <Button
+                        variant="secondary"
+                        onClick={handleBackToRestaurants}
+                    >
                         Back to restaurants
                     </Button>
                 )}
@@ -218,9 +244,15 @@ export default function CartPage() {
                 {isEmpty ? (
                     <div className="cart-empty">
                         <p className="page__status meta">Your cart is empty.</p>
-                        <Button onClick={() => navigate("/restaurants")}>
-                            Browse restaurants
-                        </Button>
+                        {isFromFeed ? (
+                            <Button onClick={handleBackToFeed}>
+                                Browse feed
+                            </Button>
+                        ) : (
+                            <Button onClick={handleBackToRestaurants}>
+                                Browse restaurants
+                            </Button>
+                        )}
                     </div>
                 ) : (
                     <>

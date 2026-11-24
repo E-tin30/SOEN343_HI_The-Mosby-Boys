@@ -17,4 +17,13 @@ public interface MenuItemRepo extends JpaRepository<MenuItemEntity, UUID> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select m from MenuItemEntity m where m.id = :id")
     Optional<MenuItemEntity> findByIdForUpdate(@Param("id") UUID id);
+
+    @Query("""
+        SELECT m FROM MenuItemEntity m
+        WHERE m.restaurantId IN (
+            SELECT r.id FROM RestaurantEntity r
+            WHERE r.status = 'OPEN'
+        )
+    """)
+    List<MenuItemEntity> findAllFromOpenRestaurants();
 }

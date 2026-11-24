@@ -28,6 +28,11 @@ public class MenuService {
     }
 
     @Transactional(readOnly = true)
+    public List<MenuItem> getOpenRestaurantMenu() {
+        return menuItemRepo.findAllFromOpenRestaurants().stream().map(this::toDomain).toList();
+    }
+
+    @Transactional(readOnly = true)
     public MenuItem load(UUID menuItemId) {
         return menuItemRepo.findById(menuItemId)
                 .map(this::toDomain)

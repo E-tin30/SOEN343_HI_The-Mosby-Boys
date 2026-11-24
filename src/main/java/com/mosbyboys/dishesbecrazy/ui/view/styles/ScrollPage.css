@@ -171,6 +171,24 @@
     white-space: pre-wrap;
 }
 
+.scroll-page__filter {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    background: var(--porcelain);
+    border: var(--border-width) solid var(--linen);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.scroll-page__filter input {
+    cursor: pointer;
+    accent-color: var(--tomato);
+}
+
 @media (max-width: 600px) {
     .scroll-page__content {
         padding: 16px 0 40px;

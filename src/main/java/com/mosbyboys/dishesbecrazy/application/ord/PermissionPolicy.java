@@ -155,6 +155,22 @@ public class PermissionPolicy {
         }
     }
 
+    public void checkCanBrowseMenu(User caller) {
+        requireCaller(caller);
+        switch (caller.getRole()) {
+            case OPERATOR -> {
+                return;
+            }
+            case RESTAURANT -> {
+                throw new PermissionDeniedException("Cannot view another restaurant's menu.");
+            }
+            case CUSTOMER -> {
+                return;
+            }
+            case COURIER -> throw new PermissionDeniedException("Couriers cannot view restaurant menus yet (DLV not implemented).");
+        }
+    }
+
     // Only an operator can replace the courier of an order (R-DLV-02).
     public void checkCanReassign(User caller, Order order) {
         requireCaller(caller);

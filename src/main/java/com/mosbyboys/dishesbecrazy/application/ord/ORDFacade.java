@@ -81,6 +81,12 @@ public class ORDFacade {
     }
 
     @Transactional
+    public List<MenuItem> getOpenRestaurantMenu(User user) {
+        permissionPolicy.checkCanBrowseMenu(user);
+        return menuService.getOpenRestaurantMenu();
+    }
+
+    @Transactional
     public List<RestaurantOrderView> getRestaurantOrders(User user) {
         return orderQueries.getRestaurantOrders(user);
     }

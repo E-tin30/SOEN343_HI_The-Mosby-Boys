@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.UUID;
 import java.math.BigDecimal;
 
-import com.mosbyboys.dishesbecrazy.application.ord.MenuImageService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
@@ -32,7 +31,7 @@ public class MenuController {
     private final ORDFacade ordFacade;
     private final REGFacade regFacade;
 
-    public record MenuItemResponse(UUID id, String name, BigDecimal price, String status, String description, String postDescription, int stockQuantity, String itemUrl) {
+    public record MenuItemResponse(UUID id, String name, BigDecimal price, String status, String description, String postDescription, int stockQuantity, String imageUrl) {
         static MenuItemResponse from(MenuItem m) {
             String availability = (m.isAvailable() ? MenuItemStatus.AVAILABLE : MenuItemStatus.SOLD_OUT).name();
             // Exposes ORD's existing availability rule, including zero stock, in the menu status field.
@@ -54,6 +53,16 @@ public class MenuController {
     public ResponseEntity<List<MenuItemResponse>> getMenu(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID restaurantId) {
         User user = regFacade.getCurrentUser(UUID.fromString(jwt.getSubject()));
         List<MenuItem> body = ordFacade.getMenuForRestaurant(user, restaurantId);
+        List<MenuItemResponse> menuItems = body.stream()
+                .map(MenuItemResponse::from)
+                .toList();
+        return ResponseEntity.ok(menuItems);
+    }
+
+    @GetMapping("/api/restaurants/menu-all")
+    public ResponseEntity<List<MenuItemResponse>> getOpenRestaurantMenu(@AuthenticationPrincipal Jwt jwt) {
+        User user = regFacade.getCurrentUser(UUID.fromString(jwt.getSubject()));
+        List<MenuItem> body = ordFacade.getOpenRestaurantMenu(user);
         List<MenuItemResponse> menuItems = body.stream()
                 .map(MenuItemResponse::from)
                 .toList();

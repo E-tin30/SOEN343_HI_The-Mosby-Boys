@@ -14,7 +14,7 @@ export default function MenuPage() {
   const navigate = useNavigate();
   const { restaurantId } = useParams<{ restaurantId: string }>();
   const { accessToken, user } = useAuth();
-  const { addItem, itemCount } = useCart();
+  const { addItem, itemCount, clearCart } = useCart();
   const [items, setItems] = useState<MenuItem[] | null>(null);
   const [error, setError] = useState("");
 
@@ -27,6 +27,11 @@ export default function MenuPage() {
       .catch((e: Error) => setError(e.message));
   }, [accessToken, restaurantId]);
 
+  const handleBackToRestaurants = () => {
+    clearCart();
+    navigate("/restaurants");
+  };
+
   return (
     <div className="page">
       <AppHeader>
@@ -35,7 +40,7 @@ export default function MenuPage() {
             View cart ({itemCount})
           </Button>
         )}
-        <Button variant="secondary" onClick={() => navigate("/restaurants")}>
+        <Button variant="secondary" onClick={handleBackToRestaurants}>
           Back to restaurants
         </Button>
       </AppHeader>

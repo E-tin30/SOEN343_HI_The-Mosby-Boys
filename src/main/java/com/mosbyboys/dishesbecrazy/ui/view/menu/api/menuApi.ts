@@ -29,6 +29,10 @@ export function getMenu(token: string, restaurantId: string, signal?: AbortSigna
   return get(`/api/restaurants/${restaurantId}/menu`, token, signal);
 }
 
+export function getOpenRestaurantMenu(token: string, signal?: AbortSignal): Promise<MenuItem[]> {
+  return get('/api/restaurants/menu-all', token, signal);
+}
+
 export function pauseRestaurant(token: string, restaurantId: string): Promise<Restaurant> {
   return post(`/api/restaurants/${restaurantId}/pause`, token);
 }

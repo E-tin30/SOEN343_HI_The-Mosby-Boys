@@ -6,59 +6,65 @@ import AppHeader from "../components/AppHeader";
 import Button from "../components/Button";
 import Heading from "../components/Heading";
 import Tag from "../components/Tag";
-import {getMenu} from "./api/menuApi";
+import {getOpenRestaurantMenu} from "./api/menuApi";
 import type {MenuItem} from "./types/menu";
 import "../styles/ScrollPage.css";
 
+function shuffleItems<T>(items: T[]): T[] {
+    const shuffled = [...items];
+
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+
+    return shuffled;
+}
+
 export default function ScrollPage() {
     const navigate = useNavigate();
-    const {restaurantId} = useParams<{ restaurantId: string }>();
 
     const {accessToken, user} = useAuth();
-    const {addItem, itemCount} = useCart();
+    const {addItem} = useCart();
 
     const [items, setItems] = useState<MenuItem[] | null>(null);
     const [error, setError] = useState("");
+    const [showSoldOut, setShowSoldOut] = useState(true);
 
     const isCustomer = user?.role === "CUSTOMER";
 
     useEffect(() => {
-        if (!accessToken || !restaurantId) return;
+        if (!accessToken) return;
 
-        getMenu(accessToken, restaurantId)
-            .then(setItems)
+        getOpenRestaurantMenu(accessToken)
+            .then((result) => {
+                setItems(shuffleItems(result));
+            })
             .catch((e: Error) => setError(e.message));
-    }, [accessToken, restaurantId]);
+    }, [accessToken]);
 
     // Only display menu items that have been posted (ie has a description)
     const posts = items?.filter(
-        (item) => item.postDescription?.trim()
+        (item) =>
+            item.postDescription?.trim() &&
+            (showSoldOut || item.status !== "SOLD_OUT")
     ) ?? [];
 
     const handlePostClick = (item: MenuItem) => {
-        if (!restaurantId || item.status === "SOLD_OUT" || !isCustomer) {
+        if (item.status === "SOLD_OUT" || !isCustomer) {
             return;
         }
 
-        addItem(restaurantId, item);
-        navigate("/cart");
+        addItem(item.restaurantId, item);
+        navigate("/cart", { state: { isFromFeed: true } });
     };
 
     return (
         <div className="page scroll-page">
             <AppHeader>
-                {/*{isCustomer && (*/}
-                {/*    <Button*/}
-                {/*        variant="secondary"*/}
-                {/*        onClick={() => navigate("/cart")}*/}
-                {/*    >*/}
-                {/*        View cart ({itemCount})*/}
-                {/*    </Button>*/}
-                {/*)}*/}
-
                 <Button
                     variant="secondary"
-                    onClick={() => navigate(`/home`)}
+                    onClick={() => navigate("/home")}
                 >
                     Back Home
                 </Button>
@@ -68,8 +74,16 @@ export default function ScrollPage() {
                 <header className="scroll-page__intro">
                     <Heading>Discover what's cooking.</Heading>
                     <p className="meta">
-                        Scroll through the kitchen's latest creations.
+                        Scroll through your community's latest creations.
                     </p>
+                    <label className="scroll-page__filter">
+                        <input
+                            type="checkbox"
+                            checked={showSoldOut}
+                            onChange={(e) => setShowSoldOut(e.target.checked)}
+                        />
+                        Show sold out
+                    </label>
                 </header>
 
                 {error && (
@@ -117,9 +131,6 @@ export default function ScrollPage() {
 
                                         <div className="scroll-post__title">
                                             <Heading level={3}>{item.name}</Heading>
-                                            <span className="meta">
-                                                Today's special
-                                            </span>
                                         </div>
 
                                         {soldOut && <Tag>Sold out</Tag>}
