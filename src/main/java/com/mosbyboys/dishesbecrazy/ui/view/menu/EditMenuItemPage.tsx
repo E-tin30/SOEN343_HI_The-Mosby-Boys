@@ -76,7 +76,7 @@ export default function EditMenuItemPage() {
 
     const handleSubmit = async (
         e: FormEvent<HTMLFormElement>,
-        itemId: string, imageUrl: string, postDescription: string
+        itemId: string, imageUrl: string, postDescription: string | null
     ) => {
         e.preventDefault();
         setError("");

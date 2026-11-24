@@ -1,6 +1,6 @@
 import VideoPage from "../components/VideoPage";
 
-const videoModules = import.meta.glob<string>("./assets/promo-vid.{mp4,webm,mov}", {
+const videoModules = import.meta.glob<string>("../assets/promo-vid.{mp4,webm,mov}", {
     eager: true,
     import: "default",
     query: "?url",

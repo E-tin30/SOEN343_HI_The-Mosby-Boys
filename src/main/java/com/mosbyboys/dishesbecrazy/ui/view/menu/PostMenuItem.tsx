@@ -143,8 +143,7 @@ export default function PostMenuItemPage() {
                 <header className="page__intro">
                     <Heading>Manage your menu postings!</Heading>
                     <p className="meta">
-                        Post menu items to make them visible to customers,
-                        or remove existing postings.
+                        Post menu items to advertise them to customers, or remove existing postings.
                     </p>
                 </header>
 
@@ -205,10 +204,12 @@ export default function PostMenuItemPage() {
 
                                         {isPosted ? (
                                             <p className="menu-item__description meta">
-                                                {item.postDescription}
+                                                <i>
+                                                    {item.postDescription}
+                                                </i>
                                             </p>
                                         ) : (
-                                            <label className="menu-item__post-description">
+                                            <label className="menu-item__edit-fields">
                                                 Post description
                                                 <textarea
                                                     value={descriptions[item.id] ?? ""}
@@ -218,7 +219,7 @@ export default function PostMenuItemPage() {
                                                             item.id
                                                         )
                                                     }
-                                                    rows={3}
+                                                    rows={2}
                                                     placeholder="Write a description for your post..."
                                                     disabled={isUpdating}
                                                 />

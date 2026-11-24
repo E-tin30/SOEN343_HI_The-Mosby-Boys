@@ -51,6 +51,7 @@ public class MenuService {
         entity.setStockQuantity(item.getStockQuantity());
         entity.setStatus(item.getStatus());
         entity.setDescription(item.getDescription());
+        entity.setPostDescription(item.getPostDescription());
         entity.setImageUrl(item.getImageUrl());
         menuItemRepo.save(entity);
     }

@@ -32,11 +32,11 @@ public class MenuController {
     private final ORDFacade ordFacade;
     private final REGFacade regFacade;
 
-    public record MenuItemResponse(UUID id, String name, BigDecimal price, String status, String description, int stockQuantity, String menuUrl) {
+    public record MenuItemResponse(UUID id, String name, BigDecimal price, String status, String description, String postDescription, int stockQuantity, String itemUrl) {
         static MenuItemResponse from(MenuItem m) {
             String availability = (m.isAvailable() ? MenuItemStatus.AVAILABLE : MenuItemStatus.SOLD_OUT).name();
             // Exposes ORD's existing availability rule, including zero stock, in the menu status field.
-            return new MenuItemResponse(m.getId(), m.getName(), m.getPrice(), availability, m.getDescription(), m.getStockQuantity(), m.getImageUrl());
+            return new MenuItemResponse(m.getId(), m.getName(), m.getPrice(), availability, m.getDescription(), m.getPostDescription(), m.getStockQuantity(), m.getImageUrl());
         }
     }
 
@@ -81,13 +81,17 @@ public class MenuController {
 
         UUID menuItemId = UUID.randomUUID();
 
-        String imageUrl = "";
+        String imageUrl = null;
 
-        if(image != null) {
+        if (image != null && !image.isEmpty()) {
             try {
-                imageUrl = ordFacade.saveMenuItemImage(menuItemId, image.getBytes(), image.getContentType());
+                imageUrl = ordFacade.saveMenuItemImage(
+                        menuItemId,
+                        image.getBytes(),
+                        image.getContentType()
+                );
             } catch (IOException e) {
-                imageUrl = "";
+                imageUrl = null;
             }
         }
 
