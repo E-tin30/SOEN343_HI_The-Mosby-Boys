@@ -398,7 +398,7 @@ export default function CartPage() {
                                 <Button variant="secondary" onClick={clearCart} disabled={placingOrder && checkout}>
                                     Clear cart
                                 </Button>
-                                <Button onClick={proceedToCheckout} disabled={placingOrder && checkout}>
+                                <Button onClick={proceedToCheckout} disabled={isOrderDisabled || placingOrder && checkout}>
                                     Continue to Checkout
                                 </Button>
                             </div>}

@@ -31,11 +31,11 @@ public class MenuController {
     private final ORDFacade ordFacade;
     private final REGFacade regFacade;
 
-    public record MenuItemResponse(UUID id, String name, BigDecimal price, String status, String description, String postDescription, int stockQuantity, String imageUrl) {
+    public record MenuItemResponse(UUID id, UUID restaurantId, String name, BigDecimal price, String status, String description, String postDescription, int stockQuantity, String imageUrl) {
         static MenuItemResponse from(MenuItem m) {
             String availability = (m.isAvailable() ? MenuItemStatus.AVAILABLE : MenuItemStatus.SOLD_OUT).name();
             // Exposes ORD's existing availability rule, including zero stock, in the menu status field.
-            return new MenuItemResponse(m.getId(), m.getName(), m.getPrice(), availability, m.getDescription(), m.getPostDescription(), m.getStockQuantity(), m.getImageUrl());
+            return new MenuItemResponse(m.getId(), m.getRestaurantId(), m.getName(), m.getPrice(), availability, m.getDescription(), m.getPostDescription(), m.getStockQuantity(), m.getImageUrl());
         }
     }
 
