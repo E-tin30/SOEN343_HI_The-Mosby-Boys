@@ -2,7 +2,7 @@
 
 # Dishes Be Crazy
 
-A food-ordering platform where local Montreal home cooks sell their homemade meals (SOEN 343, Phase II). Customers browse their kitchens' menus and place orders; cooks accept or reject them and prepare them in FIFO order. Kitchen accounts use the existing RESTAURANT role. Every command and error appears in the on-screen output console.
+A food-ordering platform where local Montreal home cooks sell their homemade meals (SOEN 343). Customers browse their kitchens' menus and place orders; cooks accept or reject them and prepare them in FIFO order; Couriers pick up and deliver orders. Kitchen accounts use the existing RESTAURANT role. Every command and error appears in the on-screen output console.
 
 
 ## Team

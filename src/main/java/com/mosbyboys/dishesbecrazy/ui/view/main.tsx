@@ -30,6 +30,7 @@ import EditMenuItemPage from "./menu/EditMenuItemPage";
 import AlternatePath from "./easterEggs/AlternatePath";
 import BackgroundRedirect from "./easterEggs/BackgroundRedirect";
 import ScrollPage from "./menu/ScrollPage";
+import PostMenuItemPage from "./menu/PostMenuItem";
 
 createRoot(document.getElementById("root")!).render(
     <BrowserRouter>
@@ -96,6 +97,14 @@ createRoot(document.getElementById("root")!).render(
                         element={
                             <ProtectedRoute allowedRoles={["RESTAURANT"]}>
                                 <EditMenuItemPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/restaurant/post"
+                        element={
+                            <ProtectedRoute allowedRoles={["RESTAURANT"]}>
+                                <PostMenuItemPage />
                             </ProtectedRoute>
                         }
                     />

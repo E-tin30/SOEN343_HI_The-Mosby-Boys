@@ -129,6 +129,9 @@ export default function RestaurantHomePage() {
               <Button variant="secondary" onClick={() => navigate("/restaurant/edit")}>
                 Edit Menu Item
               </Button>
+              <Button variant="secondary" onClick={() => navigate("/restaurant/post")}>
+                Post Menu Item
+              </Button>
             </div>
           </section>
 
