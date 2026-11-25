@@ -123,14 +123,11 @@ export default function RestaurantHomePage() {
               </ul>
             )}
             <div className="dashboard-card__footer dashboard-card__actions">
-              <Button variant="secondary" onClick={() => navigate("/restaurant/add")}>
-                Add Menu Item
-              </Button>
               <Button variant="secondary" onClick={() => navigate("/restaurant/edit")}>
-                Edit Menu Item
+                Edit Menu
               </Button>
               <Button variant="secondary" onClick={() => navigate("/restaurant/post")}>
-                Post Menu Item
+                Manage Posts
               </Button>
             </div>
           </section>
