@@ -37,6 +37,7 @@ class ORDFacadeQueriesTest {
 
     private OrderService orderService;
     private MenuService menuService;
+    private MenuImageService menuImageService;
     private RestaurantService restaurantService;
     private PricingService pricingService;
     private REGFacade regFacade;
@@ -56,6 +57,7 @@ class ORDFacadeQueriesTest {
     void setUp() {
         orderService = mock(OrderService.class);
         menuService = mock(MenuService.class);
+        menuImageService = mock(MenuImageService.class);
         restaurantService = mock(RestaurantService.class);
         pricingService = mock(PricingService.class);
         regFacade = mock(REGFacade.class);
@@ -64,7 +66,7 @@ class ORDFacadeQueriesTest {
     }
 
     private ORDFacade newFacade() {
-        return new ORDFacade(orderService, new PermissionPolicy(), queues, menuService,
+        return new ORDFacade(orderService, new PermissionPolicy(), queues, menuService, menuImageService,
                 restaurantService,
                 new OrderQueries(orderService, queues, menuService, restaurantService, pricingService, regFacade),
                 regFacade, mock(ApplicationEventPublisher.class));

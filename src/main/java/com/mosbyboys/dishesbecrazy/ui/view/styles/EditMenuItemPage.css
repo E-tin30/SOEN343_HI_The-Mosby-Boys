@@ -39,9 +39,10 @@
     width: 100%;
     box-sizing: border-box;
     padding: 0.65rem;
-    border: 1px solid #ccc;
+    border: 1px solid var(--linen);
     border-radius: 6px;
     font: inherit;
+    background: var(--porcelain);
 }
 
 .menu-item__actions {

@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { useAuth } from "../AuthContext";
+import { useAuth } from "../context/AuthContext";
 import { loggedFetch, RequestError } from "../api/loggedFetch";
 import { logError } from "../outputLog";
 import Button from "./Button";

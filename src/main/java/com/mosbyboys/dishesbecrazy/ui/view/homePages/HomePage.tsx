@@ -1,19 +1,19 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "./AuthContext";
-import { useCart } from "./CartContext";
-import AppHeader from "./components/AppHeader";
-import ActiveOrderDetails from "./components/ActiveOrderDetails";
-import Button from "./components/Button";
-import Heading from "./components/Heading";
-import { MapCard } from "./dashboard/LiveMap";
-import { getOrderHistory } from "./orders/api/ordersApi";
-import type { ActiveOrderSummary, HistoryStatus } from "./orders/types/order";
-import "./styles/Dashboard.css";
+import { useAuth } from "../context/AuthContext";
+import { useCart } from "../context/CartContext";
+import AppHeader from "../components/AppHeader";
+import ActiveOrderDetails from "../components/ActiveOrderDetails";
+import Button from "../components/Button";
+import Heading from "../components/Heading";
+import { MapCard } from "../dashboard/LiveMap";
+import { getOrderHistory } from "../orders/api/ordersApi";
+import type { ActiveOrderSummary, HistoryStatus } from "../orders/types/order";
+import "../styles/Dashboard.css";
 
 // Statuses for an order that hasn't reached the customer yet.
 const IN_PROGRESS: HistoryStatus[] = ["PLACED", "ACCEPTED", "PREPARING", "READY", "PICKEDUP"];
-import DemoResetControl from "./components/DemoResetControl";
+import DemoResetControl from "../components/DemoResetControl";
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -77,9 +77,14 @@ export default function HomePage() {
             Find home cooks and restaurants near you.
           </p>
           <hr className="intro-card__divider" />
+            <div className="dashboard-card__actions">
           <Button onClick={() => navigate("/restaurants")}>
-            Browse restaurants
+            Browse Restaurants
           </Button>
+            <Button onClick={() => navigate("/feed")}>
+                Browse Feed
+            </Button>
+            </div>
         </section>
 
         <div className="dashboard-grid">
@@ -101,11 +106,10 @@ export default function HomePage() {
             </Button>
           </section>
 
-          {/* Same as the menu page's cart button; /cart is customer-only. */}
           {isCustomer && (
             <section className="dashboard-card dashboard-card--action card">
-              <Button block onClick={() => navigate("/cart")}>
-                View cart ({itemCount})
+              <Button block onClick={() => navigate("/feed")}>
+                Browse feed
               </Button>
             </section>
           )}

@@ -1,11 +1,11 @@
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "./AuthContext";
-import AppHeader from "./components/AppHeader";
-import Button from "./components/Button";
-import DemoResetControl from "./components/DemoResetControl";
-import Heading from "./components/Heading";
-import OperatorRestaurantList from "./components/OperatorRestaurantList"
-import OperatorCourierList from "./components/OperatorCourierList";
+import { useAuth } from "../context/AuthContext";
+import AppHeader from "../components/AppHeader";
+import Button from "../components/Button";
+import DemoResetControl from "../components/DemoResetControl";
+import Heading from "../components/Heading";
+import OperatorRestaurantList from "../components/OperatorRestaurantList"
+import OperatorCourierList from "../components/OperatorCourierList";
 
 export default function OperatorHomePage() {
   const navigate = useNavigate();

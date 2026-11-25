@@ -20,8 +20,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -39,6 +41,7 @@ public class ORDFacade {
     private final PermissionPolicy permissionPolicy;
     private final OrderQueues queues;
     private final MenuService menuService;
+    private final MenuImageService menuImageService;
     private final RestaurantService restaurantService;
     private final OrderQueries orderQueries;
     private final REGFacade regFacade;
@@ -77,6 +80,17 @@ public class ORDFacade {
         Restaurant restaurant = restaurantService.load(restaurantId);   
         permissionPolicy.checkCanBrowseMenu(user, restaurant);        
         return menuService.getMenu(restaurantId); 
+    }
+
+    @Transactional
+    public List<MenuItem> getOpenRestaurantMenu(User user) {
+        permissionPolicy.checkCanBrowseMenu(user);
+        return menuService.getOpenRestaurantMenu();
+    }
+
+    @Transactional
+    public Map<UUID, String> getRestaurantNames(Collection<UUID> restaurantIds) {
+        return restaurantService.getNames(restaurantIds);
     }
 
     @Transactional
@@ -330,6 +344,10 @@ public class ORDFacade {
     public void saveMenuItem(MenuItem item) {
         menuService.save(item);
     }
+
+    //save menu item image
+    @Transactional
+    public String saveMenuItemImage(UUID itemId, byte[] image, String contentType) { return menuImageService.save(itemId, image, contentType); }
 
     //get restaurantID from db
     @Transactional

@@ -1,4 +1,4 @@
-import type { Role } from "./AuthContext";
+import type { Role } from "./context/AuthContext";
 
 // Dashboard each role lands on after login.
 // To add a dashboard for a new role (e.g. OPERATOR), add its path here

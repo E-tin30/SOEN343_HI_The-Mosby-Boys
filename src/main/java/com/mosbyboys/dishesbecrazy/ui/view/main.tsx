@@ -1,7 +1,7 @@
 import {createRoot} from "react-dom/client";
 import "./styles/base.css";
 import OutputConsole from "./components/OutputConsole";
-import {AuthProvider} from "./AuthContext";
+import {AuthProvider} from "./context/AuthContext";
 import ProtectedRoute from "./ProtectedRoute";
 import {
     BrowserRouter,
@@ -12,23 +12,25 @@ import {
 
 import LoginPage from "./LoginPage";
 import RegistrationPage from "./RegistrationPage";
-import HomePage from "./HomePage";
-import RestaurantHomePage from "./RestaurantHomePage";
-import CourierHomePage from "./CourierHomePage";
+import HomePage from "./homePages/HomePage";
+import RestaurantHomePage from "./homePages/RestaurantHomePage";
+import CourierHomePage from "./homePages/CourierHomePage";
 import RestaurantOrdersPage from "./orders/RestaurantOrdersPage";
 import OrderHistoryPage from "./orders/OrderHistoryPage";
 import LedgerPage from "./orders/LedgerPage";
 import RestaurantsPage from "./menu/RestaurantsPage";
 import MenuPage from "./menu/MenuPage";
-import {CartProvider} from "./CartContext";
+import {CartProvider} from "./context/CartContext";
 import CartPage from "./menu/CartPage";
 import OrderSummaryPage from "./orders/OrderSummaryPage";
 import DashboardPage from "./dashboard/DashboardPage";
-import OperatorHomePage from "./OperatorHomePage";
+import OperatorHomePage from "./homePages/OperatorHomePage";
 import AddMenuItemPage from "./menu/AddMenuItemPage";
 import EditMenuItemPage from "./menu/EditMenuItemPage";
-import AlternatePath from "./AlternatePath";
-import BackgroundRedirect from "./BackgroundRedirect";
+import AlternatePath from "./easterEggs/AlternatePath";
+import BackgroundRedirect from "./easterEggs/BackgroundRedirect";
+import ScrollPage from "./menu/ScrollPage";
+import PostMenuItemPage from "./menu/PostMenuItem";
 
 createRoot(document.getElementById("root")!).render(
     <BrowserRouter>
@@ -99,6 +101,14 @@ createRoot(document.getElementById("root")!).render(
                         }
                     />
                     <Route
+                        path="/restaurant/post"
+                        element={
+                            <ProtectedRoute allowedRoles={["RESTAURANT"]}>
+                                <PostMenuItemPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
                         path="/orders/history"
                         element={
                             <ProtectedRoute allowedRoles={["CUSTOMER", "RESTAURANT", "COURIER", "OPERATOR"]}>
@@ -158,6 +168,16 @@ createRoot(document.getElementById("root")!).render(
                                 ]}
                             >
                                 <DashboardPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/feed"
+                        element={
+                            <ProtectedRoute
+                                allowedRoles={["CUSTOMER"]}
+                            >
+                                <ScrollPage />
                             </ProtectedRoute>
                         }
                     />

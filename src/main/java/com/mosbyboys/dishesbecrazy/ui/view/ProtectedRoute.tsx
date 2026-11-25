@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
-import { useAuth, type Role } from "./AuthContext";
+import { useAuth, type Role } from "./context/AuthContext";
 import { getHomeRoute } from "./roleRoutes";
 import PlateLogo from "./components/PlateLogo";
 import "./styles/LoadingScreen.css";

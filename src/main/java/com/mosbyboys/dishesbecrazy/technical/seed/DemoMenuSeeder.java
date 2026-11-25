@@ -50,9 +50,9 @@ public class DemoMenuSeeder implements CommandLineRunner {
 
     private void seed(MenuSeed item, UUID restaurantId) {
         jdbc.update("""
-                INSERT INTO public."MenuItem" (id, restaurant_id, name, price, stock_quantity, status, description)
+                INSERT INTO public."MenuItem" (id, restaurant_id, name, price, stock_quantity, status, description, post_description, image_url)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT (id) DO NOTHING
-                """, item.id(), restaurantId, item.name(), item.price(), item.stockQuantity(), item.status().name(), item.description());
+                """, item.id(), restaurantId, item.name(), item.price(), item.stockQuantity(), item.status().name(), item.description(), item.postDescription(), item.imageUrl());
     }
 }

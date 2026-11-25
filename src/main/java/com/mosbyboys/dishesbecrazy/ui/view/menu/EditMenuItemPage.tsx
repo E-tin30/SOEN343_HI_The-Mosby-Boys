@@ -2,7 +2,7 @@ import AppHeader from "../components/AppHeader";
 import Button from "../components/Button";
 import Heading from "../components/Heading";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../AuthContext";
+import { useAuth } from "../context/AuthContext";
 import { useEffect, useState, type FormEvent, type ChangeEvent } from "react";
 import type { MenuItem } from "./types/menu";
 import { getMenu } from "./api/menuApi";
@@ -76,7 +76,7 @@ export default function EditMenuItemPage() {
 
     const handleSubmit = async (
         e: FormEvent<HTMLFormElement>,
-        itemId: string
+        itemId: string, imageUrl: string, postDescription: string | null
     ) => {
         e.preventDefault();
         setError("");
@@ -105,7 +105,9 @@ export default function EditMenuItemPage() {
             name: formData.name.trim(),
             price: Number(formData.price),
             stockQuantity: Number(formData.stockQuantity),
-            description: formData.description.trim()
+            description: formData.description.trim(),
+            postDescription: postDescription,
+            imageUrl: imageUrl
         };
 
         try {
@@ -211,7 +213,7 @@ export default function EditMenuItemPage() {
                                         <form
                                             className="menu-item__edit-form"
                                             onSubmit={e =>
-                                                handleSubmit(e, item.id)
+                                                handleSubmit(e, item.id, item.imageUrl, item.postDescription)
                                             }
                                         >
                                             <div className="menu-item__edit-fields">

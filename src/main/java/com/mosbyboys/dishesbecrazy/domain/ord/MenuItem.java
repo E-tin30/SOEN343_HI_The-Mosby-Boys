@@ -15,12 +15,13 @@ public class MenuItem {
     private final BigDecimal price;
     private final String description;
     private final String imageUrl;
+    private final String postDescription;
     private final Instant createdAt;
     private int stockQuantity;
     private MenuItemStatus status;
 
     public MenuItem(UUID id, UUID restaurantId, String name, BigDecimal price, int stockQuantity,
-                    MenuItemStatus status, String description, String imageUrl, Instant createdAt) {
+                    MenuItemStatus status, String description, String postDescription, String imageUrl, Instant createdAt) {
         if (id == null) {
             throw new IllegalArgumentException("Menu item id must not be null");
         }
@@ -46,6 +47,7 @@ public class MenuItem {
         this.stockQuantity = stockQuantity;
         this.status = status;
         this.description = description;
+        this.postDescription = postDescription;
         this.imageUrl = imageUrl;
         this.createdAt = createdAt;
     }

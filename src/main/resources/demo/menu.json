@@ -6,7 +6,9 @@
     "price": 18.50,
     "stockQuantity": 6,
     "status": "AVAILABLE",
-    "description": "A slice of Sam's family pork pie, baked at home in Montreal"
+    "description": "A slice of Sam's family pork pie, baked at home in Montreal",
+    "postDescription": "A little taste of home 🥧❤️ Grandma's tourtière is made with love, just like the family recipe we've been making for generations. Golden, flaky pastry with a deliciously seasoned pork filling. Perfect for a cozy meal! #Homemade #MontrealFood #ComfortFood",
+    "imageUrl": "https://zmlykiviyssjacfuione.supabase.co/storage/v1/object/public/menu-images/demo_image_01.png"
   },
   {
     "id": "34300000-0000-4000-8000-000000000102",
@@ -15,7 +17,9 @@
     "price": 16.00,
     "stockQuantity": 10,
     "status": "AVAILABLE",
-    "description": "Sam's homemade butter chicken with basmati rice"
+    "description": "Sam's homemade butter chicken with basmati rice",
+    "postDescription": "Comfort food, but make it extra creamy! 🍛 Our homemade butter chicken is simmered in a rich, flavourful sauce and served with fluffy basmati rice. Made fresh in our kitchen, one batch at a time. Who's hungry? 😍 #ButterChicken #HomemadeFood #FoodLovers",
+    "imageUrl": "https://zmlykiviyssjacfuione.supabase.co/storage/v1/object/public/menu-images/demo_image_02.png"
   },
   {
     "id": "34300000-0000-4000-8000-000000000103",
@@ -24,7 +28,9 @@
     "price": 12.00,
     "stockQuantity": 15,
     "status": "AVAILABLE",
-    "description": "Six hand-folded potato and cheese dumplings with fried onions"
+    "description": "Six hand-folded potato and cheese dumplings with fried onions",
+    "postDescription": "Little pockets of happiness! 🥟✨ These handmade pierogi are filled with creamy potato and cheese, then topped with golden fried onions. Six delicious bites of homemade comfort. Grab a plate before they're gone! #Pierogi #Homemade #ComfortFood",
+    "imageUrl": "https://zmlykiviyssjacfuione.supabase.co/storage/v1/object/public/menu-images/demo_image_03.png"
   },
   {
     "id": "34300000-0000-4000-8000-000000000104",
@@ -33,7 +39,9 @@
     "price": 7.50,
     "stockQuantity": 0,
     "status": "SOLD_OUT",
-    "description": "A small batch of maple syrup cake from Sam's family recipe"
+    "description": "A small batch of maple syrup cake from Sam's family recipe",
+    "postDescription": "A Quebec classic that deserves all the love! 🍁 This pouding chômeur is made from a family recipe, with soft, fluffy cake soaking up a rich maple syrup sauce. Sweet, warm, and absolutely irresistible. A little taste of tradition! #PoudingChomeur #QuebecFood #MapleSeason",
+    "imageUrl": "https://zmlykiviyssjacfuione.supabase.co/storage/v1/object/public/menu-images/demo_image_04.png"
   },
   {
     "id": "34300000-0000-4000-8000-000000000201",
@@ -42,7 +50,9 @@
     "price": 19.25,
     "stockQuantity": 6,
     "status": "AVAILABLE",
-    "description": "Robin's Sunday rice pot with mushrooms and parmesan"
+    "description": "Robin's Sunday rice pot with mushrooms and parmesan",
+    "postDescription": "Sunday comfort in every spoonful 🍄🤍 Creamy risotto cooked slowly with earthy mushrooms and finished with freshly grated parmesan. Simple ingredients, lots of love, and the perfect excuse to slow down and enjoy a good meal. #Risotto #HomemadeCooking #Foodie",
+    "imageUrl": "https://zmlykiviyssjacfuione.supabase.co/storage/v1/object/public/menu-images/demo_image_05.png"
   },
   {
     "id": "34300000-0000-4000-8000-000000000202",
@@ -51,7 +61,9 @@
     "price": 17.25,
     "stockQuantity": 10,
     "status": "AVAILABLE",
-    "description": "Pasta folded by hand in Robin's kitchen with spinach, ricotta and tomato sauce"
+    "description": "Pasta folded by hand in Robin's kitchen with spinach, ricotta and tomato sauce",
+    "postDescription": "Fresh pasta, made by hand, just the way it should be 🍝💚 Filled with spinach and creamy ricotta, then served with a delicious homemade tomato sauce. Every ravioli is folded with care. Pasta night just got better! #FreshPasta #Ravioli #HomemadeItalian",
+    "imageUrl": "https://zmlykiviyssjacfuione.supabase.co/storage/v1/object/public/menu-images/demo_image_06.png"
   },
   {
     "id": "34300000-0000-4000-8000-000000000203",
@@ -60,7 +72,9 @@
     "price": 13.25,
     "stockQuantity": 15,
     "status": "AVAILABLE",
-    "description": "Robin's home-baked flatbread with tomato, mozzarella and basil"
+    "description": "Robin's home-baked flatbread with tomato, mozzarella and basil",
+    "postDescription": "A little freshness straight from the garden! 🍅🌿 Our homemade flatbread brings together juicy tomatoes, melted mozzarella, and fresh basil on a perfectly baked crust. Simple, fresh, and full of flavour. #Flatbread #FreshIngredients #HomemadeFood",
+    "imageUrl": "https://zmlykiviyssjacfuione.supabase.co/storage/v1/object/public/menu-images/demo_image_07.png"
   },
   {
     "id": "34300000-0000-4000-8000-000000000204",
@@ -69,7 +83,9 @@
     "price": 8.25,
     "stockQuantity": 0,
     "status": "SOLD_OUT",
-    "description": "A small batch of Robin's coffee and mascarpone dessert"
+    "description": "A small batch of Robin's coffee and mascarpone dessert",
+    "postDescription": "Save room for dessert! ☕🍰 Layers of coffee-soaked goodness, creamy mascarpone, and a dusting of cocoa. Our homemade tiramisu is the perfect sweet ending to any meal. Made in small batches with lots of love! #Tiramisu #DessertLovers #HomemadeDessert",
+    "imageUrl": "https://zmlykiviyssjacfuione.supabase.co/storage/v1/object/public/menu-images/demo_image_08.png"
   },
   {
     "id": "34300000-0000-4000-8000-000000000301",
@@ -78,7 +94,9 @@
     "price": 20.75,
     "stockQuantity": 6,
     "status": "AVAILABLE",
-    "description": "Casey's slow-braised beef with rice, beans and homemade salsa"
+    "description": "Casey's slow-braised beef with rice, beans and homemade salsa",
+    "postDescription": "Big flavours, homemade comfort! 🥩🔥 Our beef is slow-braised until tender, then served over rice with hearty beans and fresh homemade salsa. A satisfying bowl made to fuel your day. Come hungry! #BeefBowl #HomemadeMeals #Foodie",
+    "imageUrl": "https://zmlykiviyssjacfuione.supabase.co/storage/v1/object/public/menu-images/demo_image_09.png"
   },
   {
     "id": "34300000-0000-4000-8000-000000000302",
@@ -87,7 +105,9 @@
     "price": 14.75,
     "stockQuantity": 10,
     "status": "AVAILABLE",
-    "description": "A burrito from Casey's kitchen with chicken, rice and black beans"
+    "description": "A burrito from Casey's kitchen with chicken, rice and black beans",
+    "postDescription": "Wrapped up and ready to go! 🌯 Our homemade chicken burrito is packed with tender chicken, fluffy rice, and hearty black beans. A delicious, filling meal in every bite. The perfect lunch doesn't exi... #BurritoTime #HomemadeFood #LunchGoals",
+    "imageUrl": "https://zmlykiviyssjacfuione.supabase.co/storage/v1/object/public/menu-images/demo_image_10.png"
   },
   {
     "id": "34300000-0000-4000-8000-000000000303",
@@ -96,7 +116,9 @@
     "price": 11.75,
     "stockQuantity": 15,
     "status": "AVAILABLE",
-    "description": "Three tacos with Casey's simmered black beans, slaw and lime"
+    "description": "Three tacos with Casey's simmered black beans, slaw and lime",
+    "postDescription": "Taco night is calling! 🌮🌮🌮 Three delicious tacos loaded with slow-simmered black beans, crunchy slaw, and a squeeze of fresh lime. Fresh, flavourful, and completely satisfying. Which one are you grabbing first? #TacoTuesday #HomemadeTacos #PlantBased",
+    "imageUrl": "https://zmlykiviyssjacfuione.supabase.co/storage/v1/object/public/menu-images/demo_image_11.png"
   },
   {
     "id": "34300000-0000-4000-8000-000000000304",
@@ -105,6 +127,8 @@
     "price": 6.75,
     "stockQuantity": 0,
     "status": "SOLD_OUT",
-    "description": "A small batch of Casey's cinnamon sugar churros with chocolate dip"
+    "description": "A small batch of Casey's cinnamon sugar churros with chocolate dip",
+    "postDescription": "Crispy on the outside, soft on the inside, and rolled in cinnamon sugar 🤎 These homemade churros come with a rich chocolate dip for the ultimate sweet treat. Warning: sharing is optional! 🍫 #Churros #SweetTooth #HomemadeDesserts",
+    "imageUrl": "https://zmlykiviyssjacfuione.supabase.co/storage/v1/object/public/menu-images/demo_image_12.png"
   }
 ]

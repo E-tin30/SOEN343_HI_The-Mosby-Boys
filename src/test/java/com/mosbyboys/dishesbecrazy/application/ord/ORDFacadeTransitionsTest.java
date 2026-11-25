@@ -44,6 +44,7 @@ class ORDFacadeTransitionsTest {
     private OrderService orderService;
     private OrderObserver subscriber;
     private MenuService menuService;
+    private MenuImageService menuImageService;
     private REGFacade regFacade;
     private ApplicationEventPublisher eventPublisher;
     private OrderQueues queues;
@@ -64,10 +65,11 @@ class ORDFacadeTransitionsTest {
         orderService = mock(OrderService.class);
         subscriber = mock(OrderObserver.class);
         menuService = mock(MenuService.class);
+        menuImageService = mock(MenuImageService.class);
         regFacade = mock(REGFacade.class);
         eventPublisher = mock(ApplicationEventPublisher.class);
         queues = new OrderQueues();
-        facade = new ORDFacade(orderService, new PermissionPolicy(), queues, menuService,
+        facade = new ORDFacade(orderService, new PermissionPolicy(), queues, menuService, menuImageService,
                 mock(RestaurantService.class), mock(OrderQueries.class), regFacade, eventPublisher);
         facade.subscribe(subscriber);
 
@@ -434,7 +436,7 @@ class ORDFacadeTransitionsTest {
 
     private MenuItem realItem(int stock) {
         MenuItem item = new MenuItem(menuItemId, restaurantId, "Pizza", new BigDecimal("10.00"), stock,
-                MenuItemStatus.AVAILABLE, "Cheese", null, Instant.now());
+                MenuItemStatus.AVAILABLE, "Cheese", null, null, Instant.now());
         when(menuService.load(menuItemId)).thenReturn(item);
         when(menuService.loadForUpdate(menuItemId)).thenReturn(item);
         return item;

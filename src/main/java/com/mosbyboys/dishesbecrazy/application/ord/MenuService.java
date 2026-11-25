@@ -28,6 +28,11 @@ public class MenuService {
     }
 
     @Transactional(readOnly = true)
+    public List<MenuItem> getOpenRestaurantMenu() {
+        return menuItemRepo.findAllFromOpenRestaurants().stream().map(this::toDomain).toList();
+    }
+
+    @Transactional(readOnly = true)
     public MenuItem load(UUID menuItemId) {
         return menuItemRepo.findById(menuItemId)
                 .map(this::toDomain)
@@ -51,6 +56,7 @@ public class MenuService {
         entity.setStockQuantity(item.getStockQuantity());
         entity.setStatus(item.getStatus());
         entity.setDescription(item.getDescription());
+        entity.setPostDescription(item.getPostDescription());
         entity.setImageUrl(item.getImageUrl());
         menuItemRepo.save(entity);
     }
@@ -64,7 +70,7 @@ public class MenuService {
 
     private MenuItem toDomain(MenuItemEntity e) {
         return new MenuItem(e.getId(), e.getRestaurantId(), e.getName(), e.getPrice(), e.getStockQuantity(),
-                e.getStatus(), e.getDescription(), e.getImageUrl(), e.getCreatedAt());
+                e.getStatus(), e.getDescription(), e.getPostDescription(), e.getImageUrl(), e.getCreatedAt());
     }
 
     @Transactional
@@ -72,5 +78,5 @@ public class MenuService {
         return menuItemRepo.findByIdForUpdate(menuItemId)
                 .map(this::toDomain)
                 .orElseThrow(() -> new NoSuchElementException("Menu item not found: " + menuItemId));
-}
+    }
 }
