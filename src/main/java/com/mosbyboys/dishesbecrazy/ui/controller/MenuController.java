@@ -2,7 +2,9 @@ package com.mosbyboys.dishesbecrazy.ui.controller;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.math.BigDecimal;
 
 import jakarta.validation.Valid;
@@ -22,6 +24,8 @@ import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
 import com.mosbyboys.dishesbecrazy.domain.ord.MenuItem;
 import com.mosbyboys.dishesbecrazy.domain.ord.MenuItemStatus;
 import com.mosbyboys.dishesbecrazy.domain.reg.User;
+import com.mosbyboys.dishesbecrazy.ui.controller.MenuController.MenuItemResponse;
+
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -31,11 +35,12 @@ public class MenuController {
     private final ORDFacade ordFacade;
     private final REGFacade regFacade;
 
-    public record MenuItemResponse(UUID id, UUID restaurantId, String name, BigDecimal price, String status, String description, String postDescription, int stockQuantity, String imageUrl) {
-        static MenuItemResponse from(MenuItem m) {
+    public record MenuItemResponse(UUID id, UUID restaurantId, String restaurantName, String name, BigDecimal price, String status, String description, String postDescription, int stockQuantity, String imageUrl) {
+        static MenuItemResponse from(MenuItem m) { return from(m, null); }
+        static MenuItemResponse from(MenuItem m, String restaurantName) {
             String availability = (m.isAvailable() ? MenuItemStatus.AVAILABLE : MenuItemStatus.SOLD_OUT).name();
             // Exposes ORD's existing availability rule, including zero stock, in the menu status field.
-            return new MenuItemResponse(m.getId(), m.getRestaurantId(), m.getName(), m.getPrice(), availability, m.getDescription(), m.getPostDescription(), m.getStockQuantity(), m.getImageUrl());
+            return new MenuItemResponse(m.getId(), m.getRestaurantId(), restaurantName, m.getName(), m.getPrice(), availability, m.getDescription(), m.getPostDescription(), m.getStockQuantity(), m.getImageUrl());
         }
     }
 
@@ -63,8 +68,9 @@ public class MenuController {
     public ResponseEntity<List<MenuItemResponse>> getOpenRestaurantMenu(@AuthenticationPrincipal Jwt jwt) {
         User user = regFacade.getCurrentUser(UUID.fromString(jwt.getSubject()));
         List<MenuItem> body = ordFacade.getOpenRestaurantMenu(user);
+        Map<UUID, String> names = ordFacade.getRestaurantNames(body.stream().map(MenuItem::getRestaurantId).collect(Collectors.toSet()));
         List<MenuItemResponse> menuItems = body.stream()
-                .map(MenuItemResponse::from)
+                .map(m -> MenuItemResponse.from(m, names.get(m.getRestaurantId())))
                 .toList();
         return ResponseEntity.ok(menuItems);
     }

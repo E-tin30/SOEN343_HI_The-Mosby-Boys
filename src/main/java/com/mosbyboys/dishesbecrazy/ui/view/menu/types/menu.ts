@@ -7,6 +7,7 @@ export type Restaurant = {
 export type MenuItem = {
   id: string;
   restaurantId: string;
+  restaurantName?: string | null;
   name: string;
   price: number;
   stockQuantity: number;
