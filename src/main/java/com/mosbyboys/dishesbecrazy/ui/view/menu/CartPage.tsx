@@ -191,6 +191,13 @@ export default function CartPage() {
     };
 
     const handleBackToFeed = () => {
+        if(!isEmpty) {
+            const isConfirmClearCart = window.confirm('Going back to feed will clear your cart.');
+
+            if(!isConfirmClearCart)
+                return;
+        }
+
         clearCart();
         navigate("/feed");
     };
@@ -208,12 +215,20 @@ export default function CartPage() {
         <div className="page">
             <AppHeader>
                 {isFromFeed ? (
-                    <Button
-                        variant="secondary"
-                        onClick={handleBackToFeed}
-                    >
-                        Back to feed
-                    </Button>
+                    <>
+                        <Button
+                            variant="secondary"
+                            onClick={handleBackToFeed}
+                        >
+                            Back to feed
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            onClick={handleBackToMenu}
+                            >
+                            See restaurant's menu
+                        </Button>
+                    </>
                 ) : cart ? (
                     <Button
                         variant="secondary"

@@ -14,11 +14,12 @@ export default function MenuPage() {
   const navigate = useNavigate();
   const { restaurantId } = useParams<{ restaurantId: string }>();
   const { accessToken, user } = useAuth();
-  const { addItem, itemCount, clearCart } = useCart();
+  const { addItem, itemCount, clearCart, cart } = useCart();
   const [items, setItems] = useState<MenuItem[] | null>(null);
   const [error, setError] = useState("");
 
   const isCustomer = user?.role === "CUSTOMER";
+  const isEmpty = !cart || cart.items.length === 0;
 
   useEffect(() => {
     if (!accessToken || !restaurantId) return;
@@ -28,6 +29,12 @@ export default function MenuPage() {
   }, [accessToken, restaurantId]);
 
   const handleBackToRestaurants = () => {
+      if(!isEmpty) {
+          const isConfirmClearCart = window.confirm('Going back to restaurants will clear your cart.');
+
+          if(!isConfirmClearCart)
+              return;
+      }
     clearCart();
     navigate("/restaurants");
   };

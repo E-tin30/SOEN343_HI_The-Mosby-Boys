@@ -106,11 +106,10 @@ export default function HomePage() {
             </Button>
           </section>
 
-          {/* Same as the menu page's cart button; /cart is customer-only. */}
           {isCustomer && (
             <section className="dashboard-card dashboard-card--action card">
-              <Button block onClick={() => navigate("/cart")}>
-                View cart ({itemCount})
+              <Button block onClick={() => navigate("/feed")}>
+                Browse feed
               </Button>
             </section>
           )}
