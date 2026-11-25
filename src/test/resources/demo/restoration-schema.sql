@@ -25,7 +25,7 @@ CREATE TABLE public."MenuItem" (
     id uuid PRIMARY KEY, restaurant_id uuid NOT NULL REFERENCES public."Restaurant"(user_id) ON DELETE CASCADE,
     created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     name varchar NOT NULL DEFAULT '', price numeric NOT NULL DEFAULT 0, stock_quantity integer NOT NULL DEFAULT 0,
-    status varchar NOT NULL DEFAULT '', description varchar NOT NULL DEFAULT '', image_url varchar NOT NULL DEFAULT ''
+    status varchar NOT NULL DEFAULT '', description varchar NOT NULL DEFAULT '', post_description varchar NOT NULL DEFAULT '', image_url varchar NOT NULL DEFAULT ''
 );
 CREATE TABLE public."Order" (
     id uuid PRIMARY KEY, user_id uuid NOT NULL REFERENCES public."User"(id) ON DELETE CASCADE,

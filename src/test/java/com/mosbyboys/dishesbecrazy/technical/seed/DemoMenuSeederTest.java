@@ -73,7 +73,7 @@ class DemoMenuSeederTest {
         for (var item : fixtures.menuItems()) {
             verify(jdbc).update(contains("INSERT INTO public.\"MenuItem\""),
                     eq(item.id()), eq(ids.get(item.restaurantUsername())), eq(item.name()), eq(item.price()),
-                    eq(item.stockQuantity()), eq(item.status().name()), eq(item.description()));
+                    eq(item.stockQuantity()), eq(item.status().name()), eq(item.description()), eq(item.postDescription()), eq(item.imageUrl()));
         }
         verify(manager).commit(any());
     }
