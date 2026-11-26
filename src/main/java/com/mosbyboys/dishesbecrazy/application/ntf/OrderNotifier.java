@@ -20,17 +20,18 @@ Runs inside the order's transaction, so it must never throw: a failed notificati
 @RequiredArgsConstructor
 public class OrderNotifier implements OrderObserver {
 
-    // %s is the restaurant name.
+    // %1$s is the restaurant name, %2$s the order number.
     static final Map<String, String> MESSAGES = Map.of(
-            "PlacedState", "Your order at %s was placed.",
-            "AcceptedState", "%s accepted your order.",
-            "RejectedState", "%s rejected your order.",
-            "PreparingState", "%s is preparing your order.",
-            "ReadyState", "Your order at %s is ready and waiting for a courier.",
-            "PickedUpState", "Your order from %s is on the way.",
-            "DeliveredState", "Your order from %s was delivered.",
-            "CancelledState", "Your order at %s was cancelled.",
-            "RefundedState", "Your order from %s was refunded.");
+        "PlacedState", "Your order %2$s at %1$s was placed.",
+        "AcceptedState", "%1$s accepted your order %2$s.",
+        "RejectedState", "%1$s rejected your order %2$s.",
+        "PreparingState", "%1$s is preparing your order %2$s.",
+        "ReadyState", "Your order %2$s at %1$s is ready and waiting for a courier.",
+        "PickedUpState", "Your order %2$s from %1$s is on the way.",
+        "DeliveredState", "Your order %2$s from %1$s was delivered.",
+        "CancelledState", "Your order %2$s at %1$s was cancelled.",
+        "RefundedState", "Your order %2$s from %1$s was refunded."
+    );
 
     private final ORDFacade ordFacade;
     private final NotificationService notifications;
@@ -46,8 +47,7 @@ public class OrderNotifier implements OrderObserver {
             String restaurant = ordFacade.getRestaurantNames(Set.of(order.getRestaurantId()))
                     .getOrDefault(order.getRestaurantId(), "the restaurant");
 
-            notifications.notify(order.getCustomerId(), event.newState(),
-                    template.formatted(restaurant), order.getId());
+            notifications.notify(order.getCustomerId(), event.newState(), template.formatted(restaurant, OrderNumber.of(order.getId())), order.getId());
         } catch (RuntimeException e) {
             log.warn("Could not notify the customer about order {}", event.orderId(), e);
         }

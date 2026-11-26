@@ -62,7 +62,7 @@ public class DispatchWaitMonitor {
 
     private void alertOperators(UUID orderId, Duration waited) {
         String message = "Order %s has been waiting for a courier for %s."
-                .formatted(orderId.toString().substring(0, 8), describe(waited));
+                .formatted(OrderNumber.of(orderId), describe(waited));
         List<UUID> operators = registration.getOperatorIds();
         operators.forEach(operatorId -> notifications.notify(operatorId, KIND, message, orderId));
     }
