@@ -1,15 +1,43 @@
 .ntf-toasts {
-  position: fixed; right: 1rem; bottom: 1rem; display: flex; flex-direction: column;
-  gap: 0.5rem; z-index: 2000; max-width: 360px;
+  position: fixed;
+  right: var(--space-4);
+  bottom: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  z-index: 2000;
+  max-width: 360px;
 }
+
 .ntf-toast {
-  display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem;
-  background: #1d2939; color: #fff; padding: 0.7rem 0.9rem; border-radius: 8px;
-  font-size: 0.875rem; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--espresso);
+  color: var(--porcelain);
+  border-left: 4px solid var(--tomato);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.4;
   animation: ntf-in 160ms ease-out;
 }
+
 .ntf-toast button {
-  background: transparent; border: 0; color: inherit; cursor: pointer;
-  font-size: 1.1rem; line-height: 1; padding: 0;
+  background: transparent;
+  border: 0;
+  color: var(--linen);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  padding: 0;
 }
-@keyframes ntf-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.ntf-toast button:hover { color: var(--porcelain); }
+
+@keyframes ntf-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
