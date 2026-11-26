@@ -46,7 +46,7 @@ class DemoDataRestorerTest {
         loader = spy(new DemoFixtureLoader(JsonMapper.builder().build()));
         baseline = loader.load();
         restorer = new DemoDataRestorer(jdbc, new TransactionTemplate(new DataSourceTransactionManager(source)),
-                loader, new DemoCatalogueRestorer(jdbc), new DemoOrderStore(jdbc));
+            loader, new DemoCatalogueRestorer(jdbc), new DemoOrderStore(jdbc), new DemoNotificationSeeder(jdbc));
         for (var account : baseline.accounts()) {
             UUID id = UUID.randomUUID();
             users.put(account.username(), id);
@@ -419,4 +419,20 @@ class DemoDataRestorerTest {
         return rows;
     }
     // Comparing full persisted rows catches stale children, extra bills and differences from the complete starting state.
+
+    @Test
+    void restoreReplacesNotificationsWithTheDemoSet() throws Exception {
+        restorer.restore();
+        jdbc.update("""
+                INSERT INTO public."Notification" (id, user_id, order_id, kind, message, created_at, is_read)
+                SELECT ?, id, NULL, 'PlacedState', 'stale', CURRENT_TIMESTAMP, false
+                FROM public."User" WHERE username = 'demo_customer'
+                """, UUID.randomUUID());
+
+        restorer.restore();
+
+        assertEquals(5, jdbc.queryForObject("SELECT COUNT(*) FROM public.\"Notification\"", Integer.class));
+        assertEquals(1, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM public.\"Notification\" WHERE is_read = false", Integer.class));
+    }
 }

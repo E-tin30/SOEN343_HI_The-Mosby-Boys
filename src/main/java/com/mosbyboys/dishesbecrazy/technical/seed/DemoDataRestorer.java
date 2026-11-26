@@ -22,6 +22,7 @@ public class DemoDataRestorer {
     private final DemoFixtureLoader fixtures;
     private final DemoCatalogueRestorer catalogue;
     private final DemoOrderStore orders;
+    private final DemoNotificationSeeder notifications;
 
     public void restore() throws IOException {
         DemoFixtures baseline = fixtures.load();
@@ -33,11 +34,13 @@ public class DemoDataRestorer {
             for (var order : baseline.orders()) {
                 orders.seedMissing(order, users);
             }
+            notifications.seed(users);
         });
     }
     // Restore one global starting point for every walkthrough; resolve Auth identities before any database writes.
 
     private void clearActivity() {
+        jdbc.update("DELETE FROM public.\"Notification\"");
         jdbc.update("DELETE FROM public.\"Bill\"");
         jdbc.update("DELETE FROM public.\"Event\"");
         jdbc.update("DELETE FROM public.\"OrderLineItem\"");
