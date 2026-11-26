@@ -133,4 +133,20 @@ class DispatchWaitMonitorTest {
 
         assertDoesNotThrow(monitor::check);
     }
+
+    @Test
+    void resetMakesTheMonitorAlertAgainForAnOrderStillInTheQueue() {
+        queues.enqueueGlobalReady(orderId);
+        monitor.check();
+        clock.advance(Duration.ofMinutes(6));
+        monitor.check();
+        verify(notifications, times(1)).notify(eq(operatorOne), eq("DISPATCH_WAIT"), contains("waiting"), eq(orderId));
+
+        monitor.reset();
+        monitor.check();
+        clock.advance(Duration.ofMinutes(6));
+        monitor.check();
+
+        verify(notifications, times(2)).notify(eq(operatorOne), eq("DISPATCH_WAIT"), contains("waiting"), eq(orderId));
+    }
 }

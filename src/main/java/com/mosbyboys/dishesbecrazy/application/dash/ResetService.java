@@ -8,6 +8,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.util.Assert;
 
 import com.mosbyboys.dishesbecrazy.application.dlv.DispatchQueueLoader;
+import com.mosbyboys.dishesbecrazy.application.ntf.NTFFacade;
 import com.mosbyboys.dishesbecrazy.application.ord.OrderQueueLoader;
 import com.mosbyboys.dishesbecrazy.application.ord.PermissionDeniedException;
 import com.mosbyboys.dishesbecrazy.application.prc.LedgerService;
@@ -27,6 +28,7 @@ public class ResetService {
     private final DispatchQueueLoader dispatchQueue;
     private final DemoStateAccess access;
     private final LedgerService ledger;
+    private final NTFFacade notifications;
 
     public void restoreDatabaseAndOrderQueues(UUID operatorId) throws IOException {
         var caller = registration.getCurrentUser(operatorId);
@@ -43,6 +45,7 @@ public class ResetService {
             restoration.databaseRestored();
             orderQueues.rebuild();
             dispatchQueue.rebuild();
+            notifications.resetDispatchAlerts();
             restoration.complete();
         }
         // Hold exclusive access through commit and rebuilding; a runtime failure keeps normal requests blocked for retry.

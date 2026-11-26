@@ -20,8 +20,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /* R-NTF-02: alerts every operator once when an order has waited in the dispatch queue longer than the configured threshold.
-The queue keeps no timestamps, so the first check that sees an order starts its clock. That also means startup and demo
-restoration need no special handling: orders already in the queue are simply timed from the next check. */
+The queue keeps no timestamps, so the first check that sees an order starts its clock. Startup needs no special handling,
+but demo restoration calls reset(): a seeded order keeps the same id across a reset, so without it the monitor would
+remember having alerted for it and stay silent. */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -58,6 +59,12 @@ public class DispatchWaitMonitor {
         } catch (RuntimeException e) {
             log.warn("Dispatch wait check failed; it will run again at the next interval", e);
         }
+    }
+
+    // Called when the demo is restored: forget every clock and alert so queued orders are timed from scratch.
+    public synchronized void reset() {
+        waitingSince.clear();
+        alerted.clear();
     }
 
     private void alertOperators(UUID orderId, Duration waited) {

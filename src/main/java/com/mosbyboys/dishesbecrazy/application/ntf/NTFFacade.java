@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 public class NTFFacade {
 
     private final NotificationStore store;
+    private final DispatchWaitMonitor dispatchWaitMonitor;
 
     public List<Notification> list(UUID userId) {
         return store.list(userId);
@@ -24,8 +25,8 @@ public class NTFFacade {
         store.markAllRead(userId);
     }
 
-    // Used when the demo is restored.
-    public void clearAll() {
-        store.clear();
+    // Used when the demo is restored: seeded notifications stay, but the monitor starts timing from scratch.
+    public void resetDispatchAlerts() {
+        dispatchWaitMonitor.reset();
     }
 }
