@@ -76,13 +76,19 @@
 .ntf-bell__list { list-style: none; margin: 0; padding: 0; }
 
 .ntf-bell__item {
+  border-bottom: var(--border-width) solid var(--linen);
+}
+.ntf-bell__item:last-child { border-bottom: 0; }
+
+.ntf-bell__row {
   display: flex;
   align-items: flex-start;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
-  border-bottom: var(--border-width) solid var(--linen);
+  color: inherit;
+  text-decoration: none;
 }
-.ntf-bell__item:last-child { border-bottom: 0; }
+.ntf-bell__row--link:hover { background: var(--cream); }
 
 .ntf-bell__dot {
   flex: none;

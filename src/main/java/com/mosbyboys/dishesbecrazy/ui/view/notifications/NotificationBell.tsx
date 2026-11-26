@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useNotifications } from "./NotificationContext";
 import "./NotificationBell.css";
@@ -60,17 +61,34 @@ export default function NotificationBell() {
             <p className="ntf-bell__empty">Nothing yet. We'll tell you when your order moves.</p>
           ) : (
             <ul className="ntf-bell__list">
-              {notifications.map((n) => (
-                <li key={n.id} className="ntf-bell__item">
-                  <span className="ntf-bell__dot" aria-hidden="true" />
-                  <div className="ntf-bell__body">
-                    <span className="ntf-bell__message">{n.message}</span>
-                    <time className="ntf-bell__time" dateTime={n.createdAt}>
-                      {timeOf(n.createdAt)}
-                    </time>
-                  </div>
-                </li>
-              ))}
+              {notifications.map((n) => {
+                const content = (
+                  <>
+                    <span className="ntf-bell__dot" aria-hidden="true" />
+                    <div className="ntf-bell__body">
+                      <span className="ntf-bell__message">{n.message}</span>
+                      <time className="ntf-bell__time" dateTime={n.createdAt}>
+                        {timeOf(n.createdAt)}
+                      </time>
+                    </div>
+                  </>
+                );
+                return (
+                  <li key={n.id} className="ntf-bell__item">
+                    {n.orderId ? (
+                      <Link
+                        className="ntf-bell__row ntf-bell__row--link"
+                        to={`/orders/history#order-${n.orderId}`}
+                        onClick={() => setOpen(false)}
+                      >
+                        {content}
+                      </Link>
+                    ) : (
+                      <div className="ntf-bell__row">{content}</div>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>
