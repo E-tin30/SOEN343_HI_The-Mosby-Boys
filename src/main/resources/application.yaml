@@ -47,6 +47,10 @@ pricing:
   gst: 0.05
   qst: 0.09975
 
+notifications:
+  dispatch-wait-threshold: 1m
+  monitor-interval: 15s
+
 stripe:
   secret-key: ${STRIPE_SECRET_KEY}
 
