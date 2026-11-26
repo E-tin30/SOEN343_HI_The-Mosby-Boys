@@ -1,6 +1,7 @@
 import {createRoot} from "react-dom/client";
 import "./styles/base.css";
 import OutputConsole from "./components/OutputConsole";
+import AppScroll from "./components/AppScroll";
 import {AuthProvider} from "./context/AuthContext";
 import ProtectedRoute from "./ProtectedRoute";
 import {
@@ -39,7 +40,7 @@ createRoot(document.getElementById("root")!).render(
         <AuthProvider>
             <NotificationProvider>
             <CartProvider>
-                <div className="app-scroll">
+                <AppScroll>
                 <Routes>
                     <Route path="/" element={<Navigate to="/login" replace/>}/>
                     <Route path="/login" element={<LoginPage/>}/>
@@ -185,7 +186,7 @@ createRoot(document.getElementById("root")!).render(
                         }
                     />
                 </Routes>
-                </div>
+                </AppScroll>
                 <OutputConsole/>
             </CartProvider>
             </NotificationProvider>

@@ -129,7 +129,7 @@ export default function AddMenuItemPage() {
             }
 
             alert("Menu item added successfully!");
-            navigate("/home");
+            navigate("/restaurant/edit");
 
         } catch (err: unknown) {
             setError(
@@ -286,9 +286,9 @@ export default function AddMenuItemPage() {
                         Changed your mind?{" "}
                         <Button
                             variant="link"
-                            onClick={() => navigate("/home")}
+                            onClick={() => navigate("/restaurant/edit")}
                         >
-                            Go back home
+                            Go back to menu
                         </Button>
                     </p>
                 </form>
