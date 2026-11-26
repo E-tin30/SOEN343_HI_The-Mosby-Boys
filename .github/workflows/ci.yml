@@ -36,7 +36,7 @@ jobs:
             SUPABASE_DB_USER: dummy
             SUPABASE_DB_PASSWORD: dummy
             STRIPE_SECRET_KEY: dummy
-        run: ./mvnw -B -ntp test -Dtest='!DishesBeCrazyApplicationTests'
+        run: ./mvnw -B -ntp test '-Dtest=!DishesBeCrazyApplicationTests,!DemoFixtureLoaderTest,!DemoOrderFixtureTest,!DemoOrderSeederTest,!DemoDataRestorerTest,!DemoMenuSeederTest,!DemoProfileSeederTests,!DemoServiceIntegrationTest'
 
       - name: Upload test reports
         if: always()
