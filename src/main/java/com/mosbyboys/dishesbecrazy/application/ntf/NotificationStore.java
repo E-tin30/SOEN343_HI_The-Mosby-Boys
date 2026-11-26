@@ -1,63 +1,79 @@
 package com.mosbyboys.dishesbecrazy.application.ntf;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Deque;
+import java.sql.Timestamp;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedDeque;
 
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 
 import com.mosbyboys.dishesbecrazy.domain.ntf.Notification;
 
-/* Short per-user list of notifications, kept in memory. Each user keeps only the newest MAX_PER_USER;
-older ones fall off. Shared by every request, so the map is concurrent and each list is locked while it changes. */
+// Notifications persisted per user, newest first, capped at MAX_PER_USER.
+// add() runs inside the caller's transaction, so a notification for an order
+// that rolls back is rolled back with it.
 @Component
 public class NotificationStore {
 
     static final int MAX_PER_USER = 50;
 
-    // Newest first.
-    private final Map<UUID, Deque<Notification>> byUser = new ConcurrentHashMap<>();
+    private static final RowMapper<Notification> MAPPER = (rs, i) -> new Notification(
+            rs.getObject("id", UUID.class),
+            rs.getObject("user_id", UUID.class),
+            rs.getString("kind"),
+            rs.getString("message"),
+            rs.getObject("order_id", UUID.class),
+            rs.getTimestamp("created_at").toInstant(),
+            rs.getBoolean("is_read"));
 
-    public void add(Notification notification) {
-        Deque<Notification> list = byUser.computeIfAbsent(notification.recipientId(), id -> new ConcurrentLinkedDeque<>());
-        synchronized (list) {
-            list.addFirst(notification);
-            while (list.size() > MAX_PER_USER) {
-                list.removeLast();
-            }
-        }
+    private final JdbcTemplate jdbc;
+
+    public NotificationStore(JdbcTemplate jdbc) {
+        this.jdbc = jdbc;
     }
 
-    // The user's notifications, newest first. A copy, so callers can't change the store.
+    public void add(Notification notification) {
+        jdbc.update("""
+                INSERT INTO public."Notification" (id, user_id, order_id, created_at, kind, message, is_read)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                notification.id(), notification.recipientId(), notification.orderId(),
+                Timestamp.from(notification.createdAt()), notification.kind(),
+                notification.message(), notification.read());
+
+        // Keep only the newest MAX_PER_USER for this user.
+        jdbc.update("""
+                DELETE FROM public."Notification"
+                WHERE user_id = ?
+                  AND id NOT IN (
+                      SELECT id FROM public."Notification"
+                      WHERE user_id = ?
+                      ORDER BY created_at DESC, id
+                      LIMIT ?)
+                """,
+                notification.recipientId(), notification.recipientId(), MAX_PER_USER);
+    }
+
+    // Newest first.
     public List<Notification> list(UUID userId) {
-        Deque<Notification> list = byUser.get(userId);
-        if (list == null) {
-            return List.of();
-        }
-        synchronized (list) {
-            return Collections.unmodifiableList(new ArrayList<>(list));
-        }
+        return jdbc.query("""
+                SELECT id, user_id, order_id, created_at, kind, message, is_read
+                FROM public."Notification"
+                WHERE user_id = ?
+                ORDER BY created_at DESC, id
+                LIMIT ?
+                """, MAPPER, userId, MAX_PER_USER);
     }
 
     public void markAllRead(UUID userId) {
-        Deque<Notification> list = byUser.get(userId);
-        if (list == null) {
-            return;
-        }
-        synchronized (list) {
-            List<Notification> read = list.stream().map(Notification::withRead).toList();
-            list.clear();
-            list.addAll(read);
-        }
+        jdbc.update("""
+                UPDATE public."Notification" SET is_read = true
+                WHERE user_id = ? AND is_read = false
+                """, userId);
     }
 
-    // Used when the demo is restored, so old messages don't outlive the data they describe.
     public void clear() {
-        byUser.clear();
+        jdbc.update("DELETE FROM public.\"Notification\"");
     }
 }

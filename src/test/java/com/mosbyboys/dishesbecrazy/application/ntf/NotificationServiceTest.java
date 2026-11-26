@@ -45,15 +45,18 @@ class NotificationServiceTest {
     }
 
     @Test
-    void inlineChannelKeepsTheNotificationInTheStore() {
-        NotificationStore store = new NotificationStore();
+    void inlineChannelHandsTheNotificationToTheStore() {
+        NotificationStore store = mock(NotificationStore.class);
         NotificationService service = new NotificationService(List.of(new InlineNotificationChannel(store)), clock);
         UUID recipient = UUID.randomUUID();
 
         service.notify(recipient, "DeliveredState", "Delivered", null);
 
-        assertEquals(1, store.list(recipient).size());
-        assertEquals("Delivered", store.list(recipient).get(0).message());
+        ArgumentCaptor<Notification> saved = ArgumentCaptor.forClass(Notification.class);
+        verify(store).add(saved.capture());
+        assertEquals(recipient, saved.getValue().recipientId());
+        assertEquals("DeliveredState", saved.getValue().kind());
+        assertEquals("Delivered", saved.getValue().message());
     }
 
     @Test
