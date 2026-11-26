@@ -20,8 +20,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -84,6 +86,11 @@ public class ORDFacade {
     public List<MenuItem> getOpenRestaurantMenu(User user) {
         permissionPolicy.checkCanBrowseMenu(user);
         return menuService.getOpenRestaurantMenu();
+    }
+
+    @Transactional
+    public Map<UUID, String> getRestaurantNames(Collection<UUID> restaurantIds) {
+        return restaurantService.getNames(restaurantIds);
     }
 
     @Transactional

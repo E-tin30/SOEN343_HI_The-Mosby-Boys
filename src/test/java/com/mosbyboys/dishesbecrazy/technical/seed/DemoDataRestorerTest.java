@@ -342,7 +342,8 @@ class DemoDataRestorerTest {
             assertEquals(menu.stockQuantity(), row.get("stock_quantity"));
             assertEquals(menu.status().name(), row.get("status"));
             assertEquals(menu.description(), row.get("description"));
-            assertEquals("", row.get("image_url"));
+            assertEquals(menu.postDescription(), row.get("post_description"));
+            assertEquals(menu.imageUrl(), row.get("image_url"));
         }
         var preparationCounts = Map.of("demo_restaurant", 0, "demo_restaurant_building", 3, "demo_restaurant_busy", 6);
         for (var entry : preparationCounts.entrySet()) {

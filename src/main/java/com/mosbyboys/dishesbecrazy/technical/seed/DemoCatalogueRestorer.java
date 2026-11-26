@@ -88,7 +88,7 @@ class DemoCatalogueRestorer {
         if (updated == 0) {
             jdbc.update("""
                     INSERT INTO public."MenuItem" (id, restaurant_id, name, price, stock_quantity, status, description, post_description, image_url)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, '')
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """, item.id(), restaurantId, item.name(), item.price(), item.stockQuantity(), item.status().name(), item.description(), item.postDescription(), item.imageUrl());
         }
     }

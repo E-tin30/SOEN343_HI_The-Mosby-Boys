@@ -126,11 +126,11 @@ export default function ScrollPage() {
                                     {/* Post header */}
                                     <div className="scroll-post__header">
                                         <div className="scroll-post__avatar">
-                                            {item.name.charAt(0).toUpperCase()}
+                                            {(item.restaurantName ?? item.name).charAt(0).toUpperCase()}
                                         </div>
 
                                         <div className="scroll-post__title">
-                                            <Heading level={3}>{item.name}</Heading>
+                                            <Heading level={3}>{item.restaurantName ?? item.name}</Heading>
                                         </div>
 
                                         {soldOut && <Tag>Sold out</Tag>}
@@ -166,6 +166,7 @@ export default function ScrollPage() {
 
                                     {/* Post description */}
                                     <div className="scroll-post__body">
+                                        <div className="scroll-post__item-name">{item.name}</div>
                                         <div className="scroll-post__actions">
                                           <span className="scroll-post__price">
                                             ${item.price.toFixed(2)}
