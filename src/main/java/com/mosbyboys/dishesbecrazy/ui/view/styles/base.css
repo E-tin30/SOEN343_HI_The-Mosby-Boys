@@ -51,6 +51,51 @@ a:hover {
   overflow-y: auto;
 }
 
+/* Wallpaper for signed-in pages (data-role is set by AppScroll.tsx): a wash of the role's colour at the
+   top over sparse chevrons. Login and registration get no data-role and keep their illustration.
+   "local" makes the background scroll with the page instead of staying put behind it. */
+.app-scroll[data-role] {
+  background:
+    var(--role-pattern),
+    linear-gradient(var(--role-tint), var(--cream) 320px) no-repeat,
+    var(--cream);
+  background-attachment: local;
+}
+
+/* Role colours: the tint, and the chevrons drawn into the SVG in a pale shade at 60% opacity so they blend
+   into the page (stroke-opacity, the same in all four). Starting from a pale shade rather than a faint dark
+   one keeps the courier's blue from turning grey over cream. */
+.app-scroll[data-role="CUSTOMER"] {
+  --role-tint: #F7E2AE; /* gold */
+  --role-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Cpath d='M12 32l10-10 10 10M60 80l10-10 10 10' fill='none' stroke='%23DEBC80' stroke-opacity='.5' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+.app-scroll[data-role="COURIER"] {
+  --role-tint: #DCE3EF; /* blue */
+  --role-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Cpath d='M12 32l10-10 10 10M60 80l10-10 10 10' fill='none' stroke='%23A3B4D6' stroke-opacity='.5' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+.app-scroll[data-role="RESTAURANT"] {
+  --role-tint: #EECBB6; /* terracotta */
+  --role-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Cpath d='M12 32l10-10 10 10M60 80l10-10 10 10' fill='none' stroke='%23E4A68C' stroke-opacity='.5' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+.app-scroll[data-role="OPERATOR"] {
+  --role-tint: #DDE6D8; /* sage */
+  --role-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Cpath d='M12 32l10-10 10 10M60 80l10-10 10 10' fill='none' stroke='%23A8BFA1' stroke-opacity='.5' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+/* Last child of .app-scroll: darkens the bottom of the visible area so pages blend into the docked
+   output console. The negative margin overlaps the page's bottom padding instead of adding scroll height. */
+.console-fade {
+  position: sticky;
+  bottom: 0;
+  height: 72px;
+  margin-top: -72px;
+  pointer-events: none;
+  background: linear-gradient(transparent, color-mix(in srgb, var(--espresso) 20%, transparent));
+}
+
 /* Full height of the scroll area, not the window, so a short page doesn't scroll by the console's height. */
 .page {
   min-height: 100%;
