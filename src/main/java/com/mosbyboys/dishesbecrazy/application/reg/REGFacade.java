@@ -1,6 +1,7 @@
 package com.mosbyboys.dishesbecrazy.application.reg;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -72,5 +73,12 @@ public class REGFacade {
 //            return restaurantService.load(id);
 //        }
         return userFactory.createUser(role, b.build());
+    }
+
+    // Every operator's user id; the dispatch monitor alerts all of them.
+    public List<UUID> getOperatorIds() {
+        return jdbcTemplate.query(
+                "SELECT id FROM public.\"User\" WHERE UPPER(role) = 'OPERATOR'",
+                (rs, i) -> rs.getObject("id", UUID.class));
     }
 }

@@ -23,6 +23,7 @@ import com.mosbyboys.dishesbecrazy.domain.reg.User;
 import com.mosbyboys.dishesbecrazy.technical.security.DemoStateAccess;
 import com.mosbyboys.dishesbecrazy.technical.security.SecurityConfig;
 import com.mosbyboys.dishesbecrazy.technical.seed.DemoDataRestorer;
+import com.mosbyboys.dishesbecrazy.application.ntf.NTFFacade;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -41,6 +42,7 @@ class DemoResetControllerTest {
     @MockitoBean DispatchQueueLoader dispatchQueue;
     @MockitoBean LedgerService ledger;
     @MockitoBean JwtDecoder decoder;
+    @MockitoBean NTFFacade notifications;
     private final UUID operatorId = UUID.randomUUID();
 
     @BeforeEach

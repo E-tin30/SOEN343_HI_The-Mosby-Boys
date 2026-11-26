@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import PlateLogo from "./PlateLogo";
 import TextLogo from "./TextLogo";
+import NotificationBell from "../notifications/NotificationBell";
 import "./AppHeader.css";
 
 type AppHeaderProps = {
@@ -15,7 +16,10 @@ export default function AppHeader({ children }: AppHeaderProps) {
                 <PlateLogo />
                 <TextLogo />
             </div>
-            {children && <div className="app-header__actions">{children}</div>}
+            <div className="app-header__actions">
+                <NotificationBell />
+                {children}
+            </div>
         </header>
     );
 }
