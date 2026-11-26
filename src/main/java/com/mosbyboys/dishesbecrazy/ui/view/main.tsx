@@ -31,10 +31,13 @@ import AlternatePath from "./easterEggs/AlternatePath";
 import BackgroundRedirect from "./easterEggs/BackgroundRedirect";
 import ScrollPage from "./menu/ScrollPage";
 import PostMenuItemPage from "./menu/PostMenuItem";
+import {NotificationProvider} from "./notifications/NotificationContext";
+import ToastStack from "./notifications/ToastStack";
 
 createRoot(document.getElementById("root")!).render(
     <BrowserRouter>
         <AuthProvider>
+            <NotificationProvider>
             <CartProvider>
                 <div className="app-scroll">
                 <Routes>
@@ -185,6 +188,7 @@ createRoot(document.getElementById("root")!).render(
                 </div>
                 <OutputConsole/>
             </CartProvider>
+            </NotificationProvider>
         </AuthProvider>
     </BrowserRouter>
 );
