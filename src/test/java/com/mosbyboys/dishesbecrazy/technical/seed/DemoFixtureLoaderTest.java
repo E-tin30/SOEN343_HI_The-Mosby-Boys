@@ -1,3 +1,4 @@
+
 package com.mosbyboys.dishesbecrazy.technical.seed;
 
 import java.math.BigDecimal;
@@ -26,6 +27,7 @@ import tools.jackson.databind.node.ObjectNode;
 import static org.junit.jupiter.api.Assertions.*;
 
 class DemoFixtureLoaderTest {
+
     private final JsonMapper json = JsonMapper.builder().build();
     private final DemoFixtureLoader loader = new DemoFixtureLoader(json);
 
@@ -33,284 +35,543 @@ class DemoFixtureLoaderTest {
     void loadsDemoProfilesWithoutExternalServices() throws Exception {
         DemoFixtures fixtures = loader.load();
 
-        assertEquals(8, fixtures.accounts().size());
+        assertEquals(20, fixtures.accounts().size());
+
+        assertEquals(1, fixtures.accounts().stream()
+                .filter(a -> a.role() == Role.CUSTOMER).count());
+
+        assertEquals(1, fixtures.accounts().stream()
+                .filter(a -> a.role() == Role.OPERATOR).count());
+
+        assertEquals(6, fixtures.accounts().stream()
+                .filter(a -> a.role() == Role.COURIER).count());
+
+        var restaurants = fixtures.accounts().stream()
+                .filter(a -> a.role() == Role.RESTAURANT)
+                .toList();
+
+        assertEquals(12, restaurants.size());
+
+        assertEquals(Set.of(
+                "ethan_restaurant1",
+                "ethan_restaurant2",
+                "adrian_restaurant1",
+                "adrian_restaurant2",
+                "zayden_restaurant1",
+                "zayden_restaurant2",
+                "yana_restaurant1",
+                "yana_restaurant2",
+                "jalen_restaurant1",
+                "jalen_restaurant2",
+                "ashton_restaurant1",
+                "ashton_restaurant2"
+        ), restaurants.stream()
+                .map(DemoFixtures.Account::username)
+                .collect(Collectors.toSet()));
+
+        assertTrue(restaurants.stream().allMatch(a -> a.status().equals("OPEN")));
+
+        assertEquals(12, restaurants.stream()
+                .map(a -> List.of(a.latitude(), a.longitude()))
+                .distinct()
+                .count());
+
         assertEquals(Role.CUSTOMER, fixtures.accounts().getFirst().role());
         assertEquals("demo_customer", fixtures.accounts().getFirst().username());
-        var restaurants = fixtures.accounts().stream().filter(a -> a.role() == Role.RESTAURANT).toList();
-        assertEquals(Set.of("demo_restaurant", "demo_restaurant_building", "demo_restaurant_busy"),
-                restaurants.stream().map(DemoFixtures.Account::username).collect(Collectors.toSet()));
-        assertTrue(restaurants.stream().allMatch(a -> a.status().equals("OPEN")));
-        assertEquals(3, restaurants.stream().map(a -> List.of(a.latitude(), a.longitude())).distinct().count());
     }
-    // Exercises the actual checked-in JSON without provisioning accounts or starting Spring.
+
+    // Verifies the current production profile dataset and its 12 distinct restaurant locations.
 
     @Test
     void everyDemoRestaurantHasOrderableAndSoldOutMenuItems() throws Exception {
         DemoFixtures fixtures = loader.load();
+
         var menus = fixtures.menuItems().stream()
                 .collect(Collectors.groupingBy(DemoFixtures.MenuSeed::restaurantUsername));
-        var owners = fixtures.accounts().stream().filter(a -> a.role() == Role.RESTAURANT)
-                .map(DemoFixtures.Account::username).collect(Collectors.toSet());
 
-        assertEquals(12, fixtures.menuItems().size());
+        var owners = fixtures.accounts().stream()
+                .filter(a -> a.role() == Role.RESTAURANT)
+                .map(DemoFixtures.Account::username)
+                .collect(Collectors.toSet());
+
         assertEquals(owners, menus.keySet());
+
         for (var menu : menus.values()) {
-            assertEquals(4, menu.size());
-            assertEquals(3, menu.stream().filter(item -> item.status() == MenuItemStatus.AVAILABLE
-                    && item.stockQuantity() > 0).count());
-            assertEquals(1, menu.stream().filter(item -> item.status() == MenuItemStatus.SOLD_OUT
-                    && item.stockQuantity() == 0).count());
+            assertFalse(menu.isEmpty());
+
+            assertTrue(menu.stream().anyMatch(item ->
+                    item.status() == MenuItemStatus.AVAILABLE
+                            && item.stockQuantity() > 0));
+
+            assertTrue(menu.stream().anyMatch(item ->
+                    item.status() == MenuItemStatus.SOLD_OUT
+                            && item.stockQuantity() == 0));
         }
-        assertEquals(new BigDecimal("18.50"), fixtures.menuItems().getFirst().price());
-        assertEquals("demo_restaurant", fixtures.menuItems().getFirst().restaurantUsername());
     }
-    // Each production menu supports both successful ordering and the sold-out scenario.
+
+    // Every restaurant must have at least one orderable and one sold-out menu item.
 
     @Test
     void allowsThreeRestaurantAccountsWithDistinctMenus() throws Exception {
-        var fixtures = loader.load(new ClassPathResource("demo/fixtures/multiple-profiles.json"),
-                new ClassPathResource("demo/fixtures/multiple-menu.json"));
+        var fixtures = loader.load(
+                new ClassPathResource("demo/fixtures/multiple-profiles.json"),
+                new ClassPathResource("demo/fixtures/multiple-menu.json")
+        );
 
         assertEquals(6, fixtures.accounts().size());
-        assertEquals(3, fixtures.accounts().stream().filter(a -> a.role() == Role.RESTAURANT).count());
-        assertEquals(Set.of("demo_restaurant", "demo_restaurant_building", "demo_restaurant_busy"),
-                fixtures.menuItems().stream().map(DemoFixtures.MenuSeed::restaurantUsername).collect(Collectors.toSet()));
+
+        assertEquals(3, fixtures.accounts().stream()
+                .filter(a -> a.role() == Role.RESTAURANT)
+                .count());
+
+        assertEquals(Set.of(
+                "demo_restaurant",
+                "demo_restaurant_building",
+                "demo_restaurant_busy"
+        ), fixtures.menuItems().stream()
+                .map(DemoFixtures.MenuSeed::restaurantUsername)
+                .collect(Collectors.toSet()));
     }
-    // Reproduces the three-restaurant requirement that the old unique-role validation rejects.
+
+    // Multiple restaurant accounts remain supported independently of the production dataset.
 
     @ParameterizedTest
     @EnumSource(Role.class)
     void allowsAnotherDistinctAccountForEachRole(Role role) throws Exception {
         var profiles = profiles();
-        long originalCount = profiles.valueStream().filter(a -> a.get("role").asString().equals(role.name())).count();
+
+        long originalCount = profiles.valueStream()
+                .filter(a -> a.get("role").asString().equals(role.name()))
+                .count();
+
         var extra = account(profiles, role).deepCopy();
-        extra.put("email", "another-" + role.name().toLowerCase(java.util.Locale.ROOT) + ".demo@example.com");
-        extra.put("username", "another_" + role.name().toLowerCase(java.util.Locale.ROOT));
+
+        extra.put(
+                "email",
+                "another-" + role.name().toLowerCase(java.util.Locale.ROOT) + ".demo@example.com"
+        );
+
+        extra.put(
+                "username",
+                "another_" + role.name().toLowerCase(java.util.Locale.ROOT)
+        );
+
         profiles.add(extra);
 
         var fixtures = load(profiles, menu());
 
-        assertEquals(originalCount + 1, fixtures.accounts().stream().filter(a -> a.role() == role).count());
+        assertEquals(originalCount + 1, fixtures.accounts().stream()
+                .filter(a -> a.role() == role)
+                .count());
     }
-    // Repeated roles are supported for customers, couriers and operators as well as restaurants.
+
+    // Repeated roles are supported for every account type.
 
     @ParameterizedTest
     @EnumSource(Role.class)
     void stillRequiresEveryRole(Role role) throws Exception {
         var profiles = profiles();
+
         for (int i = profiles.size() - 1; i >= 0; i--) {
             if (profiles.get(i).get("role").asString().equals(role.name())) {
                 profiles.remove(i);
             }
         }
 
-        var error = assertThrows(IllegalArgumentException.class, () -> load(profiles, menu()));
+        var error = assertThrows(
+                IllegalArgumentException.class,
+                () -> load(profiles, menu())
+        );
 
         assertTrue(error.getMessage().contains("at least one account of each role"));
     }
-    // Relaxing repeated roles must not let a fixture omit a required role entirely.
+
+    // Every role must remain represented in the fixture.
 
     @ParameterizedTest
-    @ValueSource(strings = {"customer.demo@example.com", "CUSTOMER.DEMO@EXAMPLE.COM"})
+    @ValueSource(strings = {
+            "customer.demo@example.com",
+            "CUSTOMER.DEMO@EXAMPLE.COM"
+    })
     void rejectsDuplicateEmailIdentities(String email) throws Exception {
         var profiles = profiles();
+
         account(profiles, Role.RESTAURANT).put("email", email);
 
-        assertThrows(IllegalArgumentException.class, () -> load(profiles, menu()));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> load(profiles, menu())
+        );
     }
-    // Differently cased spellings cannot represent separate Auth identities in a demo fixture.
+
+    // Differently cased spellings cannot represent separate Auth identities.
 
     @Test
     void returnsCanonicalEmailsForAuthAccountReuse() throws Exception {
         var profiles = profiles();
-        account(profiles, Role.CUSTOMER).put("email", "CUSTOMER.DEMO@EXAMPLE.COM");
+
+        account(profiles, Role.CUSTOMER)
+                .put("email", "CUSTOMER.DEMO@EXAMPLE.COM");
 
         var fixtures = load(profiles, menu());
 
-        assertEquals("customer.demo@example.com", fixtures.accounts().getFirst().email());
+        assertEquals(
+                "customer.demo@example.com",
+                fixtures.accounts().getFirst().email()
+        );
     }
-    // The validated snapshot must use the same lowercase email that Supabase stores and seeders look up.
+
+    // The validated snapshot uses the same lowercase email Supabase stores.
 
     @Test
     void rejectsDuplicateUsernamesAcrossRoles() throws Exception {
         var profiles = profiles();
+
         account(profiles, Role.OPERATOR).put("username", "demo_customer");
 
-        assertThrows(IllegalArgumentException.class, () -> load(profiles, menu()));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> load(profiles, menu())
+        );
     }
-    // Menu ownership and profile lookup depend on unambiguous usernames.
+
+    // Usernames must be unique across all roles.
 
     @ParameterizedTest
-    @ValueSource(strings = {"someone@example.com", "two@names.demo@example.com", "space name.demo@example.com"})
+    @ValueSource(strings = {
+            "someone@gmail.com",
+            "someone@other.com",
+            "two@names@example.com",
+            "space name@example.com"
+    })
     void rejectsAddressesOutsideTheDemoEmailFormat(String email) throws Exception {
         var profiles = profiles();
         account(profiles, Role.CUSTOMER).put("email", email);
 
-        assertThrows(IllegalArgumentException.class, () -> load(profiles, menu()));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> load(profiles, menu())
+        );
     }
-    // Invalid demo addresses are rejected before a caller can provision Auth users.
+
+    // Invalid demo addresses are rejected before Auth provisioning.
 
     @ParameterizedTest
-    @ValueSource(strings = {"email", "username", "firstName", "lastName", "role"})
+    @ValueSource(strings = {
+            "email",
+            "username",
+            "firstName",
+            "lastName",
+            "role"
+    })
     void rejectsMissingIdentityFields(String field) throws Exception {
         var profiles = profiles();
+
         account(profiles, Role.CUSTOMER).remove(field);
 
-        assertThrows(IllegalArgumentException.class, () -> load(profiles, menu()));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> load(profiles, menu())
+        );
     }
-    // Required profile fields cannot become null arguments to Auth or SQL inserts.
+
+    // Required profile identity fields cannot be missing.
 
     @ParameterizedTest
-    @CsvSource({"CUSTOMER,address", "RESTAURANT,restaurantName", "RESTAURANT,status", "COURIER,state"})
+    @CsvSource({
+            "CUSTOMER,address",
+            "RESTAURANT,restaurantName",
+            "RESTAURANT,status",
+            "COURIER,state"
+    })
     void rejectsMissingRoleSpecificFields(Role role, String field) throws Exception {
         var profiles = profiles();
+
         account(profiles, role).remove(field);
 
-        assertThrows(IllegalArgumentException.class, () -> load(profiles, menu()));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> load(profiles, menu())
+        );
     }
-    // Each profile contains the fields consumed by its own role's existing persistence path.
+
+    // Each role must contain the fields required by its persistence path.
 
     @Test
     void rejectsUnknownRestaurantStatus() throws Exception {
         var profiles = profiles();
+
         account(profiles, Role.RESTAURANT).put("status", "BUSY");
 
-        assertThrows(IllegalArgumentException.class, () -> load(profiles, menu()));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> load(profiles, menu())
+        );
     }
-    // Queue congestion is not an additional restaurant status.
+
+    // Restaurant status must match a valid RestaurantStatus.
 
     @ParameterizedTest
-    @ValueSource(strings = {"ON-DUTY", "Offline", "idle"})
+    @ValueSource(strings = {
+            "ON-DUTY",
+            "Offline",
+            "idle"
+    })
     void rejectsUnknownCourierState(String state) throws Exception {
         var profiles = profiles();
+
         account(profiles, Role.COURIER).put("state", state);
 
-        assertThrows(IllegalArgumentException.class, () -> load(profiles, menu()));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> load(profiles, menu())
+        );
     }
-    // Courier state is read back as an exact CourierState name, so fixtures must match it exactly.
+
+    // Courier state must match a valid CourierState.
 
     @ParameterizedTest
-    @CsvSource({"CUSTOMER,latitude", "CUSTOMER,longitude", "RESTAURANT,latitude",
-            "RESTAURANT,longitude", "COURIER,latitude", "COURIER,longitude"})
+    @CsvSource({
+            "CUSTOMER,latitude",
+            "CUSTOMER,longitude",
+            "RESTAURANT,latitude",
+            "RESTAURANT,longitude",
+            "COURIER,latitude",
+            "COURIER,longitude"
+    })
     void requiresBothCoordinatesForLocatedProfiles(Role role, String field) throws Exception {
         var profiles = profiles();
+
         account(profiles, role).remove(field);
 
-        assertThrows(IllegalArgumentException.class, () -> load(profiles, menu()));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> load(profiles, menu())
+        );
     }
-    // Customer/courier columns are NOT NULL, and all three located roles must map meaningfully.
+
+    // Customer, restaurant and courier profiles require both coordinates.
 
     @ParameterizedTest
-    @CsvSource({"latitude,91", "latitude,-91", "longitude,181", "longitude,-181",
-            "latitude,NaN", "longitude,Infinity"})
+    @CsvSource({
+            "latitude,91",
+            "latitude,-91",
+            "longitude,181",
+            "longitude,-181",
+            "latitude,NaN",
+            "longitude,Infinity"
+    })
     void rejectsOutOfRangeOrNonFiniteCoordinates(String field, double value) throws Exception {
         var profiles = profiles();
+
         account(profiles, Role.CUSTOMER).put(field, value);
 
-        assertThrows(IllegalArgumentException.class, () -> load(profiles, menu()));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> load(profiles, menu())
+        );
     }
-    // NaN/infinite coordinates are invalid even if JSON coercion produces a Double.
+
+    // Coordinates must be finite and within geographic bounds.
 
     @Test
     void acceptsCoordinateBoundariesAndAnOperatorWithoutLocation() throws Exception {
         var profiles = profiles();
-        account(profiles, Role.CUSTOMER).put("latitude", -90).put("longitude", 180);
-        account(profiles, Role.RESTAURANT).put("latitude", 90).put("longitude", -180);
 
-        assertEquals(profiles.size(), load(profiles, menu()).accounts().size());
+        account(profiles, Role.CUSTOMER)
+                .put("latitude", -90)
+                .put("longitude", 180);
+
+        account(profiles, Role.RESTAURANT)
+                .put("latitude", 90)
+                .put("longitude", -180);
+
+        assertEquals(
+                profiles.size(),
+                load(profiles, menu()).accounts().size()
+        );
     }
-    // Boundary coordinates are legal; operator fixtures do not require unused location fields.
+
+    // Coordinate boundaries are valid; operators do not require locations.
 
     @ParameterizedTest
-    @ValueSource(strings = {"missing_restaurant", "demo_customer", "demo_courier", "demo_operator"})
+    @ValueSource(strings = {
+            "missing_restaurant",
+            "demo_customer",
+            "demo_courier",
+            "demo_operator"
+    })
     void menuOwnershipRequiresAnExistingRestaurantProfile(String username) throws Exception {
         var menu = menu();
+
         menu.get(0).asObject().put("restaurantUsername", username);
 
-        assertThrows(IllegalArgumentException.class, () -> load(profiles(), menu));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> load(profiles(), menu)
+        );
     }
-    // A username must resolve to a fixture restaurant, not just any account or database row.
+
+    // Menu ownership must resolve to a restaurant account in the fixture.
 
     @Test
     void rejectsDuplicateMenuIds() throws Exception {
         var menu = menu();
-        menu.get(1).asObject().put("id", menu.get(0).get("id").asString());
 
-        assertThrows(IllegalArgumentException.class, () -> load(profiles(), menu));
+        menu.get(1).asObject().put(
+                "id",
+                menu.get(0).get("id").asString()
+        );
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> load(profiles(), menu)
+        );
     }
-    // Conflicting fixture IDs cannot silently disappear through ON CONFLICT DO NOTHING.
+
+    // Menu item IDs must be unique.
 
     @ParameterizedTest
-    @ValueSource(strings = {"id", "restaurantUsername", "name", "price", "status", "description"})
+    @ValueSource(strings = {
+            "id",
+            "restaurantUsername",
+            "name",
+            "price",
+            "status",
+            "description"
+    })
     void rejectsMissingMenuFields(String field) throws Exception {
         var menu = menu();
+
         menu.get(0).asObject().remove(field);
 
-        assertThrows(IllegalArgumentException.class, () -> load(profiles(), menu));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> load(profiles(), menu)
+        );
     }
-    // Required menu values fail validation before the menu transaction can start.
+
+    // Required menu values must be present.
 
     @ParameterizedTest
-    @ValueSource(strings = {"0", "-0.01"})
+    @ValueSource(strings = {
+            "0",
+            "-0.01"
+    })
     void rejectsNonPositivePrices(String price) throws Exception {
         var menu = menu();
-        menu.get(0).asObject().put("price", new BigDecimal(price));
 
-        assertThrows(IllegalArgumentException.class, () -> load(profiles(), menu));
+        menu.get(0).asObject().put(
+                "price",
+                new BigDecimal(price)
+        );
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> load(profiles(), menu)
+        );
     }
-    // Fixture prices retain the existing strictly positive pricing rule.
+
+    // Menu prices must be strictly positive.
 
     @Test
     void rejectsNegativeStock() throws Exception {
         var menu = menu();
+
         menu.get(0).asObject().put("stockQuantity", -1);
 
-        assertThrows(IllegalArgumentException.class, () -> load(profiles(), menu));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> load(profiles(), menu)
+        );
     }
 
     @Test
     void rejectsAnAvailableItemWithNoStock() throws Exception {
         var menu = menu();
+
         menu.get(0).asObject().put("stockQuantity", 0);
 
-        assertThrows(IllegalArgumentException.class, () -> load(profiles(), menu));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> load(profiles(), menu)
+        );
     }
-    // Zero stock is valid for the existing SOLD_OUT fixture, but not for AVAILABLE items.
+
+    // Available items require stock; sold-out items may have zero stock.
 
     @ParameterizedTest
-    @ValueSource(strings = {"null", "[]", "[null]"})
+    @ValueSource(strings = {
+            "null",
+            "[]",
+            "[null]"
+    })
     void rejectsMissingOrNullProfileRecords(String document) {
-        assertThrows(IllegalArgumentException.class,
-                () -> loader.load(resource(document), new ClassPathResource("demo/menu.json")));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> loader.load(
+                        resource(document),
+                        new ClassPathResource("demo/menu.json")
+                )
+        );
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"null", "[]", "[null]"})
+    @ValueSource(strings = {
+            "null",
+            "[]",
+            "[null]"
+    })
     void rejectsMissingOrNullMenuRecords(String document) {
-        assertThrows(IllegalArgumentException.class,
-                () -> loader.load(new ClassPathResource("demo/profiles.json"), resource(document)));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> loader.load(
+                        new ClassPathResource("demo/profiles.json"),
+                        resource(document)
+                )
+        );
     }
-    // Null arrays/records must be validation failures rather than accidental null dereferences.
+
+    // Null arrays and records must fail validation cleanly.
 
     @Test
     void rejectsMalformedJson() {
-        assertThrows(JacksonException.class,
-                () -> loader.load(resource("[broken"), new ClassPathResource("demo/menu.json")));
-        assertThrows(JacksonException.class,
-                () -> loader.load(new ClassPathResource("demo/profiles.json"), resource("[broken")));
+        assertThrows(
+                JacksonException.class,
+                () -> loader.load(
+                        resource("[broken"),
+                        new ClassPathResource("demo/menu.json")
+                )
+        );
+
+        assertThrows(
+                JacksonException.class,
+                () -> loader.load(
+                        new ClassPathResource("demo/profiles.json"),
+                        resource("[broken")
+                )
+        );
     }
-    // Neither file can supply a partial fixture snapshot after a parsing failure.
+
+    // Malformed JSON cannot produce a partial fixture snapshot.
 
     @Test
     void rejectsAnEmptyMenuBeforeReturningFixtures() {
         var profiles = new ClassPathResource("demo/profiles.json");
         var menu = resource("[]");
 
-        var error = assertThrows(IllegalArgumentException.class, () -> loader.load(profiles, menu));
+        var error = assertThrows(
+                IllegalArgumentException.class,
+                () -> loader.load(profiles, menu)
+        );
 
-        assertEquals("Menu seed configuration has no items.", error.getMessage());
+        assertEquals(
+                "Menu seed configuration has no items.",
+                error.getMessage()
+        );
     }
-    // A caller cannot begin profile seeding with a menu that failed preflight validation.
+
+    // An empty menu fails before profile seeding can begin.
 
     private ArrayNode profiles() throws Exception {
         return readArray("demo/profiles.json");
@@ -325,7 +586,8 @@ class DemoFixtureLoaderTest {
             return json.readTree(input).asArray();
         }
     }
-    // Mutations begin from the real valid fixtures, so each test isolates its invalid field.
+
+    // Mutations begin from the actual checked-in fixture data.
 
     private ObjectNode account(ArrayNode profiles, Role role) {
         for (JsonNode profile : profiles) {
@@ -333,16 +595,22 @@ class DemoFixtureLoaderTest {
                 return profile.asObject();
             }
         }
-        throw new IllegalArgumentException("Test fixture has no " + role);
+
+        throw new IllegalArgumentException(
+                "Test fixture has no " + role
+        );
     }
 
     private DemoFixtures load(ArrayNode profiles, ArrayNode menu) throws Exception {
-        return loader.load(new ByteArrayResource(json.writeValueAsBytes(profiles)),
-                new ByteArrayResource(json.writeValueAsBytes(menu)));
+        return loader.load(
+                new ByteArrayResource(json.writeValueAsBytes(profiles)),
+                new ByteArrayResource(json.writeValueAsBytes(menu))
+        );
     }
 
     private ByteArrayResource resource(String document) {
-        return new ByteArrayResource(document.getBytes(StandardCharsets.UTF_8));
+        return new ByteArrayResource(
+                document.getBytes(StandardCharsets.UTF_8)
+        );
     }
-    // Exercises the public resource-loading API using in-memory JSON rather than external services.
 }
