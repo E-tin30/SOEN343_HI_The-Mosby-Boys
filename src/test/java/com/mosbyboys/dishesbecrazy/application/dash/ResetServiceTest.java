@@ -20,6 +20,7 @@ import com.mosbyboys.dishesbecrazy.technical.security.DemoStateAccess;
 import com.mosbyboys.dishesbecrazy.domain.reg.Role;
 import com.mosbyboys.dishesbecrazy.domain.reg.User;
 import com.mosbyboys.dishesbecrazy.technical.seed.DemoDataRestorer;
+import com.mosbyboys.dishesbecrazy.application.ntf.NTFFacade;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -32,6 +33,7 @@ class ResetServiceTest {
     private DispatchQueueLoader dispatchQueue;
     private ResetService reset;
     private DemoStateAccess access;
+    private NTFFacade notifications;
 
     @BeforeEach
     void prepareService() {
@@ -39,8 +41,9 @@ class ResetServiceTest {
         database = mock(DemoDataRestorer.class);
         queues = mock(OrderQueueLoader.class);
         dispatchQueue = mock(DispatchQueueLoader.class);
+        notifications = mock(NTFFacade.class);
         access = new DemoStateAccess();
-        reset = new ResetService(registration, database, queues, dispatchQueue, access, mock(LedgerService.class));
+        reset = new ResetService(registration, database, queues, dispatchQueue, access, mock(LedgerService.class), notifications);
         var operator = mock(User.class);
         when(operator.getRole()).thenReturn(Role.OPERATOR);
         when(registration.getCurrentUser(operatorId)).thenReturn(operator);
@@ -131,4 +134,13 @@ class ResetServiceTest {
         verify(queues, times(2)).rebuild();
     }
     // Latches hold one real invocation open, so the overlap check does not depend on sleeps or thread timing.
+
+    @Test
+    void clearsNotificationsAfterTheQueuesAreRebuilt() throws Exception {
+        reset.restoreDatabaseAndOrderQueues(operatorId);
+
+        var order = inOrder(dispatchQueue, notifications);
+        order.verify(dispatchQueue).rebuild();
+        order.verify(notifications).clearAll();
+    }
 }

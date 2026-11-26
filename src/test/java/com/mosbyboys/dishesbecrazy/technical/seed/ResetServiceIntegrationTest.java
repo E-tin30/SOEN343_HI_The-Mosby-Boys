@@ -36,6 +36,7 @@ import com.mosbyboys.dishesbecrazy.domain.reg.Role;
 import com.mosbyboys.dishesbecrazy.domain.reg.CourierState;
 import com.mosbyboys.dishesbecrazy.application.dlv.CourierData;
 import com.mosbyboys.dishesbecrazy.domain.reg.User;
+import com.mosbyboys.dishesbecrazy.application.ntf.NTFFacade;
 
 import tools.jackson.databind.json.JsonMapper;
 
@@ -89,7 +90,7 @@ class ResetServiceIntegrationTest {
                 """, (row, index) -> new CourierData(row.getObject("user_id", UUID.class),
                 CourierState.valueOf(row.getString("state")), row.getDouble("latitude"), row.getDouble("longitude"))));
         var dispatchQueue = new DispatchQueueLoader(orders, queues, couriers, mock(DispatchService.class));
-        reset = new ResetService(registration, database, new OrderQueueLoader(orders, queues), dispatchQueue, new DemoStateAccess(), mock(LedgerService.class));
+        reset = new ResetService(registration, database, new OrderQueueLoader(orders, queues), dispatchQueue, new DemoStateAccess(), mock(LedgerService.class), mock(NTFFacade.class));
     }
     // Restoration and queue rebuilding are real; only caller lookup and the OrderService read boundary use test adapters.
 

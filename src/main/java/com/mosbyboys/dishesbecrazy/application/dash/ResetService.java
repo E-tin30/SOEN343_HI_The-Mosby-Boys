@@ -15,6 +15,7 @@ import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
 import com.mosbyboys.dishesbecrazy.domain.reg.Role;
 import com.mosbyboys.dishesbecrazy.technical.seed.DemoDataRestorer;
 import com.mosbyboys.dishesbecrazy.technical.security.DemoStateAccess;
+import com.mosbyboys.dishesbecrazy.application.ntf.NTFFacade;
 
 import lombok.RequiredArgsConstructor;
 
@@ -27,6 +28,7 @@ public class ResetService {
     private final DispatchQueueLoader dispatchQueue;
     private final DemoStateAccess access;
     private final LedgerService ledger;
+    private final NTFFacade notifications;
 
     public void restoreDatabaseAndOrderQueues(UUID operatorId) throws IOException {
         var caller = registration.getCurrentUser(operatorId);
@@ -43,6 +45,7 @@ public class ResetService {
             restoration.databaseRestored();
             orderQueues.rebuild();
             dispatchQueue.rebuild();
+            notifications.clearAll();
             restoration.complete();
         }
         // Hold exclusive access through commit and rebuilding; a runtime failure keeps normal requests blocked for retry.
