@@ -7,7 +7,7 @@ import java.util.UUID;
 kind is the order state that caused it, or DISPATCH_WAIT for the operator alert. orderId may be null. */
 public record Notification(
         UUID id,
-        UUID recipientId,
+        UUID userId,
         String kind,
         String message,
         UUID orderId,
@@ -16,6 +16,6 @@ public record Notification(
 ) {
 
     public Notification withRead() {
-        return read ? this : new Notification(id, recipientId, kind, message, orderId, createdAt, true);
+        return read ? this : new Notification(id, userId, kind, message, orderId, createdAt, true);
     }
 }

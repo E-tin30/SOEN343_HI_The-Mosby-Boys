@@ -38,7 +38,7 @@ public class NotificationStore {
                 INSERT INTO public."Notification" (id, user_id, order_id, created_at, kind, message, is_read)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
                 """,
-                notification.id(), notification.recipientId(), notification.orderId(),
+                notification.id(), notification.userId(), notification.orderId(),
                 Timestamp.from(notification.createdAt()), notification.kind(),
                 notification.message(), notification.read());
 
@@ -52,7 +52,7 @@ public class NotificationStore {
                       ORDER BY created_at DESC, id
                       LIMIT ?)
                 """,
-                notification.recipientId(), notification.recipientId(), MAX_PER_USER);
+                notification.userId(), notification.userId(), MAX_PER_USER);
     }
 
     // Newest first.
