@@ -55,3 +55,8 @@ CREATE TABLE public."Bill" (
     status varchar, subtotal numeric, total numeric, delivery_fee numeric, service_fee numeric,
     small_order_surchage numeric DEFAULT 0
 );
+CREATE TABLE public."Notification" (
+    id uuid PRIMARY KEY, user_id uuid NOT NULL REFERENCES public."User"(id) ON DELETE CASCADE,
+    order_id uuid, created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    kind varchar NOT NULL, message varchar NOT NULL, is_read boolean NOT NULL DEFAULT false
+);
