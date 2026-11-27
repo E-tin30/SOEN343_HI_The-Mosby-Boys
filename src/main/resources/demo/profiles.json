@@ -23,8 +23,8 @@
     "username": "ethan_courier",
     "role": "COURIER",
     "state": "ASSIGNED",
-    "latitude": 45.5200,
-    "longitude": -73.5800
+    "latitude": 45.4950,
+    "longitude": -73.6300
   },
   {
     "email": "adrian.courier@example.com",
@@ -33,7 +33,7 @@
     "username": "adrian_courier",
     "role": "COURIER",
     "state": "IDLE",
-    "latitude": 45.4700,
+    "latitude": 45.5500,
     "longitude": -73.6200
   },
   {
@@ -43,8 +43,8 @@
     "username": "zayden_courier",
     "role": "COURIER",
     "state": "IDLE",
-    "latitude": 45.4900,
-    "longitude": -73.5650
+    "latitude": 45.5600,
+    "longitude": -73.5400
   },
   {
     "email": "yana.courier@example.com",
@@ -53,8 +53,8 @@
     "username": "yana_courier",
     "role": "COURIER",
     "state": "IDLE",
-    "latitude": 45.5000,
-    "longitude": -73.5900
+    "latitude": 45.4350,
+    "longitude": -73.6350
   },
   {
     "email": "jalen.courier@example.com",
@@ -63,8 +63,8 @@
     "username": "jalen_courier",
     "role": "COURIER",
     "state": "IDLE",
-    "latitude": 45.4850,
-    "longitude": -73.5800
+    "latitude": 45.4900,
+    "longitude": -73.8200
   },
   {
     "email": "ashton.courier@example.com",
@@ -73,8 +73,8 @@
     "username": "ashton_courier",
     "role": "COURIER",
     "state": "IDLE",
-    "latitude": 45.5050,
-    "longitude": -73.5450
+    "latitude": 45.5600,
+    "longitude": -73.6600
   },
   {
     "email": "ethan.restaurant1@example.com",
@@ -84,8 +84,8 @@
     "role": "RESTAURANT",
     "restaurantName": "Ethan's Maple & Miso",
     "status": "OPEN",
-    "latitude": 45.5017,
-    "longitude": -73.5673
+    "latitude": 45.5240,
+    "longitude": -73.5810
   },
   {
     "email": "ethan.restaurant2@example.com",
@@ -95,7 +95,7 @@
     "role": "RESTAURANT",
     "restaurantName": "Smokeshow BBQ",
     "status": "OPEN",
-    "latitude": 45.5100,
+    "latitude": 45.4590,
     "longitude": -73.5700
   },
   {
@@ -106,8 +106,8 @@
     "role": "RESTAURANT",
     "restaurantName": "La Petite Trattoria",
     "status": "OPEN",
-    "latitude": 45.5250,
-    "longitude": -73.5800
+    "latitude": 45.5330,
+    "longitude": -73.6180
   },
   {
     "email": "adrian.restaurant2@example.com",
@@ -117,8 +117,8 @@
     "role": "RESTAURANT",
     "restaurantName": "Adrian's Kitchen",
     "status": "OPEN",
-    "latitude": 45.4950,
-    "longitude": -73.5550
+    "latitude": 45.4400,
+    "longitude": -73.6800
   },
   {
     "email": "zayden.restaurant1@example.com",
@@ -128,8 +128,8 @@
     "role": "RESTAURANT",
     "restaurantName": "Golden Hour Tacos",
     "status": "OPEN",
-    "latitude": 45.5080,
-    "longitude": -73.5620
+    "latitude": 45.5030,
+    "longitude": -73.5540
   },
   {
     "email": "zayden.restaurant2@example.com",
@@ -139,8 +139,8 @@
     "role": "RESTAURANT",
     "restaurantName": "Zayden's Waffle Foundry",
     "status": "OPEN",
-    "latitude": 45.5150,
-    "longitude": -73.5750
+    "latitude": 45.6050,
+    "longitude": -73.5600
   },
   {
     "email": "yana.restaurant1@example.com",
@@ -150,8 +150,8 @@
     "role": "RESTAURANT",
     "restaurantName": "Basil & Bloom",
     "status": "OPEN",
-    "latitude": 45.5030,
-    "longitude": -73.5800
+    "latitude": 45.4720,
+    "longitude": -73.6150
   },
   {
     "email": "yana.restaurant2@example.com",
@@ -161,8 +161,8 @@
     "role": "RESTAURANT",
     "restaurantName": "Sakura Bento House",
     "status": "OPEN",
-    "latitude": 45.5180,
-    "longitude": -73.5500
+    "latitude": 45.4480,
+    "longitude": -73.8160
   },
   {
     "email": "jalen.restaurant1@example.com",
@@ -172,8 +172,8 @@
     "role": "RESTAURANT",
     "restaurantName": "Bayne's Beignes",
     "status": "OPEN",
-    "latitude": 45.4920,
-    "longitude": -73.5750
+    "latitude": 45.4500,
+    "longitude": -73.7400
   },
   {
     "email": "jalen.restaurant2@example.com",
@@ -183,8 +183,8 @@
     "role": "RESTAURANT",
     "restaurantName": "Poutine Palace",
     "status": "OPEN",
-    "latitude": 45.5220,
-    "longitude": -73.5650
+    "latitude": 45.6000,
+    "longitude": -73.6300
   },
   {
     "email": "ashton.restaurant1@example.com",
@@ -194,8 +194,8 @@
     "role": "RESTAURANT",
     "restaurantName": "The Velvet Fork",
     "status": "OPEN",
-    "latitude": 45.5120,
-    "longitude": -73.5580
+    "latitude": 45.5100,
+    "longitude": -73.7100
   },
   {
     "email": "ashton.restaurant2@example.com",
@@ -205,7 +205,7 @@
     "role": "RESTAURANT",
     "restaurantName": "Ashton's Curry Corner",
     "status": "OPEN",
-    "latitude": 45.4980,
-    "longitude": -73.5700
+    "latitude": 45.4900,
+    "longitude": -73.8500
   }
 ]
