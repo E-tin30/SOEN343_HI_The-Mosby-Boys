@@ -3,14 +3,13 @@
 #        Spring Boot backend (port 8080, inside the same container).
 # The backend uses the team's hosted Supabase project (Auth, Postgres, Storage) and Stripe. Their
 # values are group secrets: save each name below on the platform's Secrets page. Nothing secret is written here.
-# Replace the image tag with the line printed by the "Publish demo images" workflow (see demo-platform/README.md).
 x-demo:
   web: app
   port: 80
 
 services:
   app:
-    image: ghcr.io/e-tin30/soen343_hi_the-mosby-boys-app:0123456789abcdef0123456789abcdef01234567
+    image: ghcr.io/e-tin30/soen343_hi_the-mosby-boys-app:1b0a7ddbca0c4eb03262dc2998609011c0da1579
     environment:
       # Trust the platform's X-Forwarded-* headers so same-origin POSTs are not refused as CORS
       SERVER_FORWARD_HEADERS_STRATEGY: framework
