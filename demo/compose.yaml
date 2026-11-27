@@ -9,7 +9,7 @@ x-demo:
 
 services:
   app:
-    image: ghcr.io/e-tin30/soen343_hi_the-mosby-boys-app:1b0a7ddbca0c4eb03262dc2998609011c0da1579
+    image: ghcr.io/e-tin30/soen343_hi_the-mosby-boys-app:fc48c7055eec79ae4b0b621e3e9a68fa6e8d66ba
     environment:
       # Trust the platform's X-Forwarded-* headers so same-origin POSTs are not refused as CORS
       SERVER_FORWARD_HEADERS_STRATEGY: framework
