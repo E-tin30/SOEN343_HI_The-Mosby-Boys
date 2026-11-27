@@ -70,13 +70,12 @@ Password for all of them: `DEMO_SEED_PASSWORD` from `.env`.
 | Role | Email |
 |---|---|
 | Customer | `customer.demo@example.com` |
-| Home cook - Sam's Family Kitchen | `restaurant.demo@example.com` |
-| Home cook - Robin's Sunday Kitchen | `restaurant2.demo@example.com` |
-| Home cook - Casey's Home Kitchen | `restaurant3.demo@example.com` |
-| Courier - Jo (assigned to a stalled order) | `courier.demo@example.com` |
-| Courier - Riley (idle, far away) | `courier2.demo@example.com` |
-| Courier - Morgan (idle, near Sam's) | `courier3.demo@example.com` |
+| Home cook | `<name>.restaurant1@example.com` |
+| Home cook| `<name>.restaurant2@example.com` |
+| Courier | `<name>.courier@example.com` |
 | Operator | `operator.demo@example.com` |
+
+Replace <name> with any of the team members' first name in lowercase for courier and restaurant profiles.
 
 Run initial setup from `src/main/resources/demo/` using the database configured in `.env`:
 

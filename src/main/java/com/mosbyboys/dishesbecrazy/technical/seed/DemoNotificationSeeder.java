@@ -22,19 +22,19 @@ public class DemoNotificationSeeder {
     // One notification per finished demo order, matching OrderNotifier's wording. Only the Ready one is unread.
     private static final List<Seed> CUSTOMER_NOTIFICATIONS = List.of(
             new Seed("215", "ReadyState",
-                    "Your order #000215 at Sam's Family Kitchen is ready and waiting for a courier.",
+                    "Your order #000215 at Basil & Bloom is ready and waiting for a courier.",
                     "2026-01-15T19:15:00Z", false),
             new Seed("214", "RefundedState",
-                    "Your order #000214 from Robin's Sunday Kitchen was refunded.",
+                    "Your order #000214 from La Petite Trattoria was refunded.",
                     "2026-01-14T15:36:00Z", true),
             new Seed("213", "CancelledState",
-                    "Your order #000213 at Robin's Sunday Kitchen was cancelled.",
+                    "Your order #000213 at La Petite Trattoria was cancelled.",
                     "2026-01-14T14:01:00Z", true),
             new Seed("212", "RejectedState",
-                    "Robin's Sunday Kitchen rejected your order #000212.",
+                    "La Petite Trattoria rejected your order #000212.",
                     "2026-01-14T13:02:00Z", true),
             new Seed("211", "DeliveredState",
-                    "Your order #000211 from Robin's Sunday Kitchen was delivered.",
+                    "Your order #000211 from La Petite Trattoria was delivered.",
                     "2026-01-14T12:35:00Z", true));
 
     void seed(Map<String, UUID> users) {

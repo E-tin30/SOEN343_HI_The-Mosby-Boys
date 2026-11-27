@@ -10,47 +10,6 @@
     "longitude": -73.5540
   },
   {
-    "email": "restaurant.demo@example.com",
-    "firstName": "Sam",
-    "lastName": "Demo",
-    "username": "demo_restaurant",
-    "role": "RESTAURANT",
-    "restaurantName": "Sam's Family Kitchen",
-    "status": "OPEN",
-    "latitude": 45.5017,
-    "longitude": -73.5673
-  },
-  {
-    "email": "courier.demo@example.com",
-    "firstName": "Jo",
-    "lastName": "Demo",
-    "username": "demo_courier",
-    "role": "COURIER",
-    "state": "ASSIGNED",
-    "latitude": 45.5200,
-    "longitude": -73.5800
-  },
-  {
-    "email": "courier2.demo@example.com",
-    "firstName": "Riley",
-    "lastName": "Demo",
-    "username": "demo_courier2",
-    "role": "COURIER",
-    "state": "IDLE",
-    "latitude": 45.4700,
-    "longitude": -73.6200
-  },
-  {
-    "email": "courier3.demo@example.com",
-    "firstName": "Morgan",
-    "lastName": "Demo",
-    "username": "demo_courier3",
-    "role": "COURIER",
-    "state": "IDLE",
-    "latitude": 45.4950,
-    "longitude": -73.5550
-  },
-  {
     "email": "operator.demo@example.com",
     "firstName": "Diego",
     "lastName": "Demo",
@@ -58,25 +17,195 @@
     "role": "OPERATOR"
   },
   {
-    "email": "restaurant2.demo@example.com",
-    "firstName": "Robin",
+    "email": "ethan.courier@example.com",
+    "firstName": "Ethan",
     "lastName": "Demo",
-    "username": "demo_restaurant_building",
+    "username": "ethan_courier",
+    "role": "COURIER",
+    "state": "ASSIGNED",
+    "latitude": 45.5200,
+    "longitude": -73.5800
+  },
+  {
+    "email": "adrian.courier@example.com",
+    "firstName": "Adrian",
+    "lastName": "Demo",
+    "username": "adrian_courier",
+    "role": "COURIER",
+    "state": "IDLE",
+    "latitude": 45.4700,
+    "longitude": -73.6200
+  },
+  {
+    "email": "zayden.courier@example.com",
+    "firstName": "Zayden",
+    "lastName": "Demo",
+    "username": "zayden_courier",
+    "role": "COURIER",
+    "state": "IDLE",
+    "latitude": 45.4900,
+    "longitude": -73.5650
+  },
+  {
+    "email": "yana.courier@example.com",
+    "firstName": "Yana",
+    "lastName": "Demo",
+    "username": "yana_courier",
+    "role": "COURIER",
+    "state": "IDLE",
+    "latitude": 45.5000,
+    "longitude": -73.5900
+  },
+  {
+    "email": "jalen.courier@example.com",
+    "firstName": "Jalen",
+    "lastName": "Demo",
+    "username": "jalen_courier",
+    "role": "COURIER",
+    "state": "IDLE",
+    "latitude": 45.4850,
+    "longitude": -73.5800
+  },
+  {
+    "email": "ashton.courier@example.com",
+    "firstName": "Ashton",
+    "lastName": "Demo",
+    "username": "ashton_courier",
+    "role": "COURIER",
+    "state": "IDLE",
+    "latitude": 45.5050,
+    "longitude": -73.5450
+  },
+  {
+    "email": "ethan.restaurant1@example.com",
+    "firstName": "Ethan",
+    "lastName": "Demo",
+    "username": "ethan_restaurant1",
     "role": "RESTAURANT",
-    "restaurantName": "Robin's Sunday Kitchen",
+    "restaurantName": "Ethan's Maple & Miso",
+    "status": "OPEN",
+    "latitude": 45.5017,
+    "longitude": -73.5673
+  },
+  {
+    "email": "ethan.restaurant2@example.com",
+    "firstName": "Ethan",
+    "lastName": "Demo",
+    "username": "ethan_restaurant2",
+    "role": "RESTAURANT",
+    "restaurantName": "Smokeshow BBQ",
     "status": "OPEN",
     "latitude": 45.5100,
     "longitude": -73.5700
   },
   {
-    "email": "restaurant3.demo@example.com",
-    "firstName": "Casey",
+    "email": "adrian.restaurant1@example.com",
+    "firstName": "Adrian",
     "lastName": "Demo",
-    "username": "demo_restaurant_busy",
+    "username": "adrian_restaurant1",
     "role": "RESTAURANT",
-    "restaurantName": "Casey's Home Kitchen",
+    "restaurantName": "La Petite Trattoria",
     "status": "OPEN",
     "latitude": 45.5250,
     "longitude": -73.5800
+  },
+  {
+    "email": "adrian.restaurant2@example.com",
+    "firstName": "Adrian",
+    "lastName": "Demo",
+    "username": "adrian_restaurant2",
+    "role": "RESTAURANT",
+    "restaurantName": "Adrian's Kitchen",
+    "status": "OPEN",
+    "latitude": 45.4950,
+    "longitude": -73.5550
+  },
+  {
+    "email": "zayden.restaurant1@example.com",
+    "firstName": "Zayden",
+    "lastName": "Demo",
+    "username": "zayden_restaurant1",
+    "role": "RESTAURANT",
+    "restaurantName": "Golden Hour Tacos",
+    "status": "OPEN",
+    "latitude": 45.5080,
+    "longitude": -73.5620
+  },
+  {
+    "email": "zayden.restaurant2@example.com",
+    "firstName": "Zayden",
+    "lastName": "Demo",
+    "username": "zayden_restaurant2",
+    "role": "RESTAURANT",
+    "restaurantName": "Zayden's Waffle Foundry",
+    "status": "OPEN",
+    "latitude": 45.5150,
+    "longitude": -73.5750
+  },
+  {
+    "email": "yana.restaurant1@example.com",
+    "firstName": "Yana",
+    "lastName": "Demo",
+    "username": "yana_restaurant1",
+    "role": "RESTAURANT",
+    "restaurantName": "Basil & Bloom",
+    "status": "OPEN",
+    "latitude": 45.5030,
+    "longitude": -73.5800
+  },
+  {
+    "email": "yana.restaurant2@example.com",
+    "firstName": "Yana",
+    "lastName": "Demo",
+    "username": "yana_restaurant2",
+    "role": "RESTAURANT",
+    "restaurantName": "Sakura Bento House",
+    "status": "OPEN",
+    "latitude": 45.5180,
+    "longitude": -73.5500
+  },
+  {
+    "email": "jalen.restaurant1@example.com",
+    "firstName": "Jalen",
+    "lastName": "Demo",
+    "username": "jalen_restaurant1",
+    "role": "RESTAURANT",
+    "restaurantName": "Bayne's Beignes",
+    "status": "OPEN",
+    "latitude": 45.4920,
+    "longitude": -73.5750
+  },
+  {
+    "email": "jalen.restaurant2@example.com",
+    "firstName": "Jalen",
+    "lastName": "Demo",
+    "username": "jalen_restaurant2",
+    "role": "RESTAURANT",
+    "restaurantName": "Poutine Palace",
+    "status": "OPEN",
+    "latitude": 45.5220,
+    "longitude": -73.5650
+  },
+  {
+    "email": "ashton.restaurant1@example.com",
+    "firstName": "Ashton",
+    "lastName": "Demo",
+    "username": "ashton_restaurant1",
+    "role": "RESTAURANT",
+    "restaurantName": "The Velvet Fork",
+    "status": "OPEN",
+    "latitude": 45.5120,
+    "longitude": -73.5580
+  },
+  {
+    "email": "ashton.restaurant2@example.com",
+    "firstName": "Ashton",
+    "lastName": "Demo",
+    "username": "ashton_restaurant2",
+    "role": "RESTAURANT",
+    "restaurantName": "Ashton's Curry Corner",
+    "status": "OPEN",
+    "latitude": 45.4980,
+    "longitude": -73.5700
   }
 ]
