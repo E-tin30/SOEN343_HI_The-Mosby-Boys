@@ -13,6 +13,7 @@ import {Elements} from "@stripe/react-stripe-js";
 import {loadStripe} from "@stripe/stripe-js";
 import StripePaymentForm, {StripePaymentFormHandle} from "../components/StripePaymentForm";
 import {PricingBreakdown} from "../orders/types/PricingBreakdown";
+import { API_BASE } from "../api/apiBase";
 
 const stripePromise = loadStripe(
     import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
@@ -60,7 +61,7 @@ export default function CartPage() {
         const fetchPricing = async () => {
             try {
                 const response = await loggedFetch(
-                    "http://localhost:8080/payments/breakdown",
+                    `${API_BASE}/payments/breakdown`,
                     {
                         method: "POST",
                         headers: {
@@ -105,7 +106,7 @@ export default function CartPage() {
         log("command", "Continue to checkout");
         // Records the local checkout action; availability does not add a restriction to this step.
         try {
-            const response = await loggedFetch("http://localhost:8080/payments/create-payment-intent", {
+            const response = await loggedFetch(`${API_BASE}/payments/create-payment-intent`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
                 body: JSON.stringify({
@@ -154,7 +155,7 @@ export default function CartPage() {
 
             await paymentFormRef.current.submitPayment();
 
-            const response = await loggedFetch("http://localhost:8080/placeOrder", {
+            const response = await loggedFetch(`${API_BASE}/placeOrder`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

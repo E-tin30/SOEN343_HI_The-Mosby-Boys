@@ -11,6 +11,7 @@ import Input from "./components/Input";
 import TextLogo from "./components/TextLogo";
 import ClickableHotspot from "./components/ClickableHotspot";
 import "./styles/LoginPage.css";
+import { API_BASE } from "./api/apiBase";
 
 export default function LoginPage() {
     const [error, setError] = useState("");
@@ -44,7 +45,7 @@ export default function LoginPage() {
         setLoading(true);
 
         try {
-            const response = await loggedFetch("http://localhost:8080/login", {
+            const response = await loggedFetch(`${API_BASE}/login`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

@@ -1,0 +1,31 @@
+# Demo-platform stack for Dishes Be Crazy.
+#   app  one container: nginx (public, port 80) serves the React build and forwards /api/ to the
+#        Spring Boot backend (port 8080, inside the same container).
+# The backend uses the team's hosted Supabase project (Auth, Postgres, Storage) and Stripe. Their
+# values are group secrets: save each name below on the platform's Secrets page. Nothing secret is written here.
+# Replace the image tag with the line printed by the "Publish demo images" workflow (see demo-platform/README.md).
+x-demo:
+  web: app
+  port: 80
+
+services:
+  app:
+    image: ghcr.io/e-tin30/soen343_hi_the-mosby-boys-app:0123456789abcdef0123456789abcdef01234567
+    environment:
+      # Trust the platform's X-Forwarded-* headers so same-origin POSTs are not refused as CORS
+      SERVER_FORWARD_HEADERS_STRATEGY: framework
+      JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=50
+      SUPABASE_URL: ${secret:SUPABASE_URL}
+      SUPABASE_PUBLISHABLE_KEY: ${secret:SUPABASE_PUBLISHABLE_KEY}
+      SUPABASE_SECRET_KEY: ${secret:SUPABASE_SECRET_KEY}
+      SUPABASE_DB_URL: ${secret:SUPABASE_DB_URL}
+      SUPABASE_DB_USER: ${secret:SUPABASE_DB_USER}
+      SUPABASE_DB_PASSWORD: ${secret:SUPABASE_DB_PASSWORD}
+      STRIPE_SECRET_KEY: ${secret:STRIPE_SECRET_KEY}
+    healthcheck:
+      # Healthy when the Spring Boot backend accepts connections (it needs 20 to 60 seconds to start)
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/127.0.0.1/8080'"]
+      interval: 5s
+      timeout: 3s
+      retries: 40
+      start_period: 15s

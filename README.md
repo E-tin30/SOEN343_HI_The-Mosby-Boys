@@ -114,3 +114,13 @@ Fixture, seeding and restoration checks use isolated in-memory databases and moc
 ```sh
 ./mvnw -o -Dtest=DemoRequestFilterTest,DemoStateAccessTest,ResetServiceTest,ResetServiceIntegrationTest,OrderQueueLoaderTest,OrderQueuesTest,PreparationQueueTest,DemoDataRestorerTest,DemoOrderSeederTest,DemoFixtureLoaderTest,DemoOrderFixtureTest,DemoProfileSeederTests,DemoMenuSeederTest test
 ```
+
+## Demo platform (SOEN 343 demos)
+
+The demo runs as one image (nginx + Spring Boot) built from the root `Dockerfile` by `.github/workflows/publish-demo-images.yml` (`SERVICES: "."`, image `ghcr.io/e-tin30/soen343_hi_the-mosby-boys-app:<commit>`). The compose file is `demo/compose.yaml`. The old backend-only image for `docker compose` is `Dockerfile.backend`.
+
+Save these names on the group's **Secrets** page (values come from `.env`): `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`, `SUPABASE_DB_URL`, `SUPABASE_DB_USER`, `SUPABASE_DB_PASSWORD`, `STRIPE_SECRET_KEY`. Never commit a value.
+
+`VITE_STRIPE_PUBLISHABLE_KEY` and `VITE_GOOGLE_MAPS_API_KEY` are baked into the page at build time, so they cannot be platform secrets. They are empty in the `Dockerfile`: card payment and the map stay off until you set a test-mode key there (restrict it by HTTP referrer in Stripe or Google Cloud).
+
+`npm run dev` calls `/api/...` and `vite.config.ts` forwards it to the backend on port 8080.

@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { log, logError } from "../outputLog";
+import { API_BASE } from "../api/apiBase";
 
 export type LoginTokens = {
   accessToken: string;
@@ -41,7 +42,7 @@ const AuthContext = createContext<AuthContextType | undefined>(
     undefined
 );
 
-const API_URL = "http://localhost:8080";
+const API_URL = API_BASE;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<CurrentUser | null>(null);

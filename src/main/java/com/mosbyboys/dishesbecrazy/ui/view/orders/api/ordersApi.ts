@@ -1,7 +1,8 @@
 import { loggedFetch, readJson } from "../../api/loggedFetch";
 import type { HistoryOrder, LedgerEntry, RestaurantOrder } from "../types/order";
+import { API_BASE } from "../../api/apiBase";
 
-const API = "http://localhost:8080";
+const API = API_BASE;
 
 export async function getRestaurantOrders(token: string): Promise<RestaurantOrder[]> {
   const path = "/api/restaurant/orders";

@@ -1,0 +1,8 @@
+# Rehearsal only (not submitted): publishes the public service on your laptop.
+#   docker compose -f demo/compose.yaml -f demo/rehearse.yaml up
+# Needs the six Supabase values and STRIPE_SECRET_KEY in your shell, because ${secret:NAME} is not
+# understood by Docker Compose. See "Demo platform" in README.md.
+services:
+  app:
+    ports:
+      - "8081:80"   # <laptop port>:<x-demo port>

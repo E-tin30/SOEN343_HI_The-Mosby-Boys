@@ -1,7 +1,8 @@
 import { loggedFetch, readJson } from "../../api/loggedFetch";
 import type { Restaurant, MenuItem } from "../types/menu";
+import { API_BASE } from "../../api/apiBase";
 
-const API = "http://localhost:8080";
+const API = API_BASE;
 
 async function get<T>(path: string, token: string, signal?: AbortSignal): Promise<T> {
   const response = await loggedFetch(API + path, {

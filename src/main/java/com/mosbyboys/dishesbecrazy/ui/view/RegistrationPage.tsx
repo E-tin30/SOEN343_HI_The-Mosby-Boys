@@ -7,6 +7,7 @@ import Heading from "./components/Heading";
 import Input from "./components/Input";
 import TextLogo from "./components/TextLogo";
 import "./styles/RegistrationPage.css";
+import { API_BASE } from "./api/apiBase";
 
 export default function Register(){
     const navigate = useNavigate();
@@ -17,7 +18,7 @@ export default function Register(){
         const data = Object.fromEntries(new FormData(e.currentTarget));
 
         try {
-            const response = await loggedFetch("http://localhost:8080/register", {
+            const response = await loggedFetch(`${API_BASE}/register`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

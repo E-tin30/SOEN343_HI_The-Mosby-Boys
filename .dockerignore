@@ -1,3 +1,10 @@
 node_modules
 target
+dist
 .env
+.env.*
+.git
+.github
+artifacts
+docs
+demo

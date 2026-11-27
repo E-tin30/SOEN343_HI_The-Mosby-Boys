@@ -1,7 +1,9 @@
 name: dishes-be-crazy
 services:
   backend:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
     ports:
       - "8080:8080"
     env_file:
@@ -15,5 +17,8 @@ services:
       - "5173:5173"
     env_file:
       - .env
+    environment:
+      # The dev server forwards /api to the backend container (see vite.config.ts)
+      VITE_PROXY_TARGET: http://backend:8080
     depends_on:
       - backend

@@ -7,6 +7,7 @@ import { useAuth } from "../context/AuthContext";
 import Input from "../components/Input";
 import { loggedFetch } from "../api/loggedFetch";
 import "../styles/ImportImages.css";
+import { API_BASE } from "../api/apiBase";
 
 export default function AddMenuItemPage() {
     const navigate = useNavigate();
@@ -114,7 +115,7 @@ export default function AddMenuItemPage() {
             setLoading(true);
 
             const response = await loggedFetch(
-                "http://localhost:8080/menu/add",
+                `${API_BASE}/menu/add`,
                 {
                     method: "POST",
                     headers: {

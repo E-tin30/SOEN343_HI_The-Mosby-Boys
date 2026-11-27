@@ -5,6 +5,7 @@ import { logError } from "../outputLog";
 import Button from "./Button";
 import { DEMO_RESET_EVENT } from "../dashboard/useDashboardData";
 import "./DemoResetControl.css";
+import { API_BASE } from "../api/apiBase";
 
 export default function DemoResetControl() {
   const { user, accessToken } = useAuth();
@@ -20,7 +21,7 @@ export default function DemoResetControl() {
     setError("");
     setMessage("");
     try {
-      await loggedFetch("http://localhost:8080/api/demo/reset", {
+      await loggedFetch(`${API_BASE}/api/demo/reset`, {
         method: "POST",
         headers: { Authorization: `Bearer ${accessToken}` },
       });

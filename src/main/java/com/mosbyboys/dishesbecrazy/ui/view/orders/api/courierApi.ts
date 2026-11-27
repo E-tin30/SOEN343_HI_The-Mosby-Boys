@@ -1,8 +1,9 @@
 import type { HistoryOrder } from "../types/order";
 import { log } from "../../outputLog";
 import { post } from "./ordersApi";
+import { API_BASE } from "../../api/apiBase";
 
-const API = "http://localhost:8080";
+const API = API_BASE;
 
 export type CourierState = "OFFLINE" | "IDLE" | "ASSIGNED" | "CARRYING";
 

@@ -9,6 +9,7 @@ import "../styles/CartPage.css";
 import {useEffect, useState} from "react";
 import {PricingBreakdown} from "./types/PricingBreakdown";
 import {OrderResponse} from "./types/order";
+import { API_BASE } from "../api/apiBase";
 
 export default function OrderSummaryPage() {
     const navigate = useNavigate();
@@ -37,7 +38,7 @@ export default function OrderSummaryPage() {
                 setError(null);
 
                 const response = await loggedFetch(
-                    `http://localhost:8080/api/orders/${orderId}`,
+                    `${API_BASE}/api/orders/${orderId}`,
                     {
                         headers: {
                             Authorization: `Bearer ${accessToken}`,
@@ -74,7 +75,7 @@ export default function OrderSummaryPage() {
         const fetchPricing = async (order: OrderResponse) => {
             try {
                 const response = await loggedFetch(
-                    "http://localhost:8080/payments/breakdown",
+                    `${API_BASE}/payments/breakdown`,
                     {
                         method: "POST",
                         headers: {

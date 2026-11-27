@@ -110,6 +110,9 @@ build/
 *.md
 !README.md
 !docs/demo-walkthroughs.md
+!AGENTS.md
+!CLAUDE.md
+!demo-platform/*.md
 
 
 ###Agent skills###

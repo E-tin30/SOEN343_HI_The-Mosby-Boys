@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import { API_BASE } from "../api/apiBase";
 
 export type RestaurantDashboardData = {
     id: string;
@@ -21,7 +22,7 @@ const RESETTING = new Error("Demo reset in progress");
 
 // GET one of the /api/dashboard endpoints as the signed-in user.
 async function fetchDashboard<T>(path: string, token: string): Promise<T> {
-    const response = await fetch(`http://localhost:8080/api/dashboard/${path}`, {
+    const response = await fetch(`${API_BASE}/api/dashboard/${path}`, {
         headers: { Authorization: `Bearer ${token}` },
     });
     // 503 = a demo Reset is running; skip this refresh instead of showing an error

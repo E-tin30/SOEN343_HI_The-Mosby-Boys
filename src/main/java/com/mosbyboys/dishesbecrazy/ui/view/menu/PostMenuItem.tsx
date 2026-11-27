@@ -8,6 +8,7 @@ import { useEffect, useState, type ChangeEvent } from "react";
 import type { MenuItem } from "./types/menu";
 import { getMenu } from "./api/menuApi";
 import "../styles/EditMenuItemPage.css";
+import { API_BASE } from "../api/apiBase";
 
 export default function PostMenuItemPage() {
     const navigate = useNavigate();
@@ -83,7 +84,7 @@ export default function PostMenuItemPage() {
         try {
             setUpdatingId(item.id);
 
-            const response = await fetch("http://localhost:8080/menu/edit", {
+            const response = await fetch(`${API_BASE}/menu/edit`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
