@@ -11,8 +11,8 @@ COPY index.html tsconfig.json ./
 COPY src/main/java/com/mosbyboys/dishesbecrazy/ui ./src/main/java/com/mosbyboys/dishesbecrazy/ui
 # Browser keys are frozen into the bundle at build time and are empty by default.
 # Stripe card payment and the Google map stay disabled until a (test-mode, referrer-restricted) key is set here.
-ARG VITE_STRIPE_PUBLISHABLE_KEY=""
-ARG VITE_GOOGLE_MAPS_API_KEY=""
+ARG VITE_STRIPE_PUBLISHABLE_KEY="pk_test_51UVwRn8MMrdqtC9JGf5gK4w21wvvPPXohqTQlVuEfWRihkjQx5vxUHmbXOwqQ7qqdQLIQkjqGAu2g5Z0igyDp20w00bYDZKwoP"
+ARG VITE_GOOGLE_MAPS_API_KEY="AIzaSyBtxZcXlkZzciSI74dcDcHrPCe25HV7IgQ"
 ENV VITE_STRIPE_PUBLISHABLE_KEY=$VITE_STRIPE_PUBLISHABLE_KEY \
     VITE_GOOGLE_MAPS_API_KEY=$VITE_GOOGLE_MAPS_API_KEY
 RUN npm run build
