@@ -1,7 +1,10 @@
 package com.mosbyboys.dishesbecrazy.ui.controller;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.math.BigDecimal;
 
 import jakarta.validation.Valid;
@@ -14,11 +17,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.http.MediaType;
 import com.mosbyboys.dishesbecrazy.application.ord.ORDFacade;
 import com.mosbyboys.dishesbecrazy.application.reg.REGFacade;
 import com.mosbyboys.dishesbecrazy.domain.ord.MenuItem;
 import com.mosbyboys.dishesbecrazy.domain.ord.MenuItemStatus;
 import com.mosbyboys.dishesbecrazy.domain.reg.User;
+import com.mosbyboys.dishesbecrazy.ui.controller.MenuController.MenuItemResponse;
+
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -28,29 +35,23 @@ public class MenuController {
     private final ORDFacade ordFacade;
     private final REGFacade regFacade;
 
-    public record MenuItemResponse(UUID id, String name, BigDecimal price, String status, String description, int stockQuantity) {
-        static MenuItemResponse from(MenuItem m) {
+    public record MenuItemResponse(UUID id, UUID restaurantId, String restaurantName, String name, BigDecimal price, String status, String description, String postDescription, int stockQuantity, String imageUrl) {
+        static MenuItemResponse from(MenuItem m) { return from(m, null); }
+        static MenuItemResponse from(MenuItem m, String restaurantName) {
             String availability = (m.isAvailable() ? MenuItemStatus.AVAILABLE : MenuItemStatus.SOLD_OUT).name();
             // Exposes ORD's existing availability rule, including zero stock, in the menu status field.
-            return new MenuItemResponse(m.getId(), m.getName(), m.getPrice(), availability, m.getDescription(), m.getStockQuantity());
+            return new MenuItemResponse(m.getId(), m.getRestaurantId(), restaurantName, m.getName(), m.getPrice(), availability, m.getDescription(), m.getPostDescription(), m.getStockQuantity(), m.getImageUrl());
         }
     }
-
-    public record AddMenuItemRequest(
-            @NotBlank String name,
-            @NotNull @DecimalMin("0.01") BigDecimal price,
-            @NotNull @Min(0) Integer stockQuantity,
-            String description//,
-            //String imageUrl
-    ) {}
 
     public record EditMenuItemRequest(
             @NotNull UUID id,
             @NotBlank String name,
             @NotNull @DecimalMin("0.01") BigDecimal price,
             @NotNull @Min(0) Integer stockQuantity,
-            String description//,
-            //String imageUrl
+            String description,
+            String postDescription,
+            String imageUrl
     ) {}
 
     @GetMapping("/api/restaurants/{restaurantId}/menu")
@@ -63,24 +64,63 @@ public class MenuController {
         return ResponseEntity.ok(menuItems);
     }
 
-    @PostMapping("/menu/add")
-    public ResponseEntity<MenuItem> addMenuItem(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody AddMenuItemRequest request) {
-        UUID restaurantId = regFacade.getCurrentUser(UUID.fromString(jwt.getSubject())).getUserId();
+    @GetMapping("/api/restaurants/menu-all")
+    public ResponseEntity<List<MenuItemResponse>> getOpenRestaurantMenu(@AuthenticationPrincipal Jwt jwt) {
+        User user = regFacade.getCurrentUser(UUID.fromString(jwt.getSubject()));
+        List<MenuItem> body = ordFacade.getOpenRestaurantMenu(user);
+        Map<UUID, String> names = ordFacade.getRestaurantNames(body.stream().map(MenuItem::getRestaurantId).collect(Collectors.toSet()));
+        List<MenuItemResponse> menuItems = body.stream()
+                .map(m -> MenuItemResponse.from(m, names.get(m.getRestaurantId())))
+                .toList();
+        return ResponseEntity.ok(menuItems);
+    }
 
-        MenuItemStatus status = request.stockQuantity() > 0
+    @PostMapping(value = "/menu/add", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<MenuItem> addMenuItem(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam String name,
+            @RequestParam BigDecimal price,
+            @RequestParam Integer stockQuantity,
+            @RequestParam String description,
+            @RequestParam String postDescription, //TODO: maybe remove if not posting directly when adding an item
+            @RequestPart(required = false) MultipartFile image
+    ) {
+
+        UUID restaurantId = regFacade
+                .getCurrentUser(UUID.fromString(jwt.getSubject()))
+                .getUserId();
+
+        MenuItemStatus status = stockQuantity > 0
                 ? MenuItemStatus.AVAILABLE
                 : MenuItemStatus.SOLD_OUT;
 
+        UUID menuItemId = UUID.randomUUID();
+
+        String imageUrl = "https://zmlykiviyssjacfuione.supabase.co/storage/v1/object/public/menu-images/default_menu_item_image.png";
+
+        if (image != null && !image.isEmpty()) {
+            try {
+                imageUrl = ordFacade.saveMenuItemImage(
+                        menuItemId,
+                        image.getBytes(),
+                        image.getContentType()
+                );
+            } catch (IOException e) {
+                imageUrl = "https://zmlykiviyssjacfuione.supabase.co/storage/v1/object/public/menu-images/default_menu_item_image.png";
+            }
+        }
+
         MenuItem item = new MenuItem(
-                UUID.randomUUID(), //give it a new random UUID
+                menuItemId,
                 restaurantId,
-                request.name(),
-                request.price(),
-                request.stockQuantity(),
+                name,
+                price,
+                stockQuantity,
                 status,
-                request.description(),
-                "",// temporarily until imageURL is added
-                null //createdAt is done automatically so don't need to do it here
+                description,
+                postDescription,
+                imageUrl,
+                null
         );
 
         ordFacade.saveMenuItem(item);
@@ -109,8 +149,9 @@ public class MenuController {
                 request.stockQuantity(),
                 status,
                 request.description(),
-                "",// temporarily until imageURL is added
-                null //created at. won't be updated anyways
+                request.postDescription(),
+                request.imageUrl(),
+                null //created at. won't be updated anyway
         );
 
         ordFacade.saveMenuItem(item);

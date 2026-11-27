@@ -11,4 +11,9 @@ public class PickedUpState extends OrderState {
     public OrderState cancel() {
         return new CancelledState();
     }
+
+    @Override
+    public boolean foodHasLeftRestaurant() {
+        return true;
+    }
 }

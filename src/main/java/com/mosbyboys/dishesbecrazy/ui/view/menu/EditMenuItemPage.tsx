@@ -2,7 +2,7 @@ import AppHeader from "../components/AppHeader";
 import Button from "../components/Button";
 import Heading from "../components/Heading";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../AuthContext";
+import { useAuth } from "../context/AuthContext";
 import { useEffect, useState, type FormEvent, type ChangeEvent } from "react";
 import type { MenuItem } from "./types/menu";
 import { getMenu } from "./api/menuApi";
@@ -76,7 +76,7 @@ export default function EditMenuItemPage() {
 
     const handleSubmit = async (
         e: FormEvent<HTMLFormElement>,
-        itemId: string
+        itemId: string, imageUrl: string, postDescription: string | null
     ) => {
         e.preventDefault();
         setError("");
@@ -105,7 +105,9 @@ export default function EditMenuItemPage() {
             name: formData.name.trim(),
             price: Number(formData.price),
             stockQuantity: Number(formData.stockQuantity),
-            description: formData.description.trim()
+            description: formData.description.trim(),
+            postDescription: postDescription,
+            imageUrl: imageUrl
         };
 
         try {
@@ -170,156 +172,166 @@ export default function EditMenuItemPage() {
                 </Button>
             </AppHeader>
 
-            <main className="page__content card">
-                <header className="page__intro">
-                    <Heading>Edit an ~item~ from your menu!</Heading>
-                    <p className="meta">
-                        Click the 'Edit' button to edit the menu item.
+            <main className="page__content">
+                <section className="intro-card card">
+                    <Heading>Edit your ~menu~!</Heading>
+                    <p className="intro-card__text meta">
+                        Click the 'Edit' button to edit a menu item, or add a new one.
                     </p>
-                </header>
+                </section>
 
-                {error && (
-                    <p
-                        className="page__status page__status--error"
-                        role="alert"
-                    >
-                        Error: {error}
-                    </p>
-                )}
+                <section className="card edit-menu__list-card">
+                    {error && (
+                        <p
+                            className="page__status page__status--error"
+                            role="alert"
+                        >
+                            Error: {error}
+                        </p>
+                    )}
 
-                {!error && items === null && (
-                    <p className="page__status meta">Loading…</p>
-                )}
+                    {!error && items === null && (
+                        <p className="page__status meta">Loading…</p>
+                    )}
 
-                {items?.length === 0 && (
-                    <p className="page__status meta">
-                        This restaurant has no menu items yet.
-                    </p>
-                )}
+                    {items?.length === 0 && (
+                        <p className="page__status meta">
+                            This restaurant has no menu items yet.
+                        </p>
+                    )}
 
-                {items && items.length > 0 && (
-                    <ul className="page__list">
-                        {items.map(item => {
-                            const isEditing = editingId === item.id;
+                    {items && items.length > 0 && (
+                        <ul className="page__list">
+                            {items.map(item => {
+                                const isEditing = editingId === item.id;
 
-                            return (
-                                <li
-                                    key={item.id}
-                                    className={`list-card menu-item`}
-                                >
-                                    {isEditing ? (
-                                        <form
-                                            className="menu-item__edit-form"
-                                            onSubmit={e =>
-                                                handleSubmit(e, item.id)
-                                            }
-                                        >
-                                            <div className="menu-item__edit-fields">
-                                                <label>
-                                                    Name
-                                                    <input
-                                                        type="text"
-                                                        name="name"
-                                                        value={formData.name}
-                                                        onChange={handleChange}
-                                                        required
-                                                    />
-                                                </label>
+                                return (
+                                    <li
+                                        key={item.id}
+                                        className={`list-card menu-item`}
+                                    >
+                                        {isEditing ? (
+                                            <form
+                                                className="menu-item__edit-form"
+                                                onSubmit={e =>
+                                                    handleSubmit(e, item.id, item.imageUrl, item.postDescription)
+                                                }
+                                            >
+                                                <div className="menu-item__edit-fields">
+                                                    <label>
+                                                        Name
+                                                        <input
+                                                            type="text"
+                                                            name="name"
+                                                            value={formData.name}
+                                                            onChange={handleChange}
+                                                            required
+                                                        />
+                                                    </label>
 
-                                                <label>
-                                                    Description
-                                                    <textarea
-                                                        name="description"
-                                                        value={formData.description}
-                                                        onChange={handleChange}
-                                                        rows={3}
-                                                    />
-                                                </label>
+                                                    <label>
+                                                        Description
+                                                        <textarea
+                                                            name="description"
+                                                            value={formData.description}
+                                                            onChange={handleChange}
+                                                            rows={3}
+                                                        />
+                                                    </label>
 
-                                                <label>
-                                                    Stock quantity
-                                                    <input
-                                                        type="number"
-                                                        name="stockQuantity"
-                                                        min="0"
-                                                        step="1"
-                                                        value={formData.stockQuantity}
-                                                        onChange={handleChange}
-                                                        required
-                                                    />
-                                                </label>
+                                                    <label>
+                                                        Stock quantity
+                                                        <input
+                                                            type="number"
+                                                            name="stockQuantity"
+                                                            min="0"
+                                                            step="1"
+                                                            value={formData.stockQuantity}
+                                                            onChange={handleChange}
+                                                            required
+                                                        />
+                                                    </label>
 
-                                                <label>
-                                                    Price ($)
-                                                    <input
-                                                        type="number"
-                                                        name="price"
-                                                        min="0.01"
-                                                        step="0.01"
-                                                        value={formData.price}
-                                                        onChange={handleChange}
-                                                        required
-                                                    />
-                                                </label>
-                                            </div>
+                                                    <label>
+                                                        Price ($)
+                                                        <input
+                                                            type="number"
+                                                            name="price"
+                                                            min="0.01"
+                                                            step="0.01"
+                                                            value={formData.price}
+                                                            onChange={handleChange}
+                                                            required
+                                                        />
+                                                    </label>
+                                                </div>
 
-                                            <div className="menu-item__actions">
-                                                <Button
-                                                    type="submit"
-                                                    disabled={loading}
-                                                >
-                                                    {loading ? "Saving..." : "Confirm"}
-                                                </Button>
+                                                <div className="menu-item__actions">
+                                                    <Button
+                                                        type="submit"
+                                                        disabled={loading}
+                                                    >
+                                                        {loading ? "Saving..." : "Confirm"}
+                                                    </Button>
 
-                                                <Button
-                                                    type="button"
-                                                    variant="secondary"
-                                                    onClick={handleCancel}
-                                                    disabled={loading}
-                                                >
-                                                    Cancel
-                                                </Button>
-                                            </div>
-                                        </form>
-                                    ) : (
-                                        <>
-                                            <div className="list-card__info">
-                                                <Heading level={3}>
-                                                    {item.name}
-                                                </Heading>
+                                                    <Button
+                                                        type="button"
+                                                        variant="secondary"
+                                                        onClick={handleCancel}
+                                                        disabled={loading}
+                                                    >
+                                                        Cancel
+                                                    </Button>
+                                                </div>
+                                            </form>
+                                        ) : (
+                                            <>
+                                                <div className="list-card__info">
+                                                    <Heading level={3}>
+                                                        {item.name}
+                                                    </Heading>
 
-                                                {item.description && (
-                                                    <p className="menu-item__description meta">
-                                                        {item.description}
+                                                    {item.description && (
+                                                        <p className="menu-item__description meta">
+                                                            {item.description}
+                                                        </p>
+                                                    )}
+
+                                                    <p className="meta">
+                                                        Stock: {item.stockQuantity}
                                                     </p>
-                                                )}
+                                                </div>
 
-                                                <p className="meta">
-                                                    Stock: {item.stockQuantity}
-                                                </p>
-                                            </div>
+                                                <div className="list-card__side">
+                                                    <Button
+                                                        type="button"
+                                                        variant="secondary"
+                                                        onClick={() => handleEdit(item)}
+                                                        disabled={editingId !== null}
+                                                    >
+                                                        Edit
+                                                    </Button>
 
-                                            <div className="list-card__side">
-                                                <Button
-                                                    type="button"
-                                                    variant="secondary"
-                                                    onClick={() => handleEdit(item)}
-                                                    disabled={editingId !== null}
-                                                >
-                                                    edit
-                                                </Button>
+                                                    <span className="list-card__price">
+                                                        ${item.price.toFixed(2)}
+                                                    </span>
+                                                </div>
+                                            </>
+                                        )}
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    )}
 
-                                                <span className="list-card__price">
-                                                    ${item.price.toFixed(2)}
-                                                </span>
-                                            </div>
-                                        </>
-                                    )}
-                                </li>
-                            );
-                        })}
-                    </ul>
-                )}
+                    <Button
+                        block
+                        onClick={() => navigate("/restaurant/add")}
+                        disabled={editingId !== null}
+                    >
+                        Add Menu Item
+                    </Button>
+                </section>
             </main>
         </div>
     );

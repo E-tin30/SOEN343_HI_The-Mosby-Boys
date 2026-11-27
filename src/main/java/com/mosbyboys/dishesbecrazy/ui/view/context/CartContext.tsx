@@ -1,12 +1,12 @@
-import { log } from "./outputLog";
+import { log } from "../outputLog";
 import {
     createContext,
     useContext,
     useState,
     type ReactNode,
 } from "react";
-import type { MenuItem } from "./menu/types/menu";
-import type { Cart } from "./menu/types/cart";
+import type { MenuItem } from "../menu/types/menu";
+import type { Cart } from "../menu/types/cart";
 
 interface CartContextType {
     cart: Cart | null;

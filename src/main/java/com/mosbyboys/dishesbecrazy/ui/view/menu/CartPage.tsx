@@ -1,9 +1,9 @@
 import { useOrderAvailability } from "./useOrderAvailability";
 import { loggedFetch, readJson, RequestError } from "../api/loggedFetch";
 import {useEffect, useRef, useState} from "react";
-import {useNavigate} from "react-router-dom";
-import {useCart} from "../CartContext";
-import {useAuth} from "../AuthContext";
+import {useLocation, useNavigate} from "react-router-dom";
+import {useCart} from "../context/CartContext";
+import {useAuth} from "../context/AuthContext";
 import {log, logError} from "../outputLog";
 import AppHeader from "../components/AppHeader";
 import Button from "../components/Button";
@@ -20,6 +20,8 @@ const stripePromise = loadStripe(
 
 export default function CartPage() {
     const navigate = useNavigate();
+    const location = useLocation();
+    const isFromFeed = Boolean(location.state?.isFromFeed);
     const {
         cart,
         itemCount,
@@ -146,7 +148,11 @@ export default function CartPage() {
                 return;
             }
             // Rechecks immediately before placement in case availability changed after rendering.
-            paymentFormRef.current?.submitPayment();
+            if (!paymentFormRef.current) {
+                throw new Error("Payment form is not ready.");
+            }
+
+            await paymentFormRef.current.submitPayment();
 
             const response = await loggedFetch("http://localhost:8080/placeOrder", {
                 method: "POST",
@@ -184,18 +190,57 @@ export default function CartPage() {
         }
     };
 
+    const handleBackToFeed = () => {
+        if(!isEmpty) {
+            const isConfirmClearCart = window.confirm('Going back to feed will clear your cart.');
+
+            if(!isConfirmClearCart)
+                return;
+        }
+
+        clearCart();
+        navigate("/feed");
+    };
+
+    const handleBackToRestaurants = () => {
+        clearCart();
+        navigate("/restaurants");
+    };
+
+    const handleBackToMenu = () => {
+        navigate(`/restaurants/${cart?.restaurantId}/menu`);
+    };
+
     return (
         <div className="page">
             <AppHeader>
-                {cart ? (
+                {isFromFeed ? (
+                    <>
+                        <Button
+                            variant="secondary"
+                            onClick={handleBackToFeed}
+                        >
+                            Back to feed
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            onClick={handleBackToMenu}
+                            >
+                            See restaurant's menu
+                        </Button>
+                    </>
+                ) : cart ? (
                     <Button
                         variant="secondary"
-                        onClick={() => navigate(`/restaurants/${cart.restaurantId}/menu`)}
+                        onClick={handleBackToMenu}
                     >
                         Back to menu
                     </Button>
                 ) : (
-                    <Button variant="secondary" onClick={() => navigate("/restaurants")}>
+                    <Button
+                        variant="secondary"
+                        onClick={handleBackToRestaurants}
+                    >
                         Back to restaurants
                     </Button>
                 )}
@@ -214,9 +259,15 @@ export default function CartPage() {
                 {isEmpty ? (
                     <div className="cart-empty">
                         <p className="page__status meta">Your cart is empty.</p>
-                        <Button onClick={() => navigate("/restaurants")}>
-                            Browse restaurants
-                        </Button>
+                        {isFromFeed ? (
+                            <Button onClick={handleBackToFeed}>
+                                Browse feed
+                            </Button>
+                        ) : (
+                            <Button onClick={handleBackToRestaurants}>
+                                Browse restaurants
+                            </Button>
+                        )}
                     </div>
                 ) : (
                     <>
@@ -362,7 +413,7 @@ export default function CartPage() {
                                 <Button variant="secondary" onClick={clearCart} disabled={placingOrder && checkout}>
                                     Clear cart
                                 </Button>
-                                <Button onClick={proceedToCheckout} disabled={placingOrder && checkout}>
+                                <Button onClick={proceedToCheckout} disabled={isOrderDisabled || placingOrder && checkout}>
                                     Continue to Checkout
                                 </Button>
                             </div>}

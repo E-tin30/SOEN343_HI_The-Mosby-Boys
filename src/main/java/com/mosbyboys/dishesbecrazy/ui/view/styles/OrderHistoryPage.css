@@ -119,3 +119,12 @@
   opacity: 1;
   font-weight: 600;
 }
+
+/* Order opened from a notification: a brief tomato ring that fades out */
+.history-card--highlight {
+  animation: history-flash 2.4s ease-out;
+}
+@keyframes history-flash {
+  0%, 60% { box-shadow: 0 0 0 3px var(--tomato); }
+  100% { box-shadow: 0 0 0 3px transparent; }
+}

@@ -1,4 +1,10 @@
 /*styles for the menu */
+.edit-menu__list-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+}
+
 .menu-item {
     position: relative;
 }
@@ -39,9 +45,10 @@
     width: 100%;
     box-sizing: border-box;
     padding: 0.65rem;
-    border: 1px solid #ccc;
+    border: 1px solid var(--linen);
     border-radius: 6px;
     font: inherit;
+    background: var(--porcelain);
 }
 
 .menu-item__actions {

@@ -27,6 +27,7 @@ spring:
   supabase:
     url: ${SUPABASE_URL}
     publishable-key: ${SUPABASE_PUBLISHABLE_KEY}
+    secret-key: ${SUPABASE_SECRET_KEY}
 
   security:
     oauth2:
@@ -45,6 +46,10 @@ pricing:
   small-order-surcharge: 2.50
   gst: 0.05
   qst: 0.09975
+
+notifications:
+  dispatch-wait-threshold: 1m
+  monitor-interval: 15s
 
 stripe:
   secret-key: ${STRIPE_SECRET_KEY}

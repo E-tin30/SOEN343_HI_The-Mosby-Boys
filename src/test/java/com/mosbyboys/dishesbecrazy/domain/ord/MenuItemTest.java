@@ -12,7 +12,7 @@ class MenuItemTest {
 
     private MenuItem item(int stock, MenuItemStatus status) {
         return new MenuItem(UUID.randomUUID(), restaurantId, "Lasagna", new BigDecimal("16.50"), stock,
-                status, "Seven layers", null, Instant.now());
+                status, "Seven layers", null, null, Instant.now());
     }
 
     // an available item with stock can be ordered
@@ -78,7 +78,7 @@ class MenuItemTest {
     @Test
     void zeroPriceThrows() {
         assertThrows(IllegalArgumentException.class, () -> new MenuItem(UUID.randomUUID(), restaurantId, "X",
-                BigDecimal.ZERO, 1, MenuItemStatus.AVAILABLE, null, null, null));
+                BigDecimal.ZERO, 1, MenuItemStatus.AVAILABLE, null, null, null, null));
     }
 
     // negative stock throws exception
@@ -91,7 +91,7 @@ class MenuItemTest {
     @Test
     void nullRestaurantThrows() {
         assertThrows(IllegalArgumentException.class, () -> new MenuItem(UUID.randomUUID(), null, "X",
-                BigDecimal.ONE, 1, MenuItemStatus.AVAILABLE, null, null, null));
+                BigDecimal.ONE, 1, MenuItemStatus.AVAILABLE, null, null, null, null));
     }
 
     // restoring stock must not override a restaurant's manual SOLD_OUT

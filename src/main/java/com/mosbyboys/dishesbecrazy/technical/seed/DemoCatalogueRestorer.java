@@ -83,13 +83,13 @@ class DemoCatalogueRestorer {
     private void restoreMenu(MenuSeed item, UUID restaurantId) {
         int updated = jdbc.update("""
                 UPDATE public."MenuItem" SET restaurant_id = ?, name = ?, price = ?, stock_quantity = ?,
-                    status = ?, description = ?, image_url = '' WHERE id = ?
-                """, restaurantId, item.name(), item.price(), item.stockQuantity(), item.status().name(), item.description(), item.id());
+                    status = ?, description = ?, post_description = ?, image_url = ? WHERE id = ?
+                """, restaurantId, item.name(), item.price(), item.stockQuantity(), item.status().name(), item.description(), item.postDescription(), item.imageUrl(), item.id());
         if (updated == 0) {
             jdbc.update("""
-                    INSERT INTO public."MenuItem" (id, restaurant_id, name, price, stock_quantity, status, description, image_url)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, '')
-                    """, item.id(), restaurantId, item.name(), item.price(), item.stockQuantity(), item.status().name(), item.description());
+                    INSERT INTO public."MenuItem" (id, restaurant_id, name, price, stock_quantity, status, description, post_description, image_url)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, item.id(), restaurantId, item.name(), item.price(), item.stockQuantity(), item.status().name(), item.description(), item.postDescription(), item.imageUrl());
         }
     }
     // Fixtures define stock and availability directly; restoring historical orders must not consume that stock again.

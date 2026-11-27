@@ -1,0 +1,65 @@
+.image-upload {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.image-upload > label {
+    font-weight: 600;
+}
+
+.image-upload__dropzone {
+    border: 2px dashed var(--linen);
+    border-radius: 12px;
+    padding: 2rem;
+    min-height: 180px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    background: var(--porcelain);
+}
+
+.image-upload__dropzone:hover,
+.image-upload__dropzone.dragging {
+    border-color: var(--navy);
+    background: var(--cream);
+}
+
+.image-upload__placeholder {
+    text-align: center;
+}
+
+.image-upload__icon {
+    font-size: 2.5rem;
+    color: var(--navy);
+}
+
+.image-upload__preview {
+    text-align: center;
+    width: 100%;
+}
+
+.image-upload__preview img {
+    max-width: 100%;
+    max-height: 220px;
+    object-fit: contain;
+    border-radius: 8px;
+}
+
+.image-upload__preview p {
+    margin-bottom: 0;
+    overflow-wrap: anywhere;
+}
+
+.image-upload__remove {
+    align-self: flex-start;
+    border: none;
+    background: none;
+    color: var(--tomato);
+    cursor: pointer;
+    padding: 0;
+    font: inherit;
+    text-decoration: underline;
+}

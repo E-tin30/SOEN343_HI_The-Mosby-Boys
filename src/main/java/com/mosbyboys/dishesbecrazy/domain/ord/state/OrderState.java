@@ -38,6 +38,10 @@ public abstract class OrderState {
         throw new IllegalTransitionException(this, "cancel");
     }
 
+    public boolean foodHasLeftRestaurant() {
+        return false;
+    }
+
     @Override
     public String toString() {
         return getClass().getSimpleName();

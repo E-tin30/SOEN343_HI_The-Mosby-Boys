@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "../AuthContext";
+import { useAuth } from "../context/AuthContext";
 import { closeRestaurant, getRestaurants, openRestaurant, pauseRestaurant } from "../menu/api/menuApi";
 import type { Restaurant } from "../menu/types/menu";
 import Button from "./Button";

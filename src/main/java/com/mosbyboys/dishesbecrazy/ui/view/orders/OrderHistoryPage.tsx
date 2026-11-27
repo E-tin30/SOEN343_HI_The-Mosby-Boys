@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../AuthContext";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import { getHomeRoute } from "../roleRoutes";
 import AppHeader from "../components/AppHeader";
 import Button from "../components/Button";
@@ -46,6 +46,8 @@ const PriceRow = ({ label, amount }: { label: string; amount: number }) => (
 
 export default function OrderHistoryPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const handledHash = useRef("");
   const { user, accessToken } = useAuth();
   const [orders, setOrders] = useState<HistoryOrder[] | null>(null);
   const [pendingId, setPendingId] = useState<string | null>(null);
@@ -66,6 +68,18 @@ export default function OrderHistoryPage() {
   useEffect(() => {
     loadOrders();
   }, [loadOrders]);
+
+  // Arriving from a notification (#order-<id>): show every order, then scroll to that one once.
+  useEffect(() => {
+    if (!orders || !location.hash || handledHash.current === location.hash) return;
+    handledHash.current = location.hash;
+    setTab("All");
+    const id = location.hash.slice(1);
+    const frame = requestAnimationFrame(() => {
+      document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [orders, location.hash]);
 
   // Runs one action on one order, then reloads so the page matches the backend.
   const runAction = async (orderId: string, call: () => Promise<void>) => {
@@ -98,7 +112,7 @@ export default function OrderHistoryPage() {
   const canRefund = (o: HistoryOrder) => user?.role === "OPERATOR" && o.status === "DELIVERED";
 
   const renderOrder = (order: HistoryOrder) => (
-    <li key={order.id} className="list-card history-card">
+    <li key={order.id} id={`order-${order.id}`} className={`list-card history-card${location.hash === `#order-${order.id}` ? " history-card--highlight" : ""}`}>
         <div className="history-card__top">
             <Heading level={3}>{`Order #${order.id.slice(-6)}`}</Heading>
             <Tag tone={STATUS_TONE[order.status]}>{STATUS_LABEL[order.status]}</Tag>

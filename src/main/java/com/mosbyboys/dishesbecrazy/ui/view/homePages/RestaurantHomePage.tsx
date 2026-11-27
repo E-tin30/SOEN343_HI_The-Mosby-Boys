@@ -1,18 +1,18 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "./AuthContext";
-import AppHeader from "./components/AppHeader";
-import Button from "./components/Button";
-import Heading from "./components/Heading";
-import RestaurantStatusControl from "./components/RestaurantStatusControl";
-import Tag from "./components/Tag";
-import { restaurantLoad } from "./dashboard/LiveMap";
-import { getMenu } from "./menu/api/menuApi";
-import type { MenuItem, Restaurant } from "./menu/types/menu";
-import { getRestaurantOrders } from "./orders/api/ordersApi";
-import type { QueueStatus, RestaurantOrder } from "./orders/types/order";
-import "./styles/Dashboard.css";
-import "./styles/MenuPage.css";
+import { useAuth } from "../context/AuthContext";
+import AppHeader from "../components/AppHeader";
+import Button from "../components/Button";
+import Heading from "../components/Heading";
+import RestaurantStatusControl from "../components/RestaurantStatusControl";
+import Tag from "../components/Tag";
+import { restaurantLoad } from "../dashboard/LiveMap";
+import { getMenu } from "../menu/api/menuApi";
+import type { MenuItem, Restaurant } from "../menu/types/menu";
+import { getRestaurantOrders } from "../orders/api/ordersApi";
+import type { QueueStatus, RestaurantOrder } from "../orders/types/order";
+import "../styles/Dashboard.css";
+import "../styles/MenuPage.css";
 
 // One line per step an order goes through. Together they add up to the total.
 const QUEUE_SUMMARY: { label: string; status: QueueStatus }[] = [
@@ -123,11 +123,11 @@ export default function RestaurantHomePage() {
               </ul>
             )}
             <div className="dashboard-card__footer dashboard-card__actions">
-              <Button variant="secondary" onClick={() => navigate("/restaurant/add")}>
-                Add Menu Item
-              </Button>
               <Button variant="secondary" onClick={() => navigate("/restaurant/edit")}>
-                Edit Menu Item
+                Edit Menu
+              </Button>
+              <Button variant="secondary" onClick={() => navigate("/restaurant/post")}>
+                Manage Posts
               </Button>
             </div>
           </section>

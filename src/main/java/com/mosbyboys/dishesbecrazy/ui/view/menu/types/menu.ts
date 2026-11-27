@@ -6,9 +6,13 @@ export type Restaurant = {
 
 export type MenuItem = {
   id: string;
+  restaurantId: string;
+  restaurantName?: string | null;
   name: string;
   price: number;
   stockQuantity: number;
   status: "AVAILABLE" | "SOLD_OUT";
   description: string | null;
+  imageUrl: string;
+  postDescription: string | null;
 };

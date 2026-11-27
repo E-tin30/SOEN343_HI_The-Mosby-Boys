@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useAuth } from "../AuthContext";
-import { useCart } from "../CartContext";
+import { useAuth } from "../context/AuthContext";
+import { useCart } from "../context/CartContext";
 import AppHeader from "../components/AppHeader";
 import Button from "../components/Button";
 import Heading from "../components/Heading";
@@ -14,11 +14,12 @@ export default function MenuPage() {
   const navigate = useNavigate();
   const { restaurantId } = useParams<{ restaurantId: string }>();
   const { accessToken, user } = useAuth();
-  const { addItem, itemCount } = useCart();
+  const { addItem, itemCount, clearCart, cart } = useCart();
   const [items, setItems] = useState<MenuItem[] | null>(null);
   const [error, setError] = useState("");
 
   const isCustomer = user?.role === "CUSTOMER";
+  const isEmpty = !cart || cart.items.length === 0;
 
   useEffect(() => {
     if (!accessToken || !restaurantId) return;
@@ -26,6 +27,17 @@ export default function MenuPage() {
       .then(setItems)
       .catch((e: Error) => setError(e.message));
   }, [accessToken, restaurantId]);
+
+  const handleBackToRestaurants = () => {
+      if(!isEmpty) {
+          const isConfirmClearCart = window.confirm('Going back to restaurants will clear your cart.');
+
+          if(!isConfirmClearCart)
+              return;
+      }
+    clearCart();
+    navigate("/restaurants");
+  };
 
   return (
     <div className="page">
@@ -35,7 +47,7 @@ export default function MenuPage() {
             View cart ({itemCount})
           </Button>
         )}
-        <Button variant="secondary" onClick={() => navigate("/restaurants")}>
+        <Button variant="secondary" onClick={handleBackToRestaurants}>
           Back to restaurants
         </Button>
       </AppHeader>

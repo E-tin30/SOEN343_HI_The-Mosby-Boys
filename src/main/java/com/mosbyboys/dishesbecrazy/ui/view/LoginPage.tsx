@@ -2,7 +2,7 @@ import { loggedFetch, readJson, RequestError } from "./api/loggedFetch";
 
 import { useState, type FormEvent, type KeyboardEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth, type LoginTokens } from "./AuthContext";
+import { useAuth, type LoginTokens } from "./context/AuthContext";
 import { getHomeRoute } from "./roleRoutes";
 import { logError } from "./outputLog";
 import Button from "./components/Button";

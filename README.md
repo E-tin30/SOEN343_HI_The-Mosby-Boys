@@ -2,9 +2,8 @@
 
 # Dishes Be Crazy
 
-A food-ordering platform where local Montreal home cooks sell their homemade meals (SOEN 343, Phase II). Customers browse their kitchens' menus and place orders; cooks accept or reject them and prepare them in FIFO order. Kitchen accounts use the existing RESTAURANT role. Every command and error appears in the on-screen output console.
+A food-ordering platform where local Montreal home cooks sell their homemade meals (SOEN 343). Customers browse their kitchens' menus and place orders; cooks accept or reject them and prepare them in FIFO order; Couriers pick up and deliver orders. Kitchen accounts use the existing RESTAURANT role. Every command and error appears in the on-screen output console.
 
-**Built this phase:** REG (registration, login, roles) and ORD (menus, orders, order lifecycle, preparation queue), plus a minimal DASH.
 
 ## Team
 
@@ -31,6 +30,7 @@ SUPABASE_SECRET_KEY=...
 DEMO_SEED_PASSWORD=...
 VITE_STRIPE_PUBLISHABLE_KEY=...
 STRIPE_SECRET_KEY=...
+VITE_GOOGLE_MAPS_API_KEY=...
 ```
 
 ## Run
@@ -70,13 +70,12 @@ Password for all of them: `DEMO_SEED_PASSWORD` from `.env`.
 | Role | Email |
 |---|---|
 | Customer | `customer.demo@example.com` |
-| Home cook - Sam's Family Kitchen | `restaurant.demo@example.com` |
-| Home cook - Robin's Sunday Kitchen | `restaurant2.demo@example.com` |
-| Home cook - Casey's Home Kitchen | `restaurant3.demo@example.com` |
-| Courier - Jo (assigned to a stalled order) | `courier.demo@example.com` |
-| Courier - Riley (idle, far away) | `courier2.demo@example.com` |
-| Courier - Morgan (idle, near Sam's) | `courier3.demo@example.com` |
+| Home cook | `<name>.restaurant1@example.com` |
+| Home cook| `<name>.restaurant2@example.com` |
+| Courier | `<name>.courier@example.com` |
 | Operator | `operator.demo@example.com` |
+
+Replace <name> with any of the team members' first name in lowercase for courier and restaurant profiles.
 
 Run initial setup from `src/main/resources/demo/` using the database configured in `.env`:
 
@@ -99,6 +98,16 @@ npm test                      # mocked frontend tests
 npm run build                 # TypeScript and production build
 ./mvnw test
 ```
+
+Run the PermissionPolicy characterisation tests for Phase IV refactoring R2.1 (#115):
+
+```sh
+./mvnw -Dtest=PermissionPolicyTest,PermissionPolicyCharacterizationTest test
+```
+
+These isolated tests check permission decisions, error messages and null-validation order;
+they do not need a running backend or database. Run the same command on the test-only
+commit immediately before R2.1 and on the R2.1 refactoring commit.
 
 Fixture, seeding and restoration checks use isolated in-memory databases and mocked services:
 

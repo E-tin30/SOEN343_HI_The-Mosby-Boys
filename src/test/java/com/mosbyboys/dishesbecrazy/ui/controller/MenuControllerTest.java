@@ -16,7 +16,7 @@ class MenuControllerTest {
     @CsvSource({"AVAILABLE, 0, SOLD_OUT", "AVAILABLE, 3, AVAILABLE", "SOLD_OUT, 3, SOLD_OUT"})
     void exposesOrderableAvailabilityRatherThanJustStoredStatus(MenuItemStatus status, int stock, String expected) {
         MenuItem item = new MenuItem(UUID.randomUUID(), UUID.randomUUID(), "Soup", new BigDecimal("10.00"),
-                stock, status, null, null, Instant.now());
+                stock, status, null, null, null, Instant.now());
 
         assertEquals(expected, MenuController.MenuItemResponse.from(item).status());
     }

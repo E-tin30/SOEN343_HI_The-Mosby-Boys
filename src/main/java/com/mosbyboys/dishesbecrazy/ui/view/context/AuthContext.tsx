@@ -1,4 +1,4 @@
-import { loggedFetch, readJson } from "./api/loggedFetch";
+import { loggedFetch, readJson } from "../api/loggedFetch";
 
 import {
   createContext,
@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { log, logError } from "./outputLog";
+import { log, logError } from "../outputLog";
 
 export type LoginTokens = {
   accessToken: string;
